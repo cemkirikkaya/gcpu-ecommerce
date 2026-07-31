@@ -1,0 +1,164 @@
+export type UserRole = "admin" | "customer";
+
+export type AccountType = "customer" | "company";
+
+export type User = {
+  id: number;
+  name: string;
+  email: string;
+  role: UserRole;
+};
+
+export type VariantAttribute = {
+  name: string;
+  value: string;
+};
+
+export type ProductVariant = {
+  id: number;
+  sku: string;
+  label: string;
+  attributes: VariantAttribute[];
+  price: number;
+  available_quantity: number;
+  image_url: string | null;
+};
+
+export type VariantGroup = {
+  label: string;
+  variants: ProductVariant[];
+};
+
+export type Product = {
+  id: number;
+  name: string;
+  description: string | null;
+  price: number;
+  category?: {
+    id: number;
+    name: string;
+    slug: string;
+  } | null;
+  image_url: string | null;
+  base_variant?: string | null;
+  variant_groups?: VariantGroup[];
+  variants?: ProductVariant[];
+};
+
+export type Category = {
+  id: number;
+  name: string;
+  slug: string;
+  description: string | null;
+  products: Product[];
+  children?: Category[];
+};
+
+export type Catalog = {
+  shop_name: string;
+  reservation_minutes: number;
+  categories: Category[];
+  uncategorized: Product[];
+};
+
+export type CartItem = {
+  id: number;
+  quantity: number;
+  reserved_until: string | null;
+  unit_price: number;
+  subtotal: number;
+  variant: ProductVariant | null;
+};
+
+export type Cart = {
+  id: number;
+  item_count: number;
+  total: number;
+  reservation_minutes: number;
+  items: CartItem[];
+};
+
+export type Address = {
+  id: number;
+  title: string | null;
+  first_name: string;
+  last_name: string;
+  phone: string | null;
+  address_line_1: string;
+  address_line_2: string | null;
+  city: string;
+  state: string | null;
+  postal_code: string;
+  country: string;
+  is_default: boolean;
+  full_name: string;
+  full_address: string;
+};
+
+export type Order = {
+  id: number;
+  total_price: number;
+  status: string;
+  payment_status: string;
+  created_at: string | null;
+  address?: Address | null;
+  items?: Array<{
+    id: number;
+    quantity: number;
+    price: number;
+    subtotal: number;
+    product_name?: string;
+    variant_label?: string;
+  }>;
+};
+
+export type AuthResponse = {
+  user: User;
+  token: string;
+};
+
+export type AdminCategory = {
+  id: number;
+  name: string;
+  slug: string;
+  parent_id: number | null;
+};
+
+export type AdminProductVariant = {
+  id: number;
+  sku: string;
+  label: string;
+  stock_id: number | null;
+  quantity: number;
+  available_quantity: number;
+  color?: string | null;
+  memory?: string | null;
+  model?: string | null;
+};
+
+export type AdminProduct = {
+  id: number;
+  name: string;
+  description: string | null;
+  price: number;
+  category?: {
+    id: number;
+    name: string;
+    slug: string;
+  } | null;
+  variants?: AdminProductVariant[];
+  created_at?: string | null;
+};
+
+export type CatalogVariantInput = {
+  sku: string;
+  stock: number;
+  color?: string;
+  memory?: string;
+  model?: string;
+};
+
+export type ApiError = {
+  message: string;
+  errors?: Record<string, string[]>;
+};

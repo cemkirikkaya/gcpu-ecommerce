@@ -1,0 +1,8 @@
+storage/framework/views/
+storage/logs/
+storage/pail/
+bootstrap/cache/
+public/js/
+public/build/
+node_modules/
+.phpunit.cache/

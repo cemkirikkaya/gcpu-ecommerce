@@ -1,0 +1,70 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment & secrets (never commit real credentials)
+.env
+.env.*
+!.env.example
+
+# Dependencies
+/node_modules
+/vendor
+
+# Build & cache
+/public/build
+/public/hot
+/public/fonts-manifest.dev.json
+/bootstrap/cache/*
+!/bootstrap/cache/.gitignore
+
+# Storage (logs, uploads, keys)
+/public/storage
+/storage/*.key
+/storage/pail
+/storage/logs/*
+!/storage/logs/.gitignore
+
+# Database (local dev files)
+/database/*.sqlite
+/database/*.sqlite-journal
+
+# Docker local overrides
+compose.override.yaml
+docker-compose.override.yml
+
+# IDE & editor
+gcpu.code-workspace
+/.idea
+/.vscode
+/.nova
+/.zed
+/.cursor
+/.codex
+.phpactor.json
+
+# PHP / Laravel
+.phpunit.result.cache
+/.phpunit.cache
+_ide_helper.php
+.phpstorm.meta.php
+/auth.json
+Homestead.json
+Homestead.yaml
+
+# Logs & debug
+*.log
+/coverage
+
+# SSL / keys
+*.pem
+*.key
+*.crt
+
+# Frontend (monorepo)
+/frontend/node_modules
+/frontend/.next
+/frontend/out
+/frontend/.env*
+!/frontend/.env*.example
+/frontend/.vercel
