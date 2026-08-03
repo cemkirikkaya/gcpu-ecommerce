@@ -4,6 +4,7 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\CartPageController;
 use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\IyzicoPaymentController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductController;
 use Illuminate\Support\Facades\Route;
@@ -31,5 +32,14 @@ Route::middleware('auth')->group(function (): void {
     Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index');
     Route::post('/checkout', [CheckoutController::class, 'store'])->name('checkout.store');
 
+    Route::get('/orders/{order}/pay', [IyzicoPaymentController::class, 'initialize'])
+        ->name('payment.iyzico.init');
+
     Route::get('/orders/{order}', [OrderController::class, 'show'])->name('orders.show');
 });
+
+Route::post('/payment/iyzico/callback', [IyzicoPaymentController::class, 'callback'])
+    ->name('payment.iyzico.callback');
+
+Route::get('/payment/iyzico/fake/{token}', [IyzicoPaymentController::class, 'fake'])
+    ->name('payment.iyzico.fake');

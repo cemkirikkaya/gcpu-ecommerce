@@ -2,7 +2,8 @@
   "environment": {
     "includePaths": [
       ".vscode/phpstorm-stubs",
-      "vendor/laravel/framework/src"
+      "vendor/laravel/framework/src",
+      "vendor/iyzico/iyzipay-php/src"
     ],
     "phpVersion": "8.5.0"
   }

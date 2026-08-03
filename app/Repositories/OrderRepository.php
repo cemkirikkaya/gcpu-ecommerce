@@ -11,6 +11,7 @@ use App\Models\OrderItem;
 use App\Models\User;
 use App\Services\StockService;
 use Illuminate\Support\Facades\DB;
+use RuntimeException;
 
 class OrderRepository
 {
@@ -30,7 +31,7 @@ class OrderRepository
                 ->firstOrFail();
 
             if ($cart->items->isEmpty()) {
-                throw new \RuntimeException('Sepetiniz boş.');
+                throw new RuntimeException('Sepetiniz boş.');
             }
 
             $address = $this->resolveAddress($user, $addressId);
@@ -64,14 +65,92 @@ class OrderRepository
                     'quantity' => $item->quantity,
                     'price' => $productVariant->product->price,
                 ]);
-
-                $this->stockService->decrementStock($productVariant, $item->quantity);
             }
 
-            $cart->items()->delete();
-
-            return $order->load(['items.cartItem.productVariant.product', 'address', 'cart.user']);
+            return $order->load([
+                'items.cartItem.productVariant.product',
+                'items.cartItem.productVariant.variantValues.variantValue.variant',
+                'address',
+                'cart.user',
+            ]);
         });
+    }
+
+    public function completePayment(Order $order, ?string $paymentId = null): Order
+    {
+        return DB::transaction(function () use ($order, $paymentId): Order {
+            $order = $order->fresh([
+                'items.cartItem.productVariant.product',
+                'items.cartItem.productVariant.stock',
+                'cart.items',
+            ]);
+
+            if ($order === null) {
+                throw new RuntimeException('Sipariş bulunamadı.');
+            }
+
+            if ($order->payment_status === PaymentStatus::Paid) {
+                return $order;
+            }
+
+            if ($order->payment_status !== PaymentStatus::Pending && $order->payment_status !== PaymentStatus::Failed) {
+                throw new RuntimeException('Bu sipariş için ödeme tamamlanamaz.');
+            }
+
+            foreach ($order->items as $item) {
+                /** @var CartItem|null $cartItem */
+                $cartItem = $item->cartItem;
+
+                if ($cartItem === null) {
+                    continue;
+                }
+
+                $this->stockService->assertReservationIsActive($cartItem);
+
+                $this->stockService->decrementStock(
+                    $cartItem->productVariant,
+                    $item->quantity,
+                );
+            }
+
+            $order->cart?->items()->delete();
+
+            $order->update([
+                'payment_status' => PaymentStatus::Paid,
+                'status' => OrderStatus::Processing,
+                'iyzico_payment_id' => $paymentId,
+                'paid_at' => now(),
+            ]);
+
+            return $order->fresh(['items.cartItem.productVariant.product', 'address', 'cart.user']);
+        });
+    }
+
+    public function failPayment(Order $order): Order
+    {
+        if ($order->payment_status === PaymentStatus::Paid) {
+            throw new RuntimeException('Ödenmiş sipariş başarısız olarak işaretlenemez.');
+        }
+
+        $order->update([
+            'payment_status' => PaymentStatus::Failed,
+        ]);
+
+        return $order->fresh(['items.cartItem.productVariant.product', 'address', 'cart.user']);
+    }
+
+    public function storePaymentSession(
+        Order $order,
+        string $token,
+        string $conversationId,
+    ): Order {
+        $order->update([
+            'iyzico_token' => $token,
+            'iyzico_conversation_id' => $conversationId,
+            'payment_status' => PaymentStatus::Pending,
+        ]);
+
+        return $order->fresh(['items.cartItem.productVariant.product', 'address', 'cart.user']);
     }
 
     private function resolveAddress(User $user, ?int $addressId): ?Address

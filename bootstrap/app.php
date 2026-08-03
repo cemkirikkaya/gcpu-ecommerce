@@ -19,6 +19,10 @@ return Application::configure(basePath: dirname(__DIR__))
             'admin' => EnsureAdmin::class,
         ]);
 
+        $middleware->validateCsrfTokens(except: [
+            'payment/iyzico/callback',
+        ]);
+
         $middleware->redirectGuestsTo(function (Request $request): ?string {
             if ($request->is('api/*') || $request->expectsJson()) {
                 return null;

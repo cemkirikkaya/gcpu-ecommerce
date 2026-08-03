@@ -33,37 +33,41 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 function readStoredAuth(): {
   user: User | null;
   token: string | null;
-  loading: boolean;
 } {
   const storedToken = getToken();
   const storedUser = getStoredUser();
 
   if (!storedToken || !storedUser) {
-    return { user: null, token: null, loading: false };
+    return { user: null, token: null };
   }
 
   return {
     user: storedUser,
     token: storedToken,
-    loading: true,
   };
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(() => readStoredAuth().user);
-  const [token, setToken] = useState<string | null>(() => readStoredAuth().token);
-  const [loading, setLoading] = useState(() => readStoredAuth().loading);
+  const [user, setUser] = useState<User | null>(null);
+  const [token, setToken] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!token) {
+    const stored = readStoredAuth();
+
+    if (!stored.token || !stored.user) {
+      setLoading(false);
       return;
     }
 
+    setToken(stored.token);
+    setUser(stored.user);
+
     api
-      .me(token)
+      .me(stored.token)
       .then((freshUser) => {
         setUser(freshUser);
-        persistAuth(token, freshUser);
+        persistAuth(stored.token!, freshUser);
       })
       .catch(() => {
         clearAuth();
@@ -71,7 +75,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(null);
       })
       .finally(() => setLoading(false));
-  }, [token]);
+  }, []);
 
   const login = useCallback(async (email: string, password: string) => {
     const response = await api.login({ email, password });

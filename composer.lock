@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "4389d282504a076c3f0dd7b1d33a0332",
+    "content-hash": "36547cca4d61c65d069bbbaabf3e950a",
     "packages": [
         {
             "name": "anourvalar/eloquent-serialize",
@@ -2139,6 +2139,62 @@
                 }
             ],
             "time": "2026-07-17T13:53:03+00:00"
+        },
+        {
+            "name": "iyzico/iyzipay-php",
+            "version": "v2.0.61",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/iyzico/iyzipay-php.git",
+                "reference": "168839f9ccb2aebaa2cb9f07b883b1b2bb0cf87a"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/iyzico/iyzipay-php/zipball/168839f9ccb2aebaa2cb9f07b883b1b2bb0cf87a",
+                "reference": "168839f9ccb2aebaa2cb9f07b883b1b2bb0cf87a",
+                "shasum": ""
+            },
+            "require": {
+                "ext-curl": "*",
+                "php": ">=7.4.0"
+            },
+            "require-dev": {
+                "phpunit/phpunit": "^9.6.34",
+                "satooshi/php-coveralls": "~0.6.1"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Iyzipay\\": "src/Iyzipay/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "iyzico and contributors",
+                    "homepage": "https://github.com/iyzico/iyzipay-php/contributors"
+                }
+            ],
+            "description": "iyzipay api php client",
+            "homepage": "https://www.iyzico.com",
+            "keywords": [
+                "iyzico",
+                "iyzico.com",
+                "iyzipay",
+                "iyzipay api",
+                "iyzipay api php",
+                "iyzipay api php client",
+                "iyzipay php",
+                "payment processing"
+            ],
+            "support": {
+                "issues": "https://github.com/iyzico/iyzipay-php/issues",
+                "source": "https://github.com/iyzico/iyzipay-php/tree/v2.0.61"
+            },
+            "time": "2026-04-28T11:31:34+00:00"
         },
         {
             "name": "kirschbaum-development/eloquent-power-joins",

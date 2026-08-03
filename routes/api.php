@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CartController;
 use App\Http\Controllers\Api\CatalogController;
 use App\Http\Controllers\Api\CheckoutController;
+use App\Http\Controllers\Api\IyzicoPaymentController;
 use App\Http\Controllers\Api\OrderController;
 use Illuminate\Support\Facades\Route;
 
@@ -30,6 +31,7 @@ Route::middleware('auth:sanctum')->group(function (): void {
 
     Route::get('/orders', [OrderController::class, 'index']);
     Route::get('/orders/{order}', [OrderController::class, 'show']);
+    Route::post('/orders/{order}/payments/iyzico/init', [IyzicoPaymentController::class, 'initialize']);
 
     Route::middleware('admin')->prefix('admin')->group(function (): void {
         Route::get('/categories', [AdminCategoryController::class, 'index']);

@@ -9,7 +9,12 @@ import { api } from "@/lib/api";
 
 export function SiteHeader() {
   const { user, token, logout, loading } = useAuth();
+  const [mounted, setMounted] = useState(false);
   const [cartCount, setCartCount] = useState(0);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (!token) {
@@ -49,7 +54,7 @@ export function SiteHeader() {
             Koleksiyon
           </Link>
 
-          {!loading && user && token ? (
+          {mounted && !loading && user && token ? (
             <>
               {isAdmin(user) ? (
                 <Link

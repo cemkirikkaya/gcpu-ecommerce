@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -9,7 +8,6 @@ import { api, formatPrice } from "@/lib/api";
 import type { Address, Cart } from "@/lib/types";
 
 export default function CheckoutPage() {
-  const router = useRouter();
   const { token, loading: authLoading } = useAuth();
   const [cart, setCart] = useState<Cart | null>(null);
   const [addresses, setAddresses] = useState<Address[]>([]);
@@ -61,7 +59,8 @@ export default function CheckoutPage() {
 
     try {
       const response = await api.checkout(token, payload);
-      router.push(`/orders/${response.order.id}`);
+      const payment = await api.initIyzicoPayment(token, response.order.id);
+      window.location.href = payment.payment_page_url;
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Hata");
     } finally {
@@ -171,7 +170,7 @@ export default function CheckoutPage() {
           </div>
           {message && <p className="mt-4 text-sm text-red-600">{message}</p>}
           <Button type="submit" disabled={submitting} className="mt-8 w-full">
-            {submitting ? "Tamamlanıyor..." : "Siparişi Tamamla"}
+            {submitting ? "Yönlendiriliyor..." : "Ödeme"}
           </Button>
         </aside>
       </form>

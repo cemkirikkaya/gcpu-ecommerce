@@ -66,7 +66,7 @@ class CheckoutController extends Controller
             $order = $this->orderService->checkout(Auth::user(), $addressId);
 
             return response()->json([
-                'message' => 'Siparişiniz oluşturuldu.',
+                'message' => 'Siparişiniz oluşturuldu. Ödeme adımına geçebilirsiniz.',
                 'order' => new OrderResource($order),
             ], 201);
         } catch (\Throwable $exception) {

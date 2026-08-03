@@ -6,19 +6,8 @@ import { useEffect, useState } from "react";
 import { OrderStatusBadge } from "@/components/orders/order-status-badge";
 import { ButtonLink } from "@/components/ui/button";
 import { useAuth } from "@/context/auth-context";
-import { api, formatPrice } from "@/lib/api";
+import { api, formatOrderDate, formatPrice } from "@/lib/api";
 import type { Order } from "@/lib/types";
-
-function formatOrderDate(value: string | null): string {
-  if (!value) {
-    return "—";
-  }
-
-  return new Intl.DateTimeFormat("tr-TR", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(new Date(value));
-}
 
 export default function OrdersPage() {
   const { token, loading: authLoading } = useAuth();

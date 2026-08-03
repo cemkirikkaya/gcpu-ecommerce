@@ -142,6 +142,13 @@ export const api = {
       token,
     ),
 
+  initIyzicoPayment: (token: string, orderId: number) =>
+    request<{
+      token: string;
+      payment_page_url: string;
+      conversation_id: string;
+    }>(`/orders/${orderId}/payments/iyzico/init`, { method: "POST" }, token),
+
   order: (token: string, orderId: number) =>
     request<{ order: Order }>(`/orders/${orderId}`, {}, token).then((r) => r.order),
 
@@ -208,9 +215,23 @@ export const api = {
 };
 
 export function formatPrice(value: number): string {
-  return new Intl.NumberFormat("tr-TR", {
-    style: "currency",
-    currency: "TRY",
-    minimumFractionDigits: 2,
-  }).format(value);
+  const [integerPart, decimalPart = "00"] = value.toFixed(2).split(".");
+  const withSeparators = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+
+  return `${withSeparators},${decimalPart} ₺`;
+}
+
+export function formatOrderDate(value: string | null): string {
+  if (!value) {
+    return "—";
+  }
+
+  const match = value.match(/^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})/);
+  if (!match) {
+    return "—";
+  }
+
+  const [, year, month, day, hours, minutes] = match;
+
+  return `${day}.${month}.${year} ${hours}:${minutes}`;
 }

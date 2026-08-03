@@ -22,6 +22,10 @@ class Order extends Model
         'total_price',
         'status',
         'payment_status',
+        'iyzico_token',
+        'iyzico_payment_id',
+        'iyzico_conversation_id',
+        'paid_at',
     ];
 
     protected $attributes = [
@@ -38,6 +42,7 @@ class Order extends Model
             'total_price' => 'decimal:2',
             'status' => OrderStatus::class,
             'payment_status' => PaymentStatus::class,
+            'paid_at' => 'datetime',
         ];
     }
 

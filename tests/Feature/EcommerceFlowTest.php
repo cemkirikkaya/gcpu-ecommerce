@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\CartItem;
+use App\Models\Order;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\Stock;
@@ -123,6 +124,7 @@ class EcommerceFlowTest extends TestCase
         app(CartService::class)->addItem($customer, $variant, 2);
 
         $order = app(OrderService::class)->checkout($customer);
+        app(OrderService::class)->completePayment($order);
 
         expect($order->total_price)->toBe('2400.00')
             ->and($variant->fresh()->stockQuantity())->toBe(2)
@@ -153,6 +155,7 @@ class EcommerceFlowTest extends TestCase
         app(CartService::class)->addItem($customer, $variant, 2);
 
         $order = app(OrderService::class)->checkout($customer);
+        app(OrderService::class)->completePayment($order);
 
         Sanctum::actingAs($customer);
 
@@ -160,7 +163,7 @@ class EcommerceFlowTest extends TestCase
             ->assertSuccessful()
             ->assertJsonPath('order.id', $order->id)
             ->assertJsonPath('order.total_price', 2400)
-            ->assertJsonPath('order.status_label', 'Beklemede')
+            ->assertJsonPath('order.status_label', 'Hazırlanıyor')
             ->assertJsonPath('order.items.0.product_name', 'Klavye');
     }
 
@@ -188,9 +191,11 @@ class EcommerceFlowTest extends TestCase
 
         app(CartService::class)->addItem($customer, $variant, 1);
         $customerOrder = app(OrderService::class)->checkout($customer);
+        app(OrderService::class)->completePayment($customerOrder);
 
         app(CartService::class)->addItem($otherCustomer, $variant, 1);
-        app(OrderService::class)->checkout($otherCustomer);
+        $otherOrder = app(OrderService::class)->checkout($otherCustomer);
+        app(OrderService::class)->completePayment($otherOrder);
 
         Sanctum::actingAs($customer);
 
@@ -198,7 +203,7 @@ class EcommerceFlowTest extends TestCase
             ->assertSuccessful()
             ->assertJsonCount(1, 'orders')
             ->assertJsonPath('orders.0.id', $customerOrder->id)
-            ->assertJsonPath('orders.0.status', 'pending');
+            ->assertJsonPath('orders.0.status', 'processing');
     }
 
     #[Test]
@@ -273,6 +278,11 @@ class EcommerceFlowTest extends TestCase
                 'country' => 'Türkiye',
             ])
             ->assertRedirect();
+
+        $this->assertSame(1, $variant->fresh()->stockQuantity());
+
+        $order = Order::query()->firstOrFail();
+        app(OrderService::class)->completePayment($order);
 
         $this->assertSame(0, $variant->fresh()->stockQuantity());
     }

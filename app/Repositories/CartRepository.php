@@ -38,19 +38,27 @@ class CartRepository
         $productVariant->loadMissing('stock');
 
         $cartItem = CartItem::query()
+            ->withTrashed()
             ->where('cart_id', $cart->id)
             ->where('product_variant_id', $productVariant->id)
             ->first();
 
-        $newQuantity = ($cartItem?->quantity ?? 0) + $quantity;
+        $wasTrashed = $cartItem?->trashed() ?? false;
+        $newQuantity = $wasTrashed
+            ? $quantity
+            : ($cartItem?->quantity ?? 0) + $quantity;
 
         $this->stockService->assertCanReserve(
             $productVariant,
             $newQuantity,
-            $cartItem?->id,
+            $wasTrashed ? null : $cartItem?->id,
         );
 
         if ($cartItem) {
+            if ($wasTrashed) {
+                $cartItem->restore();
+            }
+
             $cartItem->update([
                 'quantity' => $newQuantity,
                 'reserved_until' => $this->stockService->reservationExpiresAt(),

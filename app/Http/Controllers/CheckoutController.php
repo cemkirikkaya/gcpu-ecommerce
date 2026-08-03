@@ -66,8 +66,8 @@ class CheckoutController extends Controller
             );
 
             return redirect()
-                ->route('orders.show', $order)
-                ->with('success', 'Siparişiniz başarıyla oluşturuldu.');
+                ->route('payment.iyzico.init', $order)
+                ->with('success', 'Ödeme adımına yönlendiriliyorsunuz.');
         } catch (\Throwable $exception) {
             return back()
                 ->withInput()
