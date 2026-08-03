@@ -145,6 +145,9 @@ export const api = {
   order: (token: string, orderId: number) =>
     request<{ order: Order }>(`/orders/${orderId}`, {}, token).then((r) => r.order),
 
+  orders: (token: string) =>
+    request<{ orders: Order[] }>("/orders", {}, token).then((r) => r.orders),
+
   adminCategories: (token: string) =>
     request<{ categories: AdminCategory[] }>("/admin/categories", {}, token).then(
       (r) => r.categories,

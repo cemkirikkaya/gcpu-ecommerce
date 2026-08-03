@@ -99,7 +99,9 @@ export type Order = {
   id: number;
   total_price: number;
   status: string;
+  status_label: string;
   payment_status: string;
+  payment_status_label: string;
   created_at: string | null;
   address?: Address | null;
   items?: Array<{

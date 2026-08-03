@@ -10,6 +10,9 @@ use Illuminate\Support\Collection;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 
+/**
+ * @method static \Illuminate\Database\Eloquent\Builder<static> query()
+ */
 class Product extends Model implements HasMedia
 {
     use InteractsWithMedia;

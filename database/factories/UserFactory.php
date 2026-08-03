@@ -10,6 +10,8 @@ use Illuminate\Support\Str;
 
 /**
  * @extends Factory<User>
+ *
+ * @method User create(array $attributes = [], ?\Illuminate\Database\Eloquent\Model $parent = null)
  */
 class UserFactory extends Factory
 {

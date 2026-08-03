@@ -18,7 +18,9 @@ class OrderResource extends JsonResource
             'id' => $this->id,
             'total_price' => (float) $this->total_price,
             'status' => $this->status->value,
+            'status_label' => $this->status->label(),
             'payment_status' => $this->payment_status->value,
+            'payment_status_label' => $this->payment_status->label(),
             'created_at' => $this->created_at?->toIso8601String(),
             'address' => new AddressResource($this->whenLoaded('address')),
             'items' => $this->whenLoaded('items', fn () => $this->items->map(function ($item): array {
@@ -31,7 +33,7 @@ class OrderResource extends JsonResource
                     'price' => (float) $item->price,
                     'subtotal' => $item->subtotal(),
                     'product_name' => $product?->name,
-                    'variant_label' => $variant?->displayLabel(),
+                    'variant_label' => $variant?->displayLabel() ?: null,
                 ];
             })),
         ];

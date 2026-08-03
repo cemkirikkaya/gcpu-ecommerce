@@ -2,10 +2,22 @@
 
 import { useEffect, useState } from "react";
 
+import { OrderStatusBadge } from "@/components/orders/order-status-badge";
 import { ButtonLink } from "@/components/ui/button";
 import { useAuth } from "@/context/auth-context";
 import { api, formatPrice } from "@/lib/api";
 import type { Order } from "@/lib/types";
+
+function formatOrderDate(value: string | null): string {
+  if (!value) {
+    return "—";
+  }
+
+  return new Intl.DateTimeFormat("tr-TR", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(new Date(value));
+}
 
 export default function OrderPage({
   params,
@@ -42,11 +54,13 @@ export default function OrderPage({
   return (
     <div className="mx-auto max-w-3xl px-6 py-16 lg:px-10 lg:py-24">
       <div className="rounded-[2rem] border border-line bg-accent-soft/40 p-8 text-center lg:p-10">
-        <p className="text-xs uppercase tracking-[0.35em] text-accent">Sipariş alındı</p>
-        <h1 className="mt-4 font-display text-4xl font-semibold">Teşekkürler</h1>
-        <p className="mt-4 text-muted">
-          Sipariş numaranız <strong>#{order.id}</strong>
-        </p>
+        <p className="text-xs uppercase tracking-[0.35em] text-accent">Sipariş</p>
+        <h1 className="mt-4 font-display text-4xl font-semibold">Sipariş #{order.id}</h1>
+        <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
+          <OrderStatusBadge status={order.status} label={order.status_label} />
+          <span className="text-sm text-muted">{order.payment_status_label}</span>
+        </div>
+        <p className="mt-4 text-muted">{formatOrderDate(order.created_at)}</p>
       </div>
 
       <div className="mt-10 space-y-6 rounded-[2rem] border border-line bg-surface p-8">
@@ -66,7 +80,8 @@ export default function OrderPage({
           {order.items?.map((item) => (
             <li key={item.id} className="flex justify-between gap-4">
               <span>
-                {item.product_name} · {item.variant_label}
+                {[item.product_name, item.variant_label].filter(Boolean).join(" · ") ||
+                  "Ürün"}
               </span>
               <span>{formatPrice(item.subtotal)}</span>
             </li>
@@ -75,9 +90,9 @@ export default function OrderPage({
       </div>
 
       <div className="mt-8 flex flex-wrap gap-3">
-        <ButtonLink href="/products">Alışverişe Devam Et</ButtonLink>
-        <ButtonLink href="/cart" variant="secondary">
-          Sepete Git
+        <ButtonLink href="/orders">Siparişlerim</ButtonLink>
+        <ButtonLink href="/products" variant="secondary">
+          Alışverişe Devam Et
         </ButtonLink>
       </div>
     </div>

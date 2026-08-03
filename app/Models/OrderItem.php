@@ -38,7 +38,7 @@ class OrderItem extends Model
 
     public function cartItem(): BelongsTo
     {
-        return $this->belongsTo(CartItem::class);
+        return $this->belongsTo(CartItem::class)->withTrashed();
     }
 
     public function subtotal(): float

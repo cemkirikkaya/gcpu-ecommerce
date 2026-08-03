@@ -1,0 +1,9 @@
+{
+  "environment": {
+    "includePaths": [
+      ".vscode/phpstorm-stubs",
+      "vendor/laravel/framework/src"
+    ],
+    "phpVersion": "8.5.0"
+  }
+}

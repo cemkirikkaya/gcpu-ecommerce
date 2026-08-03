@@ -7,6 +7,11 @@ use App\Models\User;
 
 class OrderPolicy
 {
+    public function viewAny(User $user): bool
+    {
+        return $user->isCustomer();
+    }
+
     public function view(User $user, Order $order): bool
     {
         return $order->cart?->user_id === $user->id;

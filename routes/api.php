@@ -28,6 +28,7 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::get('/checkout', [CheckoutController::class, 'show']);
     Route::post('/checkout', [CheckoutController::class, 'store']);
 
+    Route::get('/orders', [OrderController::class, 'index']);
     Route::get('/orders/{order}', [OrderController::class, 'show']);
 
     Route::middleware('admin')->prefix('admin')->group(function (): void {

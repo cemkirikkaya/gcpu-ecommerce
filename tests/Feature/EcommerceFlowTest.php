@@ -1,5 +1,7 @@
 <?php
 
+namespace Tests\Feature;
+
 use App\Models\CartItem;
 use App\Models\Product;
 use App\Models\ProductVariant;
@@ -8,175 +10,301 @@ use App\Models\User;
 use App\Services\CartService;
 use App\Services\OrderService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Laravel\Sanctum\Sanctum;
+use PHPUnit\Framework\Attributes\Test;
+use RuntimeException;
+use Tests\TestCase;
 
-uses(RefreshDatabase::class);
+use function expect;
 
-it('lists seeded catalog categories on the products page', function () {
-    $this->seed();
+class EcommerceFlowTest extends TestCase
+{
+    use RefreshDatabase;
 
-    $this->get(route('products.index'))
-        ->assertSuccessful()
-        ->assertSee('Elektronik')
-        ->assertSee('Nova X Pro')
-        ->assertSee('Essential Pamuklu Tişört');
-});
+    #[Test]
+    public function lists_seeded_catalog_categories_on_the_products_page(): void
+    {
+        $this->seed();
 
-it('reserves stock for other customers when an item is in cart', function () {
-    $product = Product::query()->create([
-        'name' => 'Kulaklık',
-        'price' => 500,
-        'description' => 'Test',
-    ]);
+        $this->get(route('products.index'))
+            ->assertSuccessful()
+            ->assertSee('Elektronik')
+            ->assertSee('Nova X Pro')
+            ->assertSee('Essential Pamuklu Tişört');
+    }
 
-    $variant = ProductVariant::query()->create([
-        'product_id' => $product->id,
-        'sku' => 'HEADPHONE-1',
-    ]);
+    #[Test]
+    public function reserves_stock_for_other_customers_when_an_item_is_in_cart(): void
+    {
+        $product = Product::query()->create([
+            'name' => 'Kulaklık',
+            'price' => 500,
+            'description' => 'Test',
+        ]);
 
-    Stock::query()->create([
-        'product_variant_id' => $variant->id,
-        'quantity' => 2,
-    ]);
+        $variant = ProductVariant::query()->create([
+            'product_id' => $product->id,
+            'sku' => 'HEADPHONE-1',
+        ]);
 
-    $firstCustomer = User::factory()->create();
-    $secondCustomer = User::factory()->create();
+        Stock::query()->create([
+            'product_variant_id' => $variant->id,
+            'quantity' => 2,
+        ]);
 
-    app(CartService::class)->addItem($firstCustomer, $variant, 2);
+        $firstCustomer = User::factory()->create();
+        $secondCustomer = User::factory()->create();
 
-    expect($variant->fresh()->availableQuantity())->toBe(0);
+        app(CartService::class)->addItem($firstCustomer, $variant, 2);
 
-    expect(fn () => app(CartService::class)->addItem($secondCustomer, $variant, 1))
-        ->toThrow(RuntimeException::class, 'Yeterli stok bulunmamaktadır.');
-});
+        $this->assertSame(0, $variant->fresh()->availableQuantity());
 
-it('extends reservation expiry when cart quantity is updated', function () {
-    $product = Product::query()->create([
-        'name' => 'Mouse',
-        'price' => 150,
-        'description' => 'Test',
-    ]);
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Yeterli stok bulunmamaktadır.');
 
-    $variant = ProductVariant::query()->create([
-        'product_id' => $product->id,
-        'sku' => 'MOUSE-1',
-    ]);
+        app(CartService::class)->addItem($secondCustomer, $variant, 1);
+    }
 
-    Stock::query()->create([
-        'product_variant_id' => $variant->id,
-        'quantity' => 5,
-    ]);
+    #[Test]
+    public function extends_reservation_expiry_when_cart_quantity_is_updated(): void
+    {
+        $product = Product::query()->create([
+            'name' => 'Mouse',
+            'price' => 150,
+            'description' => 'Test',
+        ]);
 
-    $customer = User::factory()->create();
-    $cartItem = app(CartService::class)->addItem($customer, $variant, 1);
+        $variant = ProductVariant::query()->create([
+            'product_id' => $product->id,
+            'sku' => 'MOUSE-1',
+        ]);
 
-    $originalExpiry = $cartItem->reserved_until;
+        Stock::query()->create([
+            'product_variant_id' => $variant->id,
+            'quantity' => 5,
+        ]);
 
-    $this->travel(5)->minutes();
+        $customer = User::factory()->create();
+        $cartItem = app(CartService::class)->addItem($customer, $variant, 1);
 
-    app(CartService::class)->updateItemQuantity($cartItem->fresh(), 2);
+        $originalExpiry = $cartItem->reserved_until;
 
-    expect($cartItem->fresh()->reserved_until?->greaterThan($originalExpiry))->toBeTrue();
-});
+        $this->travel(5)->minutes();
 
-it('decrements stock after checkout and clears the cart', function () {
-    $customer = User::factory()->create([
-        'email' => 'buyer@example.com',
-        'password' => 'password',
-    ]);
+        app(CartService::class)->updateItemQuantity($cartItem->fresh(), 2);
 
-    $product = Product::query()->create([
-        'name' => 'Klavye',
-        'price' => 1200,
-        'description' => 'Test',
-    ]);
+        expect($cartItem->fresh()->reserved_until?->greaterThan($originalExpiry))->toBeTrue();
+    }
 
-    $variant = ProductVariant::query()->create([
-        'product_id' => $product->id,
-        'sku' => 'KEYBOARD-1',
-    ]);
+    #[Test]
+    public function decrements_stock_after_checkout_and_clears_the_cart(): void
+    {
+        $customer = User::factory()->create([
+            'email' => 'buyer@example.com',
+            'password' => 'password',
+        ]);
 
-    Stock::query()->create([
-        'product_variant_id' => $variant->id,
-        'quantity' => 4,
-    ]);
+        $product = Product::query()->create([
+            'name' => 'Klavye',
+            'price' => 1200,
+            'description' => 'Test',
+        ]);
 
-    app(CartService::class)->addItem($customer, $variant, 2);
+        $variant = ProductVariant::query()->create([
+            'product_id' => $product->id,
+            'sku' => 'KEYBOARD-1',
+        ]);
 
-    $order = app(OrderService::class)->checkout($customer);
+        Stock::query()->create([
+            'product_variant_id' => $variant->id,
+            'quantity' => 4,
+        ]);
 
-    expect($order->total_price)->toBe('2400.00')
-        ->and($variant->fresh()->stockQuantity())->toBe(2)
-        ->and(CartItem::query()->count())->toBe(0);
-});
+        app(CartService::class)->addItem($customer, $variant, 2);
 
-it('completes checkout from the storefront flow', function () {
-    $customer = User::factory()->create([
-        'email' => 'shopper@example.com',
-        'password' => 'password',
-    ]);
+        $order = app(OrderService::class)->checkout($customer);
 
-    $product = Product::query()->create([
-        'name' => 'Monitör',
-        'price' => 3000,
-        'description' => 'Test',
-    ]);
+        expect($order->total_price)->toBe('2400.00')
+            ->and($variant->fresh()->stockQuantity())->toBe(2)
+            ->and(CartItem::query()->count())->toBe(0);
+    }
 
-    $variant = ProductVariant::query()->create([
-        'product_id' => $product->id,
-        'sku' => 'MONITOR-1',
-    ]);
+    #[Test]
+    public function returns_an_order_through_the_api_for_the_owning_customer(): void
+    {
+        $customer = User::factory()->create();
 
-    Stock::query()->create([
-        'product_variant_id' => $variant->id,
-        'quantity' => 1,
-    ]);
+        $product = Product::query()->create([
+            'name' => 'Klavye',
+            'price' => 1200,
+            'description' => 'Test',
+        ]);
 
-    $this->actingAs($customer)
-        ->post(route('cart.items.store'), [
+        $variant = ProductVariant::query()->create([
+            'product_id' => $product->id,
+            'sku' => 'KEYBOARD-API-1',
+        ]);
+
+        Stock::query()->create([
+            'product_variant_id' => $variant->id,
+            'quantity' => 4,
+        ]);
+
+        app(CartService::class)->addItem($customer, $variant, 2);
+
+        $order = app(OrderService::class)->checkout($customer);
+
+        Sanctum::actingAs($customer);
+
+        $this->getJson("/api/orders/{$order->id}")
+            ->assertSuccessful()
+            ->assertJsonPath('order.id', $order->id)
+            ->assertJsonPath('order.total_price', 2400)
+            ->assertJsonPath('order.status_label', 'Beklemede')
+            ->assertJsonPath('order.items.0.product_name', 'Klavye');
+    }
+
+    #[Test]
+    public function lists_only_the_authenticated_customers_orders_through_the_api(): void
+    {
+        $customer = User::factory()->create();
+        $otherCustomer = User::factory()->create();
+
+        $product = Product::query()->create([
+            'name' => 'Klavye',
+            'price' => 1200,
+            'description' => 'Test',
+        ]);
+
+        $variant = ProductVariant::query()->create([
+            'product_id' => $product->id,
+            'sku' => 'KEYBOARD-LIST-1',
+        ]);
+
+        Stock::query()->create([
+            'product_variant_id' => $variant->id,
+            'quantity' => 10,
+        ]);
+
+        app(CartService::class)->addItem($customer, $variant, 1);
+        $customerOrder = app(OrderService::class)->checkout($customer);
+
+        app(CartService::class)->addItem($otherCustomer, $variant, 1);
+        app(OrderService::class)->checkout($otherCustomer);
+
+        Sanctum::actingAs($customer);
+
+        $this->getJson('/api/orders')
+            ->assertSuccessful()
+            ->assertJsonCount(1, 'orders')
+            ->assertJsonPath('orders.0.id', $customerOrder->id)
+            ->assertJsonPath('orders.0.status', 'pending');
+    }
+
+    #[Test]
+    public function forbids_viewing_another_customers_order_through_the_api(): void
+    {
+        $customer = User::factory()->create();
+        $otherCustomer = User::factory()->create();
+
+        $product = Product::query()->create([
+            'name' => 'Klavye',
+            'price' => 1200,
+            'description' => 'Test',
+        ]);
+
+        $variant = ProductVariant::query()->create([
+            'product_id' => $product->id,
+            'sku' => 'KEYBOARD-FORBID-1',
+        ]);
+
+        Stock::query()->create([
+            'product_variant_id' => $variant->id,
+            'quantity' => 10,
+        ]);
+
+        app(CartService::class)->addItem($otherCustomer, $variant, 1);
+        $otherOrder = app(OrderService::class)->checkout($otherCustomer);
+
+        Sanctum::actingAs($customer);
+
+        $this->getJson("/api/orders/{$otherOrder->id}")
+            ->assertForbidden();
+    }
+
+    #[Test]
+    public function completes_checkout_from_the_storefront_flow(): void
+    {
+        $customer = User::factory()->create([
+            'email' => 'shopper@example.com',
+            'password' => 'password',
+        ]);
+
+        $product = Product::query()->create([
+            'name' => 'Monitör',
+            'price' => 3000,
+            'description' => 'Test',
+        ]);
+
+        $variant = ProductVariant::query()->create([
+            'product_id' => $product->id,
+            'sku' => 'MONITOR-1',
+        ]);
+
+        Stock::query()->create([
             'product_variant_id' => $variant->id,
             'quantity' => 1,
-        ])
-        ->assertRedirect(route('cart.index'));
+        ]);
 
-    $this->actingAs($customer)
-        ->post(route('checkout.store'), [
-            'first_name' => 'Ali',
-            'last_name' => 'Veli',
-            'address_line_1' => 'Test Sokak 1',
-            'city' => 'İstanbul',
-            'postal_code' => '34000',
-            'country' => 'Türkiye',
-        ])
-        ->assertRedirect();
+        $this->actingAs($customer)
+            ->post(route('cart.items.store'), [
+                'product_variant_id' => $variant->id,
+                'quantity' => 1,
+            ])
+            ->assertRedirect(route('cart.index'));
 
-    expect($variant->fresh()->stockQuantity())->toBe(0);
-});
+        $this->actingAs($customer)
+            ->post(route('checkout.store'), [
+                'first_name' => 'Ali',
+                'last_name' => 'Veli',
+                'address_line_1' => 'Test Sokak 1',
+                'city' => 'İstanbul',
+                'postal_code' => '34000',
+                'country' => 'Türkiye',
+            ])
+            ->assertRedirect();
 
-it('removes expired reservations via the scheduled command', function () {
-    $customer = User::factory()->create();
+        $this->assertSame(0, $variant->fresh()->stockQuantity());
+    }
 
-    $product = Product::query()->create([
-        'name' => 'Webcam',
-        'price' => 800,
-        'description' => 'Test',
-    ]);
+    #[Test]
+    public function removes_expired_reservations_via_the_scheduled_command(): void
+    {
+        $customer = User::factory()->create();
 
-    $variant = ProductVariant::query()->create([
-        'product_id' => $product->id,
-        'sku' => 'WEBCAM-1',
-    ]);
+        $product = Product::query()->create([
+            'name' => 'Webcam',
+            'price' => 800,
+            'description' => 'Test',
+        ]);
 
-    Stock::query()->create([
-        'product_variant_id' => $variant->id,
-        'quantity' => 3,
-    ]);
+        $variant = ProductVariant::query()->create([
+            'product_id' => $product->id,
+            'sku' => 'WEBCAM-1',
+        ]);
 
-    app(CartService::class)->addItem($customer, $variant, 1);
+        Stock::query()->create([
+            'product_variant_id' => $variant->id,
+            'quantity' => 3,
+        ]);
 
-    $this->travel(config('shop.reservation_minutes') + 1)->minutes();
+        app(CartService::class)->addItem($customer, $variant, 1);
 
-    $this->artisan('reservations:clear')->assertSuccessful();
+        $this->travel(config('shop.reservation_minutes') + 1)->minutes();
 
-    expect(CartItem::query()->count())->toBe(0)
-        ->and($variant->fresh()->availableQuantity())->toBe(3);
-});
+        $this->artisan('reservations:clear')->assertSuccessful();
+
+        expect(CartItem::query()->count())->toBe(0)
+            ->and($variant->fresh()->availableQuantity())->toBe(3);
+    }
+}
