@@ -5,6 +5,7 @@ namespace App\Policies;
 use App\Enums\PaymentStatus;
 use App\Models\Order;
 use App\Models\User;
+use App\Services\AdminOrderService;
 
 class OrderPolicy
 {
@@ -28,5 +29,15 @@ class OrderPolicy
             PaymentStatus::Pending,
             PaymentStatus::Failed,
         ], true);
+    }
+
+    public function adminViewAny(User $user): bool
+    {
+        return $user->canAccessAdminApi();
+    }
+
+    public function adminView(User $user, Order $order): bool
+    {
+        return app(AdminOrderService::class)->canViewOrder($user, $order);
     }
 }

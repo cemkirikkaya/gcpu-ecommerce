@@ -164,6 +164,38 @@ export type CatalogVariantInput = {
   size?: string;
 };
 
+export type AdminSummary = {
+  products_count: number;
+  total_stock: number;
+  low_stock_variants: number;
+  orders_count: number;
+  items_sold: number;
+  revenue: number;
+};
+
+export type AdminOrder = {
+  id: number;
+  total_price: number;
+  order_total?: number | null;
+  vendor_subtotal?: number | null;
+  status: string;
+  status_label: string;
+  payment_status: string;
+  payment_status_label: string;
+  created_at: string | null;
+  items_count?: number;
+  address?: Address | null;
+  items?: Array<{
+    id: number;
+    quantity: number;
+    price: number;
+    subtotal: number;
+    product_name?: string;
+    variant_label?: string | null;
+    vendor_email?: string | null;
+  }>;
+};
+
 export type ApiError = {
   message: string;
   errors?: Record<string, string[]>;

@@ -1,8 +1,10 @@
 <?php
 
 use App\Http\Controllers\Api\Admin\CategoryController as AdminCategoryController;
+use App\Http\Controllers\Api\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Api\Admin\ProductController as AdminProductController;
 use App\Http\Controllers\Api\Admin\StockController as AdminStockController;
+use App\Http\Controllers\Api\Admin\SummaryController as AdminSummaryController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CartController;
 use App\Http\Controllers\Api\CatalogController;
@@ -34,7 +36,10 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::post('/orders/{order}/payments/iyzico/init', [IyzicoPaymentController::class, 'initialize']);
 
     Route::middleware('admin')->prefix('admin')->group(function (): void {
+        Route::get('/summary', AdminSummaryController::class);
         Route::get('/categories', [AdminCategoryController::class, 'index']);
+        Route::get('/orders', [AdminOrderController::class, 'index']);
+        Route::get('/orders/{order}', [AdminOrderController::class, 'show']);
         Route::get('/products', [AdminProductController::class, 'index']);
         Route::post('/products', [AdminProductController::class, 'store']);
         Route::get('/products/{product}', [AdminProductController::class, 'show']);

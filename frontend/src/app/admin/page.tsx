@@ -5,55 +5,47 @@ import { useEffect, useState } from "react";
 
 import { ButtonLink } from "@/components/ui/button";
 import { useAuth } from "@/context/auth-context";
-import { api, formatPrice } from "@/lib/api";
-import type { AdminProduct } from "@/lib/types";
+import { api, formatOrderDate, formatPrice } from "@/lib/api";
+import type { AdminOrder, AdminSummary } from "@/lib/types";
 
 export default function AdminDashboardPage() {
   const { token } = useAuth();
-  const [products, setProducts] = useState<AdminProduct[]>([]);
+  const [summary, setSummary] = useState<AdminSummary | null>(null);
+  const [recentOrders, setRecentOrders] = useState<AdminOrder[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!token) return;
 
-    api
-      .adminProducts(token)
-      .then(setProducts)
+    Promise.all([api.adminSummary(token), api.adminOrders(token)])
+      .then(([summaryData, orders]) => {
+        setSummary(summaryData);
+        setRecentOrders(orders.slice(0, 5));
+      })
       .finally(() => setLoading(false));
   }, [token]);
-
-  const totalStock = products.reduce(
-    (sum, product) =>
-      sum +
-      (product.variants?.reduce((variantSum, variant) => variantSum + variant.quantity, 0) ??
-        0),
-    0,
-  );
-
-  const lowStockCount = products.reduce((count, product) => {
-    const lowVariants =
-      product.variants?.filter((variant) => variant.quantity <= 5).length ?? 0;
-    return count + lowVariants;
-  }, 0);
 
   return (
     <div>
       <p className="text-xs uppercase tracking-[0.35em] text-muted">Panel</p>
       <h1 className="mt-3 font-display text-4xl font-semibold">Yönetim Özeti</h1>
 
-      <div className="mt-8 grid gap-4 md:grid-cols-3">
-        <div className="rounded-[1.5rem] border border-line bg-surface p-6">
-          <p className="text-sm text-muted">Toplam Ürün</p>
-          <p className="mt-2 text-3xl font-semibold">{loading ? "—" : products.length}</p>
-        </div>
-        <div className="rounded-[1.5rem] border border-line bg-surface p-6">
-          <p className="text-sm text-muted">Toplam Stok</p>
-          <p className="mt-2 text-3xl font-semibold">{loading ? "—" : totalStock}</p>
-        </div>
-        <div className="rounded-[1.5rem] border border-line bg-surface p-6">
-          <p className="text-sm text-muted">Düşük Stoklu Varyant</p>
-          <p className="mt-2 text-3xl font-semibold">{loading ? "—" : lowStockCount}</p>
-        </div>
+      <div className="mt-8 grid gap-4 md:grid-cols-3 xl:grid-cols-6">
+        <StatCard label="Toplam Ürün" value={summary?.products_count} loading={loading} />
+        <StatCard label="Toplam Stok" value={summary?.total_stock} loading={loading} />
+        <StatCard
+          label="Düşük Stoklu Varyant"
+          value={summary?.low_stock_variants}
+          loading={loading}
+        />
+        <StatCard label="Sipariş" value={summary?.orders_count} loading={loading} />
+        <StatCard label="Satılan Adet" value={summary?.items_sold} loading={loading} />
+        <StatCard
+          label="Ciro"
+          value={summary ? formatPrice(summary.revenue) : undefined}
+          loading={loading}
+          formatted
+        />
       </div>
 
       <div className="mt-10 flex flex-wrap gap-3">
@@ -61,32 +53,65 @@ export default function AdminDashboardPage() {
         <ButtonLink href="/admin/products" variant="secondary">
           Tüm Ürünleri Gör
         </ButtonLink>
+        <ButtonLink href="/admin/orders" variant="secondary">
+          Siparişleri Gör
+        </ButtonLink>
       </div>
 
       <div className="mt-10">
-        <h2 className="font-display text-2xl font-semibold">Son Ürünler</h2>
+        <div className="flex items-center justify-between gap-4">
+          <h2 className="font-display text-2xl font-semibold">Son Siparişler</h2>
+          <Link href="/admin/orders" className="text-sm text-accent">
+            Tümünü gör
+          </Link>
+        </div>
         <div className="mt-4 space-y-3">
           {loading && <p className="text-sm text-muted">Yükleniyor...</p>}
-          {!loading && products.length === 0 && (
-            <p className="text-sm text-muted">Henüz ürün yok.</p>
+          {!loading && recentOrders.length === 0 && (
+            <p className="text-sm text-muted">Henüz sipariş yok.</p>
           )}
-          {products.slice(0, 5).map((product) => (
+          {recentOrders.map((order) => (
             <Link
-              key={product.id}
-              href={`/admin/products/${product.id}`}
+              key={order.id}
+              href={`/admin/orders/${order.id}`}
               className="flex items-center justify-between rounded-[1.25rem] border border-line bg-surface px-5 py-4 transition hover:border-accent"
             >
               <div>
-                <p className="font-medium">{product.name}</p>
+                <p className="font-medium">Sipariş #{order.id}</p>
                 <p className="text-sm text-muted">
-                  {product.variants?.length ?? 0} varyant
+                  {formatOrderDate(order.created_at)} · {order.items_count ?? 0} kalem
                 </p>
               </div>
-              <p className="font-medium">{formatPrice(product.price)}</p>
+              <p className="font-medium">{formatPrice(order.total_price)}</p>
             </Link>
           ))}
         </div>
       </div>
+    </div>
+  );
+}
+
+function StatCard({
+  label,
+  value,
+  loading,
+  formatted = false,
+}: {
+  label: string;
+  value?: number | string;
+  loading: boolean;
+  formatted?: boolean;
+}) {
+  const displayValue = loading
+    ? "—"
+    : formatted
+      ? value
+      : value ?? 0;
+
+  return (
+    <div className="rounded-[1.5rem] border border-line bg-surface p-6">
+      <p className="text-sm text-muted">{label}</p>
+      <p className="mt-2 text-3xl font-semibold">{displayValue}</p>
     </div>
   );
 }

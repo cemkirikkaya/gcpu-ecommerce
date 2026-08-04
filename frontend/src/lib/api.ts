@@ -2,7 +2,9 @@ import type {
   Address,
   AccountType,
   AdminCategory,
+  AdminOrder,
   AdminProduct,
+  AdminSummary,
   ApiError,
   AuthResponse,
   Cart,
@@ -222,6 +224,21 @@ export const api = {
       `/admin/stocks/${stockId}`,
       { method: "PATCH", body: JSON.stringify({ quantity }) },
       token,
+    ),
+
+  adminSummary: (token: string) =>
+    request<{ summary: AdminSummary }>("/admin/summary", {}, token).then(
+      (response) => response.summary,
+    ),
+
+  adminOrders: (token: string) =>
+    request<{ orders: AdminOrder[] }>("/admin/orders", {}, token).then(
+      (response) => response.orders,
+    ),
+
+  adminOrder: (token: string, orderId: number) =>
+    request<{ order: AdminOrder }>(`/admin/orders/${orderId}`, {}, token).then(
+      (response) => response.order,
     ),
 };
 
