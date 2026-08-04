@@ -24,7 +24,7 @@ class ProductResource extends JsonResource
                 'name' => $this->category?->name,
                 'slug' => $this->category?->slug,
             ]),
-            'image_url' => $this->getFirstMediaUrl('product-images') ?: null,
+            'image_url' => $this->coverImageUrl(),
             'base_variant' => $this->whenLoaded('baseVariant', fn () => $this->baseVariant?->name),
             'variant_groups' => $this->when(
                 $this->relationLoaded('variants'),

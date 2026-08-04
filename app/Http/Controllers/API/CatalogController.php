@@ -37,6 +37,7 @@ class CatalogController extends Controller
             'variants.images',
             'variants.variantValues.variantValue.variant',
             'variants.product',
+            'images',
             'media',
         ]);
 

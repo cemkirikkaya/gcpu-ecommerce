@@ -23,7 +23,7 @@ class ProductVariantResource extends JsonResource
             'attributes' => $this->attributeList(),
             'price' => $this->whenLoaded('product', fn () => (float) $this->product->price),
             'available_quantity' => $this->availableQuantity(),
-            'image_url' => $image !== null ? asset('storage/'.$image->image) : null,
+            'image_url' => $image !== null ? '/storage/'.$image->image : null,
         ];
     }
 }

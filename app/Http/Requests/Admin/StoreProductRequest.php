@@ -34,6 +34,7 @@ class StoreProductRequest extends FormRequest
             'catalog_variants.*.color' => ['nullable', 'string', 'max:255'],
             'catalog_variants.*.memory' => ['nullable', 'string', 'max:255'],
             'catalog_variants.*.model' => ['nullable', 'string', 'max:255'],
+            'catalog_variants.*.size' => ['nullable', 'string', 'max:255'],
         ];
     }
 

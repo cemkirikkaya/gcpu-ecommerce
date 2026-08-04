@@ -25,6 +25,10 @@ class DatabaseSeeder extends Seeder
             'email' => 'user@blog.test',
         ]);
 
-        $this->call(CatalogSeeder::class);
+        $this->call([
+            CatalogSeeder::class,
+            ExtraCatalogSeeder::class,
+            ProductImageSeeder::class,
+        ]);
     }
 }

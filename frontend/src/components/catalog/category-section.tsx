@@ -32,7 +32,7 @@ export function CategorySection({
       </div>
 
       {category.products.length > 0 && (
-        <div className="space-y-8">
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {category.products.map((product) => (
             <ProductCard key={product.id} product={product} />
           ))}

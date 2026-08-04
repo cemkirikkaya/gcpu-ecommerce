@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreProductRequest;
 use App\Http\Requests\Admin\UpdateProductRequest;
+use App\Http\Requests\Admin\UploadProductCoverRequest;
 use App\Http\Resources\Api\AdminProductResource;
 use App\Models\Product;
 use App\Services\ProductCatalogService;
@@ -19,6 +20,7 @@ class ProductController extends Controller
         $products = Product::query()
             ->with([
                 'category',
+                'images',
                 'variants.stock',
                 'variants.variantValues.variantValue.variant',
             ])
@@ -34,6 +36,7 @@ class ProductController extends Controller
     {
         $product->load([
             'category',
+            'images',
             'variants.stock',
             'variants.variantValues.variantValue.variant',
         ]);
@@ -49,6 +52,7 @@ class ProductController extends Controller
 
         $result['product']->load([
             'category',
+            'images',
             'variants.stock',
             'variants.variantValues.variantValue.variant',
         ]);
@@ -84,6 +88,7 @@ class ProductController extends Controller
 
         $product->load([
             'category',
+            'images',
             'variants.stock',
             'variants.variantValues.variantValue.variant',
         ]);
@@ -100,6 +105,23 @@ class ProductController extends Controller
 
         return response()->json([
             'message' => 'Ürün silindi.',
+        ]);
+    }
+
+    public function uploadCover(UploadProductCoverRequest $request, Product $product): JsonResponse
+    {
+        $this->catalogService->storeCoverImage($product, $request->file('image'));
+
+        $product->load([
+            'category',
+            'images',
+            'variants.stock',
+            'variants.variantValues.variantValue.variant',
+        ]);
+
+        return response()->json([
+            'product' => new AdminProductResource($product),
+            'message' => 'Kapak görseli güncellendi.',
         ]);
     }
 }

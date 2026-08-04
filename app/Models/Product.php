@@ -64,6 +64,28 @@ class Product extends Model implements HasMedia
         return $this->hasMany(Image::class);
     }
 
+    public function coverImageUrl(): ?string
+    {
+        $mediaUrl = $this->getFirstMediaUrl('product-images');
+
+        if ($mediaUrl !== '') {
+            return $mediaUrl;
+        }
+
+        $this->loadMissing('images');
+
+        $cover = $this->images
+            ->firstWhere('is_cover', true)
+            ?? $this->images->firstWhere('product_variant_id', null)
+            ?? $this->images->first();
+
+        if ($cover === null) {
+            return null;
+        }
+
+        return '/storage/'.$cover->image;
+    }
+
     /**
      * @return Collection<string, Collection<int, ProductVariant>>
      */

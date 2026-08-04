@@ -39,6 +39,7 @@ Route::middleware('auth:sanctum')->group(function (): void {
         Route::post('/products', [AdminProductController::class, 'store']);
         Route::get('/products/{product}', [AdminProductController::class, 'show']);
         Route::put('/products/{product}', [AdminProductController::class, 'update']);
+        Route::post('/products/{product}/cover-image', [AdminProductController::class, 'uploadCover']);
         Route::delete('/products/{product}', [AdminProductController::class, 'destroy']);
         Route::patch('/stocks/{stock}', [AdminStockController::class, 'update']);
     });

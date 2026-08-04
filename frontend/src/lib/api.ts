@@ -206,6 +206,17 @@ export const api = {
   adminDeleteProduct: (token: string, id: number) =>
     request<{ message: string }>(`/admin/products/${id}`, { method: "DELETE" }, token),
 
+  adminUploadProductCover: (token: string, productId: number, file: File) => {
+    const formData = new FormData();
+    formData.append("image", file);
+
+    return request<{ product: AdminProduct; message: string }>(
+      `/admin/products/${productId}/cover-image`,
+      { method: "POST", body: formData },
+      token,
+    );
+  },
+
   adminUpdateStock: (token: string, stockId: number, quantity: number) =>
     request<{ stock: { id: number; quantity: number }; message: string }>(
       `/admin/stocks/${stockId}`,

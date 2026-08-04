@@ -7,6 +7,7 @@ use App\Models\Stock;
 use App\Models\User;
 use App\Services\ProductCatalogService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 
 uses(RefreshDatabase::class);
 
@@ -254,5 +255,25 @@ it('updates stock quantity for admin users', function () {
     $this->assertDatabaseHas('stocks', [
         'id' => $stock->id,
         'quantity' => 25,
+    ]);
+});
+
+it('uploads a product cover image for admin users', function () {
+    $product = Product::query()->create([
+        'name' => 'Kapak Test',
+        'price' => 100,
+        'description' => 'Test',
+    ]);
+
+    $this->withToken(adminToken())
+        ->post('/api/admin/products/'.$product->id.'/cover-image', [
+            'image' => UploadedFile::fake()->image('cover.jpg', 800, 1000),
+        ])
+        ->assertOk()
+        ->assertJsonPath('product.image_url', '/storage/catalog/products/kapak-test-'.$product->id.'.jpg');
+
+    $this->assertDatabaseHas('images', [
+        'product_id' => $product->id,
+        'is_cover' => true,
     ]);
 });

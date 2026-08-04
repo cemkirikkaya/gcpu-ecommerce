@@ -1,12 +1,20 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
+import { ColorSwatch } from "@/components/catalog/color-swatch";
+import { ProductFeatures, getProductVariants } from "@/components/catalog/product-features";
+import { ProductImage } from "@/components/catalog/product-image";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { useAuth } from "@/context/auth-context";
 import { api, formatPrice } from "@/lib/api";
+import { resolveImageSrc } from "@/lib/media";
+import {
+  getVariantColorHex,
+  resolveColor,
+  variantSecondaryLabel,
+} from "@/lib/color-utils";
 import type { Product, ProductVariant } from "@/lib/types";
 
 export default function ProductDetailPage({
@@ -72,6 +80,31 @@ export default function ProductDetailPage({
   }
 
   const groups = product.variant_groups ?? [];
+  const allVariants = getProductVariants(product);
+  const isColorGrouped = product.base_variant === "Renk";
+  const activeGroup =
+    groups.find((group) =>
+      group.variants.some((variant) => variant.id === selectedVariant?.id),
+    ) ?? groups[0];
+
+  function selectColorGroup(groupLabel: string) {
+    const group = groups.find((item) => item.label === groupLabel);
+
+    if (!group) {
+      return;
+    }
+
+    const nextVariant =
+      group.variants.find((variant) => variant.available_quantity > 0) ??
+      group.variants[0] ??
+      null;
+
+    setSelectedVariant(nextVariant);
+  }
+
+  const displayImageUrl = resolveImageSrc(
+    selectedVariant?.image_url ?? product.image_url,
+  );
 
   return (
     <div className="mx-auto max-w-7xl px-6 py-16 lg:px-10 lg:py-24">
@@ -81,11 +114,10 @@ export default function ProductDetailPage({
 
       <div className="mt-10 grid gap-12 lg:grid-cols-2 lg:gap-16">
         <div className="relative min-h-[480px] overflow-hidden rounded-[2.5rem] border border-line bg-[linear-gradient(145deg,#f3eee8,#faf8f5)]">
-          {product.image_url ? (
-            <Image
-              src={product.image_url}
+          {displayImageUrl ? (
+            <ProductImage
+              src={displayImageUrl}
               alt={product.name}
-              fill
               className="object-cover"
               sizes="(max-width: 1024px) 100vw, 50vw"
             />
@@ -104,35 +136,104 @@ export default function ProductDetailPage({
             {product.name}
           </h1>
           <p className="mt-6 text-2xl text-accent">{formatPrice(product.price)}</p>
-          {product.description && (
-            <p className="mt-6 text-base leading-8 text-muted">{product.description}</p>
-          )}
+          <ProductFeatures variants={allVariants} />
 
           <div className="mt-10 space-y-8">
-            {groups.map((group) => (
-              <div key={group.label}>
-                <p className="text-xs uppercase tracking-[0.28em] text-muted">
-                  {group.label}
-                </p>
-                <div className="mt-4 flex flex-wrap gap-2">
-                  {group.variants.map((variant) => (
-                    <button
-                      key={variant.id}
-                      type="button"
-                      disabled={variant.available_quantity <= 0}
-                      onClick={() => setSelectedVariant(variant)}
-                      className={`rounded-full border px-4 py-2 text-sm ${
-                        selectedVariant?.id === variant.id
-                          ? "border-accent bg-accent text-white"
-                          : "border-line bg-surface"
-                      }`}
-                    >
-                      {variant.label}
-                    </button>
-                  ))}
+            {isColorGrouped ? (
+              <>
+                <div>
+                  <p className="text-xs uppercase tracking-[0.28em] text-muted">Renk</p>
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    {groups.map((group) => {
+                      const disabled = group.variants.every(
+                        (variant) => variant.available_quantity <= 0,
+                      );
+                      const selected = activeGroup?.label === group.label;
+
+                      return (
+                        <ColorSwatch
+                          key={group.label}
+                          color={resolveColor(group.label)}
+                          label={group.label}
+                          selected={selected}
+                          disabled={disabled}
+                          size="md"
+                          onClick={() => selectColorGroup(group.label)}
+                        />
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
-            ))}
+
+                {activeGroup && activeGroup.variants.length > 1 && (
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.28em] text-muted">
+                      Seçenek
+                    </p>
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      {activeGroup.variants.map((variant) => (
+                        <button
+                          key={variant.id}
+                          type="button"
+                          disabled={variant.available_quantity <= 0}
+                          onClick={() => setSelectedVariant(variant)}
+                          className={`rounded-full border px-4 py-2 text-sm ${
+                            selectedVariant?.id === variant.id
+                              ? "border-accent bg-accent text-white"
+                              : "border-line bg-surface"
+                          } ${variant.available_quantity <= 0 ? "cursor-not-allowed opacity-40" : ""}`}
+                        >
+                          {variantSecondaryLabel(variant)}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </>
+            ) : (
+              groups.map((group) => (
+                <div key={group.label}>
+                  <p className="text-xs uppercase tracking-[0.28em] text-muted">
+                    {group.label}
+                  </p>
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    {group.variants.map((variant) => {
+                      const colorHex = getVariantColorHex(variant);
+
+                      if (colorHex) {
+                        return (
+                          <ColorSwatch
+                            key={variant.id}
+                            color={colorHex}
+                            label={variant.label}
+                            selected={selectedVariant?.id === variant.id}
+                            disabled={variant.available_quantity <= 0}
+                            size="md"
+                            onClick={() => setSelectedVariant(variant)}
+                          />
+                        );
+                      }
+
+                      return (
+                        <button
+                          key={variant.id}
+                          type="button"
+                          disabled={variant.available_quantity <= 0}
+                          onClick={() => setSelectedVariant(variant)}
+                          className={`rounded-full border px-4 py-2 text-sm ${
+                            selectedVariant?.id === variant.id
+                              ? "border-accent bg-accent text-white"
+                              : "border-line bg-surface"
+                          } ${variant.available_quantity <= 0 ? "cursor-not-allowed opacity-40" : ""}`}
+                        >
+                          {variant.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))
+            )}
           </div>
 
           <div className="mt-10 flex flex-wrap gap-3 border-t border-line pt-10">

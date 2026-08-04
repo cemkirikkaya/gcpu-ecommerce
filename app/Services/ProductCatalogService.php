@@ -10,7 +10,9 @@ use App\Models\ProductVariantValue;
 use App\Models\Stock;
 use App\Models\Variant;
 use App\Models\VariantValue;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 
 class ProductCatalogService
@@ -110,6 +112,7 @@ class ProductCatalogService
                     'Renk' => $row['color'] ?? null,
                     'Hafıza' => $row['memory'] ?? null,
                     'Model' => $row['model'] ?? null,
+                    'Beden' => $row['size'] ?? null,
                 ];
 
                 foreach ($row['extra_attributes'] ?? [] as $extra) {
@@ -155,6 +158,39 @@ class ProductCatalogService
         });
     }
 
+    public function storeCoverImage(Product $product, UploadedFile $file): Image
+    {
+        $extension = $file->guessExtension() ?? 'jpg';
+        $filename = Str::slug($product->name).'-'.$product->id.'.'.$extension;
+        $relativePath = 'catalog/products/'.$filename;
+
+        $file->storeAs('public/catalog/products', $filename);
+
+        Image::query()
+            ->where('product_id', $product->id)
+            ->where('is_cover', true)
+            ->whereNull('product_variant_id')
+            ->get()
+            ->each(function (Image $image): void {
+                $absolutePath = storage_path('app/public/'.$image->image);
+
+                if (File::exists($absolutePath)) {
+                    File::delete($absolutePath);
+                }
+
+                $image->delete();
+            });
+
+        return Image::query()->create([
+            'product_id' => $product->id,
+            'product_variant_id' => null,
+            'image' => $relativePath,
+            'label' => $product->name,
+            'is_cover' => true,
+            'sort_order' => 0,
+        ]);
+    }
+
     private function removeVariantsPermanently(Product $product): void
     {
         ProductVariant::withTrashed()
@@ -192,6 +228,7 @@ class ProductCatalogService
             'Renk' => 'color',
             'Hafıza' => 'memory',
             'Model' => 'model',
+            'Beden' => 'size',
         ];
 
         return $product->variants->map(function (ProductVariant $variant) use ($standardMap): array {
@@ -201,6 +238,7 @@ class ProductCatalogService
                 'color' => null,
                 'memory' => null,
                 'model' => null,
+                'size' => null,
                 'image' => $variant->images->first()?->image,
                 'is_cover' => $variant->images->first()?->is_cover ?? false,
                 'extra_attributes' => [],

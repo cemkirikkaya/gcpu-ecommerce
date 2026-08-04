@@ -24,6 +24,7 @@ class AdminProductResource extends JsonResource
                 'name' => $this->category->name,
                 'slug' => $this->category->slug,
             ] : null),
+            'image_url' => $this->coverImageUrl(),
             'variants' => $this->whenLoaded('variants', fn () => $this->variants->map(fn ($variant) => [
                 'id' => $variant->id,
                 'sku' => $variant->sku,
@@ -39,6 +40,9 @@ class AdminProductResource extends JsonResource
                     ?->variantValue?->value,
                 'model' => $variant->variantValues
                     ->first(fn ($v) => $v->variantValue?->variant?->name === 'Model')
+                    ?->variantValue?->value,
+                'size' => $variant->variantValues
+                    ->first(fn ($v) => $v->variantValue?->variant?->name === 'Beden')
                     ?->variantValue?->value,
             ])),
             'created_at' => $this->created_at?->toIso8601String(),

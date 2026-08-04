@@ -3,9 +3,12 @@
 import { FormEvent, useEffect, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 
+import { ProductCoverUpload } from "@/components/admin/product-cover-upload";
+import { VariantFields } from "@/components/admin/variant-fields";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { useAuth } from "@/context/auth-context";
 import { api } from "@/lib/api";
+import { categoryOptionLabel, emptyVariant, sortedCategoryOptions } from "@/lib/admin-products";
 import type { AdminCategory, AdminProduct, CatalogVariantInput } from "@/lib/types";
 
 export default function EditProductPage() {
@@ -21,7 +24,9 @@ export default function EditProductPage() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (!token) return;
+    if (!token) {
+      return;
+    }
 
     Promise.all([
       api.adminProduct(token, Number(params.id)),
@@ -37,7 +42,8 @@ export default function EditProductPage() {
             color: variant.color ?? "",
             memory: variant.memory ?? "",
             model: variant.model ?? "",
-          })) ?? [],
+            size: variant.size ?? "",
+          })) ?? [emptyVariant()],
         );
       })
       .catch((err) => setError(err instanceof Error ? err.message : "Ürün yüklenemedi"));
@@ -45,7 +51,10 @@ export default function EditProductPage() {
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!token || !product) return;
+
+    if (!token || !product) {
+      return;
+    }
 
     setLoading(true);
     setError(null);
@@ -70,19 +79,6 @@ export default function EditProductPage() {
     }
   }
 
-  function updateVariant(index: number, field: keyof CatalogVariantInput, value: string) {
-    setVariants((current) =>
-      current.map((variant, variantIndex) =>
-        variantIndex === index
-          ? {
-              ...variant,
-              [field]: field === "stock" ? Number(value) : value,
-            }
-          : variant,
-      ),
-    );
-  }
-
   if (!product) {
     return <p className="text-sm text-muted">{error ?? "Yükleniyor..."}</p>;
   }
@@ -94,12 +90,29 @@ export default function EditProductPage() {
 
       {merged && (
         <p className="mt-4 rounded-[1rem] border border-accent/30 bg-accent/5 px-4 py-3 text-sm">
-          Varyantlar mevcut ürüne eklendi. Tüm renk ve hafıza seçeneklerini aşağıda
-          görebilirsiniz.
+          Varyantlar mevcut ürüne eklendi. Tüm seçenekleri aşağıda görebilirsiniz.
         </p>
       )}
 
       <form onSubmit={handleSubmit} className="mt-8 max-w-3xl space-y-6">
+        <ProductCoverUpload
+          productId={product.id}
+          imageUrl={product.image_url}
+          productName={product.name}
+          onUploaded={(imageUrl) =>
+            setProduct((current) => (current ? { ...current, image_url: imageUrl } : current))
+          }
+          onUpload={async (file) => {
+            if (!token) {
+              throw new Error("Oturum bulunamadı");
+            }
+
+            const response = await api.adminUploadProductCover(token, product.id, file);
+
+            return { image_url: response.product.image_url ?? null };
+          }}
+        />
+
         <input
           name="name"
           required
@@ -110,7 +123,7 @@ export default function EditProductPage() {
         <textarea
           name="description"
           defaultValue={product.description ?? ""}
-          placeholder="Açıklama"
+          placeholder="Vitrin açıklaması"
           rows={4}
           className="w-full rounded-[1.5rem] border border-line bg-background px-5 py-3 text-sm outline-none focus:border-accent"
         />
@@ -130,47 +143,26 @@ export default function EditProductPage() {
           className="w-full rounded-full border border-line bg-background px-5 py-3 text-sm outline-none focus:border-accent"
         >
           <option value="">Kategori seçin</option>
-          {categories.map((category) => (
+          {sortedCategoryOptions(categories).map((category) => (
             <option key={category.id} value={category.id}>
-              {category.name}
+              {categoryOptionLabel(category, categories)}
             </option>
           ))}
         </select>
 
         <div className="space-y-4 rounded-[1.5rem] border border-line bg-surface p-6">
-          <h2 className="font-medium">Varyantlar</h2>
-          {variants.map((variant, index) => (
-            <div key={index} className="grid gap-3 md:grid-cols-2">
-              <input
-                required
-                value={variant.sku}
-                onChange={(event) => updateVariant(index, "sku", event.target.value)}
-                placeholder="örn. HOOD-BLACK-M"
-                className="rounded-full border border-line bg-background px-4 py-2 text-sm"
-              />
-              <input
-                type="number"
-                min={0}
-                required
-                value={variant.stock}
-                onChange={(event) => updateVariant(index, "stock", event.target.value)}
-                placeholder="Stok"
-                className="rounded-full border border-line bg-background px-4 py-2 text-sm"
-              />
-              <input
-                value={variant.color ?? ""}
-                onChange={(event) => updateVariant(index, "color", event.target.value)}
-                placeholder="Renk"
-                className="rounded-full border border-line bg-background px-4 py-2 text-sm"
-              />
-              <input
-                value={variant.memory ?? ""}
-                onChange={(event) => updateVariant(index, "memory", event.target.value)}
-                placeholder="Hafıza"
-                className="rounded-full border border-line bg-background px-4 py-2 text-sm"
-              />
-            </div>
-          ))}
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="font-medium">Varyantlar</h2>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => setVariants((current) => [...current, emptyVariant()])}
+            >
+              Varyant Ekle
+            </Button>
+          </div>
+
+          <VariantFields variants={variants} onChange={setVariants} />
         </div>
 
         {error && <p className="text-sm text-red-600">{error}</p>}

@@ -136,6 +136,7 @@ export type AdminProductVariant = {
   color?: string | null;
   memory?: string | null;
   model?: string | null;
+  size?: string | null;
 };
 
 export type AdminProduct = {
@@ -149,6 +150,7 @@ export type AdminProduct = {
     slug: string;
   } | null;
   variants?: AdminProductVariant[];
+  image_url?: string | null;
   created_at?: string | null;
 };
 
@@ -158,6 +160,7 @@ export type CatalogVariantInput = {
   color?: string;
   memory?: string;
   model?: string;
+  size?: string;
 };
 
 export type ApiError = {

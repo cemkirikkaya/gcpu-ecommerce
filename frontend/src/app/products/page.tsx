@@ -34,7 +34,7 @@ export default async function ProductsPage() {
         {catalog.uncategorized.length > 0 && (
           <section className="space-y-8">
             <h2 className="font-display text-4xl font-semibold">Diğer Ürünler</h2>
-            <div className="space-y-8">
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
               {catalog.uncategorized.map((product) => (
                 <ProductCard key={product.id} product={product} />
               ))}
