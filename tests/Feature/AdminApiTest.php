@@ -18,7 +18,7 @@ function adminToken(): string
     return $admin->createToken('test')->plainTextToken;
 }
 
-it('registers company accounts as admin role', function () {
+it('registers company accounts as vendor role', function () {
     $this->postJson('/api/auth/register', [
         'name' => 'Şirket A.Ş.',
         'email' => 'sirket@example.com',
@@ -27,11 +27,11 @@ it('registers company accounts as admin role', function () {
         'account_type' => 'company',
     ])
         ->assertCreated()
-        ->assertJsonPath('user.role', UserRole::Admin->value);
+        ->assertJsonPath('user.role', UserRole::Vendor->value);
 
     $this->assertDatabaseHas('users', [
         'email' => 'sirket@example.com',
-        'role' => UserRole::Admin->value,
+        'role' => UserRole::Vendor->value,
     ]);
 });
 
@@ -275,5 +275,75 @@ it('uploads a product cover image for admin users', function () {
     $this->assertDatabaseHas('images', [
         'product_id' => $product->id,
         'is_cover' => true,
+    ]);
+});
+
+it('lists only vendor-owned products for vendor users', function () {
+    $vendor = User::factory()->vendor()->create();
+    $otherVendor = User::factory()->vendor()->create();
+
+    Product::query()->create([
+        'user_id' => $vendor->id,
+        'name' => 'Şirket Ürünü',
+        'price' => 100,
+        'description' => 'Test',
+    ]);
+
+    Product::query()->create([
+        'user_id' => $otherVendor->id,
+        'name' => 'Başka Şirket Ürünü',
+        'price' => 200,
+        'description' => 'Test',
+    ]);
+
+    Product::query()->create([
+        'name' => 'Platform Ürünü',
+        'price' => 300,
+        'description' => 'Test',
+    ]);
+
+    $this->withToken($vendor->createToken('test')->plainTextToken)
+        ->getJson('/api/admin/products')
+        ->assertOk()
+        ->assertJsonCount(1, 'products')
+        ->assertJsonPath('products.0.name', 'Şirket Ürünü')
+        ->assertJsonPath('products.0.vendor_email', $vendor->email);
+});
+
+it('forbids vendors from updating another vendors product', function () {
+    $vendor = User::factory()->vendor()->create();
+    $otherVendor = User::factory()->vendor()->create();
+
+    $product = Product::query()->create([
+        'user_id' => $otherVendor->id,
+        'name' => 'Korumalı Ürün',
+        'price' => 100,
+        'description' => 'Test',
+    ]);
+
+    $this->withToken($vendor->createToken('test')->plainTextToken)
+        ->putJson("/api/admin/products/{$product->id}", [
+            'name' => 'Yetkisiz Güncelleme',
+        ])
+        ->assertForbidden();
+});
+
+it('assigns vendor user id when vendor creates a product', function () {
+    $vendor = User::factory()->vendor()->create();
+
+    $this->withToken($vendor->createToken('test')->plainTextToken)
+        ->postJson('/api/admin/products', [
+            'name' => 'Vendor Ürünü',
+            'price' => 150,
+            'catalog_variants' => [
+                ['sku' => 'VND-001', 'stock' => 4],
+            ],
+        ])
+        ->assertCreated()
+        ->assertJsonPath('product.vendor_email', $vendor->email);
+
+    $this->assertDatabaseHas('products', [
+        'name' => 'Vendor Ürünü',
+        'user_id' => $vendor->id,
     ]);
 });

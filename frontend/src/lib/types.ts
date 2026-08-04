@@ -1,4 +1,4 @@
-export type UserRole = "admin" | "customer";
+export type UserRole = "admin" | "vendor" | "customer";
 
 export type AccountType = "customer" | "company";
 
@@ -151,6 +151,7 @@ export type AdminProduct = {
   } | null;
   variants?: AdminProductVariant[];
   image_url?: string | null;
+  vendor_email?: string | null;
   created_at?: string | null;
 };
 

@@ -48,14 +48,29 @@ class User extends Authenticatable implements FilamentUser
         return $this->role === UserRole::Admin;
     }
 
+    public function canAccessAdminApi(): bool
+    {
+        return $this->isAdmin() || $this->isVendor();
+    }
+
     public function isAdmin(): bool
     {
         return $this->role === UserRole::Admin;
     }
 
+    public function isVendor(): bool
+    {
+        return $this->role === UserRole::Vendor;
+    }
+
     public function isCustomer(): bool
     {
         return $this->role === UserRole::Customer;
+    }
+
+    public function products(): HasMany
+    {
+        return $this->hasMany(Product::class);
     }
 
     public function posts(): HasMany

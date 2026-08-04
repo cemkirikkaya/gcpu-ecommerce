@@ -33,7 +33,7 @@ class AuthController extends Controller
         ]);
 
         $role = $validated['account_type'] === 'company'
-            ? UserRole::Admin
+            ? UserRole::Vendor
             : UserRole::Customer;
 
         $user = User::query()->create([

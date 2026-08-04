@@ -8,6 +8,7 @@ use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\ProductVariantValue;
 use App\Models\Stock;
+use App\Models\User;
 use App\Models\Variant;
 use App\Models\VariantValue;
 use Illuminate\Http\UploadedFile;
@@ -21,12 +22,14 @@ class ProductCatalogService
      * @param  array<string, mixed>  $validated
      * @return array{product: Product, merged: bool}
      */
-    public function storeOrMergeProduct(array $validated): array
+    public function storeOrMergeProduct(array $validated, User $owner): array
     {
         $catalogVariants = $validated['catalog_variants'];
         unset($validated['catalog_variants']);
 
-        $existing = $this->findByName($validated['name']);
+        $validated['user_id'] = $owner->isVendor() ? $owner->id : null;
+
+        $existing = $this->findByName($validated['name'], $owner);
 
         if ($existing !== null) {
             $existing->update([
@@ -48,13 +51,20 @@ class ProductCatalogService
         return ['product' => $product, 'merged' => false];
     }
 
-    public function findByName(string $name): ?Product
+    public function findByName(string $name, User $owner): ?Product
     {
         $normalized = Str::lower(trim($name));
 
-        return Product::query()
-            ->whereRaw('LOWER(TRIM(name)) = ?', [$normalized])
-            ->first();
+        $query = Product::query()
+            ->whereRaw('LOWER(TRIM(name)) = ?', [$normalized]);
+
+        if ($owner->isVendor()) {
+            $query->where('user_id', $owner->id);
+        } else {
+            $query->whereNull('user_id');
+        }
+
+        return $query->first();
     }
 
     public function ensureColorGrouping(Product $product): void

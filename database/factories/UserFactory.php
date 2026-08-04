@@ -42,6 +42,13 @@ class UserFactory extends Factory
         ]);
     }
 
+    public function vendor(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => UserRole::Vendor,
+        ]);
+    }
+
     public function unverified(): static
     {
         return $this->state(fn (array $attributes) => [

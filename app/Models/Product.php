@@ -22,6 +22,7 @@ class Product extends Model implements HasMedia
      * @var list<string>
      */
     protected $fillable = [
+        'user_id',
         'category_id',
         'base_variant_id',
         'name',
@@ -42,6 +43,11 @@ class Product extends Model implements HasMedia
     public function registerMediaCollections(): void
     {
         $this->addMediaCollection('product-images');
+    }
+
+    public function vendor(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'user_id');
     }
 
     public function category(): BelongsTo

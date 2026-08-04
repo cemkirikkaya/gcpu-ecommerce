@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import { useAuth } from "@/context/auth-context";
-import { isAdmin } from "@/lib/auth";
+import { isPanelUser } from "@/lib/auth";
 import { api } from "@/lib/api";
 
 export function SiteHeader() {
@@ -56,7 +56,7 @@ export function SiteHeader() {
 
           {mounted && !loading && user && token ? (
             <>
-              {isAdmin(user) ? (
+              {isPanelUser(user) ? (
                 <Link
                   href="/admin"
                   className="rounded-full px-4 py-2 text-stone-700 transition hover:bg-accent-soft/70"

@@ -8,18 +8,27 @@ use App\Http\Requests\Admin\UpdateProductRequest;
 use App\Http\Requests\Admin\UploadProductCoverRequest;
 use App\Http\Resources\Api\AdminProductResource;
 use App\Models\Product;
+use App\Models\User;
 use App\Services\ProductCatalogService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class ProductController extends Controller
 {
     public function __construct(private ProductCatalogService $catalogService) {}
 
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
+        $this->authorize('viewAny', Product::class);
+
+        /** @var User $user */
+        $user = $request->user();
+
         $products = Product::query()
+            ->when($user->isVendor(), fn ($query) => $query->where('user_id', $user->id))
             ->with([
                 'category',
+                'vendor',
                 'images',
                 'variants.stock',
                 'variants.variantValues.variantValue.variant',
@@ -34,8 +43,11 @@ class ProductController extends Controller
 
     public function show(Product $product): JsonResponse
     {
+        $this->authorize('view', $product);
+
         $product->load([
             'category',
+            'vendor',
             'images',
             'variants.stock',
             'variants.variantValues.variantValue.variant',
@@ -48,10 +60,16 @@ class ProductController extends Controller
 
     public function store(StoreProductRequest $request): JsonResponse
     {
-        $result = $this->catalogService->storeOrMergeProduct($request->validated());
+        $this->authorize('create', Product::class);
+
+        /** @var User $user */
+        $user = $request->user();
+
+        $result = $this->catalogService->storeOrMergeProduct($request->validated(), $user);
 
         $result['product']->load([
             'category',
+            'vendor',
             'images',
             'variants.stock',
             'variants.variantValues.variantValue.variant',
@@ -74,6 +92,8 @@ class ProductController extends Controller
 
     public function update(UpdateProductRequest $request, Product $product): JsonResponse
     {
+        $this->authorize('update', $product);
+
         $validated = $request->validated();
 
         if (array_key_exists('catalog_variants', $validated)) {
@@ -88,6 +108,7 @@ class ProductController extends Controller
 
         $product->load([
             'category',
+            'vendor',
             'images',
             'variants.stock',
             'variants.variantValues.variantValue.variant',
@@ -101,6 +122,8 @@ class ProductController extends Controller
 
     public function destroy(Product $product): JsonResponse
     {
+        $this->authorize('delete', $product);
+
         $this->catalogService->deleteProduct($product);
 
         return response()->json([
@@ -110,10 +133,13 @@ class ProductController extends Controller
 
     public function uploadCover(UploadProductCoverRequest $request, Product $product): JsonResponse
     {
+        $this->authorize('update', $product);
+
         $this->catalogService->storeCoverImage($product, $request->file('image'));
 
         $product->load([
             'category',
+            'vendor',
             'images',
             'variants.stock',
             'variants.variantValues.variantValue.variant',

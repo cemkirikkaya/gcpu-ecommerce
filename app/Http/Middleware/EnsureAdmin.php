@@ -15,7 +15,7 @@ class EnsureAdmin
     {
         $user = $request->user();
 
-        if ($user === null || ! $user->isAdmin()) {
+        if ($user === null || ! $user->canAccessAdminApi()) {
             return response()->json([
                 'message' => 'Bu işlem için yönetici yetkisi gerekir.',
             ], 403);

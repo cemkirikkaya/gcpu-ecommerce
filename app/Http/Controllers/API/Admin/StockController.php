@@ -11,6 +11,16 @@ class StockController extends Controller
 {
     public function update(UpdateStockRequest $request, Stock $stock): JsonResponse
     {
+        $stock->load('productVariant.product');
+
+        $product = $stock->productVariant?->product;
+
+        if ($product === null) {
+            abort(404);
+        }
+
+        $this->authorize('update', $product);
+
         $stock->update([
             'quantity' => $request->validated('quantity'),
         ]);

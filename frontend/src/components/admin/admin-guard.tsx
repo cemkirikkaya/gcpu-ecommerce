@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 import { useAuth } from "@/context/auth-context";
-import { getHomePathForUser, isAdmin } from "@/lib/auth";
+import { getHomePathForUser, isPanelUser } from "@/lib/auth";
 
 export function AdminGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -18,12 +18,12 @@ export function AdminGuard({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    if (!isAdmin(user)) {
+    if (!isPanelUser(user)) {
       router.replace(getHomePathForUser(user));
     }
   }, [loading, router, token, user]);
 
-  if (loading || !user || !isAdmin(user)) {
+  if (loading || !user || !isPanelUser(user)) {
     return (
       <div className="flex min-h-[50vh] items-center justify-center text-sm text-muted">
         Yükleniyor...
