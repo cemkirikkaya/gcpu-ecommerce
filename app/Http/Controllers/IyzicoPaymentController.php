@@ -55,11 +55,17 @@ class IyzicoPaymentController extends Controller
         $result = $this->paymentGateway->retrieve($token);
 
         if ($result->successful) {
-            $this->orderService->completePayment($order, $result->paymentId);
+            $this->orderService->completePayment(
+                $order,
+                $result->paymentId,
+                $result->installment,
+                $result->paidPrice,
+            );
 
             Log::info('Payment callback succeeded', [
                 'order_id' => $order->id,
                 'payment_id' => $result->paymentId,
+                'installment' => $result->installment,
             ]);
 
             return $this->redirectToFrontend($order, 'success');

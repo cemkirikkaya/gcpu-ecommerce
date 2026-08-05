@@ -76,9 +76,13 @@ class OrderRepository
         });
     }
 
-    public function completePayment(Order $order, ?string $paymentId = null): Order
-    {
-        return DB::transaction(function () use ($order, $paymentId): Order {
+    public function completePayment(
+        Order $order,
+        ?string $paymentId = null,
+        ?int $installment = null,
+        ?string $paidPrice = null,
+    ): Order {
+        return DB::transaction(function () use ($order, $paymentId, $installment, $paidPrice): Order {
             $order = $order->fresh([
                 'items.cartItem.productVariant.product',
                 'items.cartItem.productVariant.stock',
@@ -119,6 +123,8 @@ class OrderRepository
                 'payment_status' => PaymentStatus::Paid,
                 'status' => OrderStatus::Processing,
                 'iyzico_payment_id' => $paymentId,
+                'installment' => $installment ?? 1,
+                'paid_price' => $paidPrice ?? $order->total_price,
                 'paid_at' => now(),
             ]);
 

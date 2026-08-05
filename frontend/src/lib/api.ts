@@ -10,6 +10,7 @@ import type {
   Cart,
   Catalog,
   CatalogVariantInput,
+  InstallmentOption,
   Order,
   Product,
   User,
@@ -132,7 +133,14 @@ export const api = {
       cart: Cart;
       addresses: Address[];
       reservation_minutes: number;
+      direct_payment: boolean;
     }>("/checkout", {}, token),
+
+  checkoutInstallments: (token: string) =>
+    request<{
+      installments: InstallmentOption[];
+      direct_payment: boolean;
+    }>("/checkout/installments", {}, token),
 
   checkout: (
     token: string,
@@ -144,13 +152,16 @@ export const api = {
       token,
     ),
 
-  initIyzicoPayment: (token: string, orderId: number) =>
+  initIyzicoPayment: (token: string, orderId: number, installment = 1) =>
     request<{
       token: string;
       payment_page_url: string;
       conversation_id: string;
       redirect_url?: string;
-    }>(`/orders/${orderId}/payments/iyzico/init`, { method: "POST" }, token),
+    }>(`/orders/${orderId}/payments/iyzico/init`, {
+      method: "POST",
+      body: JSON.stringify({ installment }),
+    }, token),
 
   order: (token: string, orderId: number) =>
     request<{ order: Order }>(`/orders/${orderId}`, {}, token).then((r) => r.order),

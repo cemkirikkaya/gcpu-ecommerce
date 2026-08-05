@@ -84,7 +84,57 @@ class IyzicoPaymentTest extends TestCase
 
         expect($order->payment_status->value)->toBe('paid')
             ->and($order->status->value)->toBe('processing')
+            ->and($order->installment)->toBe(1)
+            ->and($order->iyzico_payment_id)->not->toBeNull()
             ->and(CartItem::query()->count())->toBe(0);
+    }
+
+    #[Test]
+    public function completes_order_with_direct_fake_payment_and_installment(): void
+    {
+        config(['iyzico.direct' => true]);
+
+        $customer = User::factory()->create();
+        $order = $this->createPendingOrder($customer);
+
+        Sanctum::actingAs($customer);
+
+        $this->postJson("/api/orders/{$order->id}/payments/iyzico/init", [
+            'installment' => 3,
+        ])
+            ->assertSuccessful()
+            ->assertJsonStructure(['redirect_url']);
+
+        /** @var FakePaymentGateway $gateway */
+        $gateway = app(PaymentGateway::class);
+
+        expect($gateway->lastInstallment)->toBe(3);
+
+        $order->refresh();
+
+        expect($order->installment)->toBe(3)
+            ->and($order->iyzico_payment_id)->not->toBeNull();
+    }
+
+    #[Test]
+    public function returns_installment_options_for_direct_checkout(): void
+    {
+        config(['iyzico.direct' => true]);
+
+        $customer = User::factory()->create();
+        $this->createPendingOrder($customer);
+
+        Sanctum::actingAs($customer);
+
+        $this->getJson('/api/checkout/installments')
+            ->assertSuccessful()
+            ->assertJsonStructure([
+                'installments' => [
+                    '*' => ['number', 'label', 'monthly_price', 'total_price'],
+                ],
+                'direct_payment',
+            ])
+            ->assertJsonPath('direct_payment', true);
     }
 
     #[Test]

@@ -29,6 +29,7 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::delete('/cart/items/{cartItem}', [CartController::class, 'destroy']);
 
     Route::get('/checkout', [CheckoutController::class, 'show']);
+    Route::get('/checkout/installments', [CheckoutController::class, 'installments']);
     Route::post('/checkout', [CheckoutController::class, 'store']);
 
     Route::get('/orders', [OrderController::class, 'index']);

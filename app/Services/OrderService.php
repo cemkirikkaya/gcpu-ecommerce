@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Contracts\PaymentGateway;
+use App\DataTransferObjects\InstallmentOption;
 use App\DataTransferObjects\PaymentInitializationResult;
 use App\Enums\PaymentStatus;
 use App\Models\Order;
@@ -54,7 +55,7 @@ class OrderService
         return $initialization;
     }
 
-    public function chargePaymentDirectly(Order $order, string $buyerIp): Order
+    public function chargePaymentDirectly(Order $order, string $buyerIp, int $installment = 1): Order
     {
         if (! in_array($order->payment_status, [PaymentStatus::Pending, PaymentStatus::Failed], true)) {
             throw new RuntimeException('Bu sipariş için ödeme başlatılamaz.');
@@ -65,10 +66,11 @@ class OrderService
             'payment_status' => $order->payment_status->value,
             'total_price' => $order->total_price,
             'buyer_ip' => $buyerIp,
+            'installment' => $installment,
             'mode' => 'direct',
         ]);
 
-        $result = $this->paymentGateway->chargeDirectly($order, $buyerIp);
+        $result = $this->paymentGateway->chargeDirectly($order, $buyerIp, $installment);
 
         if (! $result->successful) {
             Log::warning('Payment direct charge failed', [
@@ -84,18 +86,51 @@ class OrderService
         Log::info('Payment direct charge succeeded', [
             'order_id' => $order->id,
             'payment_id' => $result->paymentId,
+            'installment' => $installment,
         ]);
 
-        return $this->completePayment($order, $result->paymentId);
+        return $this->completePayment(
+            $order,
+            $result->paymentId,
+            $result->installment ?? $installment,
+            $result->paidPrice,
+        );
     }
 
-    public function completePayment(Order $order, ?string $paymentId = null): Order
+    /**
+     * @return list<InstallmentOption>
+     */
+    public function getInstallmentOptions(float $totalPrice): array
     {
-        $completedOrder = $this->repository->completePayment($order, $paymentId);
+        $price = number_format($totalPrice, 2, '.', '');
+        $cardNumber = (string) config('iyzico.test_card.number');
+        $binNumber = substr($cardNumber, 0, 6);
+
+        if ($binNumber === '') {
+            throw new RuntimeException('Taksit seçenekleri için kart BIN bilgisi tanımlı değil.');
+        }
+
+        return $this->paymentGateway->getInstallmentOptions($price, $binNumber);
+    }
+
+    public function completePayment(
+        Order $order,
+        ?string $paymentId = null,
+        ?int $installment = null,
+        ?string $paidPrice = null,
+    ): Order {
+        $completedOrder = $this->repository->completePayment(
+            $order,
+            $paymentId,
+            $installment,
+            $paidPrice,
+        );
 
         Log::info('Payment completed', [
             'order_id' => $completedOrder->id,
             'payment_id' => $paymentId,
+            'installment' => $completedOrder->installment,
+            'paid_price' => $completedOrder->paid_price,
             'payment_status' => $completedOrder->payment_status->value,
             'order_status' => $completedOrder->status->value,
         ]);

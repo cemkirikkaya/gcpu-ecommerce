@@ -36,7 +36,42 @@ class CheckoutController extends Controller
             'cart' => new CartResource($cart),
             'addresses' => AddressResource::collection($addresses),
             'reservation_minutes' => config('shop.reservation_minutes'),
+            'direct_payment' => (bool) config('iyzico.direct'),
         ]);
+    }
+
+    public function installments(): JsonResponse
+    {
+        if (! config('iyzico.direct')) {
+            return response()->json([
+                'installments' => [],
+                'direct_payment' => false,
+            ]);
+        }
+
+        $cart = $this->cartService->getCartWithItems(Auth::user());
+
+        if ($cart->items->isEmpty()) {
+            return response()->json([
+                'message' => 'Taksit seçenekleri için sepetinizde ürün olmalı.',
+            ], 422);
+        }
+
+        try {
+            $options = $this->orderService->getInstallmentOptions($cart->total());
+
+            return response()->json([
+                'installments' => array_map(
+                    fn ($option) => $option->toArray(),
+                    $options,
+                ),
+                'direct_payment' => true,
+            ]);
+        } catch (\Throwable $exception) {
+            return response()->json([
+                'message' => $exception->getMessage(),
+            ], 422);
+        }
     }
 
     public function store(StoreCheckoutRequest $request): JsonResponse

@@ -24,6 +24,8 @@ class Order extends Model
         'payment_status',
         'iyzico_token',
         'iyzico_payment_id',
+        'installment',
+        'paid_price',
         'iyzico_conversation_id',
         'paid_at',
     ];
@@ -40,6 +42,8 @@ class Order extends Model
     {
         return [
             'total_price' => 'decimal:2',
+            'paid_price' => 'decimal:2',
+            'installment' => 'integer',
             'status' => OrderStatus::class,
             'payment_status' => PaymentStatus::class,
             'paid_at' => 'datetime',

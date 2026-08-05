@@ -5,7 +5,7 @@ import { FormEvent, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/auth-context";
 import { api, formatPrice } from "@/lib/api";
-import type { Address, Cart } from "@/lib/types";
+import type { Address, Cart, InstallmentOption } from "@/lib/types";
 
 export default function CheckoutPage() {
   const { token, loading: authLoading } = useAuth();
@@ -15,6 +15,9 @@ export default function CheckoutPage() {
   const [message, setMessage] = useState<string | null>(null);
   const [loadedForToken, setLoadedForToken] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [directPayment, setDirectPayment] = useState(false);
+  const [installments, setInstallments] = useState<InstallmentOption[]>([]);
+  const [selectedInstallment, setSelectedInstallment] = useState(1);
 
   useEffect(() => {
     if (authLoading || !token) {
@@ -23,21 +26,43 @@ export default function CheckoutPage() {
 
     api
       .checkoutPreview(token)
-      .then((data) => {
-        setCart(data.cart);
-        setAddresses(data.addresses);
-        if (data.addresses.length > 0) {
+      .then((preview) => {
+        setCart(preview.cart);
+        setAddresses(preview.addresses);
+        setDirectPayment(preview.direct_payment);
+        if (preview.addresses.length > 0) {
           const defaultAddress =
-            data.addresses.find((address) => address.is_default) ??
-            data.addresses[0];
+            preview.addresses.find((address) => address.is_default) ??
+            preview.addresses[0];
           setAddressId(defaultAddress.id);
         }
+
+        if (!preview.direct_payment) {
+          setInstallments([]);
+          setSelectedInstallment(1);
+
+          return;
+        }
+
+        return api.checkoutInstallments(token).then((installmentData) => {
+          setInstallments(installmentData.installments);
+          setSelectedInstallment(installmentData.installments[0]?.number ?? 1);
+        });
       })
       .catch((error) => setMessage(error.message))
       .finally(() => setLoadedForToken(token));
   }, [token, authLoading]);
 
   const loading = authLoading || (Boolean(token) && loadedForToken !== token);
+
+  const selectedInstallmentOption = installments.find(
+    (option) => option.number === selectedInstallment,
+  );
+  const cartTotal = cart?.total ?? 0;
+  const payableTotal = selectedInstallmentOption
+    ? Number(selectedInstallmentOption.total_price)
+    : cartTotal;
+  const hasInstallmentMarkup = payableTotal !== cartTotal;
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -59,7 +84,11 @@ export default function CheckoutPage() {
 
     try {
       const response = await api.checkout(token, payload);
-      const payment = await api.initIyzicoPayment(token, response.order.id);
+      const payment = await api.initIyzicoPayment(
+        token,
+        response.order.id,
+        selectedInstallment,
+      );
       //window.location.href = payment.payment_page_url;
       if (payment.redirect_url) {
         window.location.href = payment.redirect_url;
@@ -169,10 +198,51 @@ export default function CheckoutPage() {
               </li>
             ))}
           </ul>
+          {directPayment && installments.length > 0 && (
+            <section className="mt-6 border-t border-line pt-4">
+              <h3 className="font-medium">Taksit Seçenekleri</h3>
+              <div className="mt-3 space-y-2">
+                {installments.map((option) => (
+                  <label
+                    key={option.number}
+                    className="flex cursor-pointer items-center justify-between gap-3 rounded-[1.25rem] border border-line px-4 py-3 text-sm transition hover:border-accent/40"
+                  >
+                    <span className="flex items-center gap-3">
+                      <input
+                        type="radio"
+                        name="installment"
+                        checked={selectedInstallment === option.number}
+                        onChange={() => setSelectedInstallment(option.number)}
+                      />
+                      <span>{option.label}</span>
+                    </span>
+                    <span className="text-muted">
+                      {option.number === 1
+                        ? formatPrice(Number(option.total_price))
+                        : `${option.number} x ${formatPrice(Number(option.monthly_price))}`}
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </section>
+          )}
           <div className="mt-6 flex justify-between border-t border-line pt-4">
-            <span>Toplam</span>
-            <span className="font-display text-2xl text-accent">
-              {formatPrice(cart?.total ?? 0)}
+            <span>{directPayment && installments.length > 0 ? "Ödenecek tutar" : "Toplam"}</span>
+            <span className="text-right">
+              {hasInstallmentMarkup && (
+                <span className="block text-sm text-muted line-through">
+                  {formatPrice(cartTotal)}
+                </span>
+              )}
+              <span className="font-display text-2xl text-accent">
+                {formatPrice(payableTotal)}
+              </span>
+              {selectedInstallmentOption && selectedInstallmentOption.number > 1 && (
+                <span className="mt-1 block text-xs text-muted">
+                  {selectedInstallmentOption.number} x{" "}
+                  {formatPrice(Number(selectedInstallmentOption.monthly_price))}
+                </span>
+              )}
             </span>
           </div>
           {message && <p className="mt-4 text-sm text-red-600">{message}</p>}

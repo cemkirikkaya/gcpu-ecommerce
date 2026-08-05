@@ -8,5 +8,7 @@ readonly class PaymentRetrievalResult
         public bool $successful,
         public ?string $paymentId = null,
         public ?string $errorMessage = null,
+        public ?int $installment = null,
+        public ?string $paidPrice = null,
     ) {}
 }

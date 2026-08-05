@@ -95,9 +95,19 @@ export type Address = {
   full_address: string;
 };
 
+export type InstallmentOption = {
+  number: number;
+  label: string;
+  monthly_price: string;
+  total_price: string;
+};
+
 export type Order = {
   id: number;
   total_price: number;
+  paid_price?: number | null;
+  installment?: number;
+  iyzico_payment_id?: string | null;
   status: string;
   status_label: string;
   payment_status: string;

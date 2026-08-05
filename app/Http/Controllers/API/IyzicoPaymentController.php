@@ -3,10 +3,10 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Payment\InitIyzicoPaymentRequest;
 use App\Models\Order;
 use App\Services\OrderService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
 class IyzicoPaymentController extends Controller
@@ -15,7 +15,7 @@ class IyzicoPaymentController extends Controller
         private OrderService $orderService,
     ) {}
 
-    public function initialize(Request $request, Order $order): JsonResponse
+    public function initialize(InitIyzicoPaymentRequest $request, Order $order): JsonResponse
     {
         $this->authorize('pay', $order);
 
@@ -23,6 +23,7 @@ class IyzicoPaymentController extends Controller
             'order_id' => $order->id,
             'direct' => (bool) config('iyzico.direct'),
             'fake' => (bool) config('iyzico.fake'),
+            'installment' => $request->installment(),
             'ip' => $request->ip(),
         ]);
 
@@ -31,6 +32,7 @@ class IyzicoPaymentController extends Controller
                 $this->orderService->chargePaymentDirectly(
                     $order,
                     $request->ip() ?? '127.0.0.1',
+                    $request->installment(),
                 );
 
                 $query = http_build_query([

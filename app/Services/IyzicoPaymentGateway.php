@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Contracts\PaymentGateway;
+use App\DataTransferObjects\InstallmentOption;
 use App\DataTransferObjects\PaymentInitializationResult;
 use App\DataTransferObjects\PaymentRetrievalResult;
 use App\Models\Order;
@@ -15,6 +16,7 @@ use Iyzipay\Model\Buyer;
 use Iyzipay\Model\CheckoutForm;
 use Iyzipay\Model\CheckoutFormInitialize;
 use Iyzipay\Model\Currency;
+use Iyzipay\Model\InstallmentInfo;
 use Iyzipay\Model\Locale;
 use Iyzipay\Model\Payment;
 use Iyzipay\Model\PaymentCard;
@@ -24,6 +26,7 @@ use Iyzipay\Options;
 use Iyzipay\Request\CreateCheckoutFormInitializeRequest;
 use Iyzipay\Request\CreatePaymentRequest;
 use Iyzipay\Request\RetrieveCheckoutFormRequest;
+use Iyzipay\Request\RetrieveInstallmentInfoRequest;
 use RuntimeException;
 
 class IyzicoPaymentGateway implements PaymentGateway
@@ -124,7 +127,7 @@ class IyzicoPaymentGateway implements PaymentGateway
         );
     }
 
-    public function chargeDirectly(Order $order, string $buyerIp): PaymentRetrievalResult
+    public function chargeDirectly(Order $order, string $buyerIp, int $installment = 1): PaymentRetrievalResult
     {
         $order->loadMissing([
             'items.cartItem.productVariant.product.category',
@@ -148,13 +151,15 @@ class IyzicoPaymentGateway implements PaymentGateway
             throw new RuntimeException('Doğrudan ödeme için test kart bilgileri tanımlı değil.');
         }
 
+        $paidPrice = $this->resolvePaidPrice($price, (string) $cardNumber, $installment);
+
         $request = new CreatePaymentRequest;
         $request->setLocale(Locale::TR);
         $request->setConversationId($conversationId);
         $request->setPrice($price);
-        $request->setPaidPrice($price);
+        $request->setPaidPrice($paidPrice);
         $request->setCurrency(Currency::TL);
-        $request->setInstallment(1);
+        $request->setInstallment($installment);
         $request->setBasketId($conversationId);
         $request->setPaymentChannel(PaymentChannel::WEB);
         $request->setPaymentGroup(PaymentGroup::PRODUCT);
@@ -213,10 +218,14 @@ class IyzicoPaymentGateway implements PaymentGateway
             'order_id' => $order->id,
             'conversation_id' => $conversationId,
             'amount' => $price,
+            'paid_price' => $paidPrice,
+            'installment' => $installment,
             'card_last_four' => substr((string) $cardNumber, -4),
         ]);
 
         $response = Payment::create($request, $this->options());
+
+        Log::info('iyzico direct payment full response', $this->paymentResponseContext($response, $order->id));
 
         if ($response->getStatus() !== 'success') {
             Log::warning('iyzico direct payment failed', [
@@ -259,7 +268,24 @@ class IyzicoPaymentGateway implements PaymentGateway
             errorMessage: $successful
                 ? null
                 : ($response->getErrorMessage() ?: 'Ödeme tamamlanamadı.'),
+            installment: (int) ($response->getInstallment() ?? $installment),
+            paidPrice: $response->getPaidPrice() !== null
+                ? $this->formatAmount((float) $response->getPaidPrice())
+                : $paidPrice,
         );
+    }
+
+    private function resolvePaidPrice(string $price, string $cardNumber, int $installment): string
+    {
+        $options = $this->getInstallmentOptions($price, substr($cardNumber, 0, 6));
+
+        foreach ($options as $option) {
+            if ($option->number === $installment) {
+                return $option->totalPrice;
+            }
+        }
+
+        return $price;
     }
 
     private function directPaymentSuccessful(Payment $response): bool
@@ -271,6 +297,36 @@ class IyzicoPaymentGateway implements PaymentGateway
         $paymentStatus = $response->getPaymentStatus();
 
         return $paymentStatus === null || $paymentStatus === 'SUCCESS';
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function paymentResponseContext(Payment $response, int $orderId): array
+    {
+        return [
+            'order_id' => $orderId,
+            'status' => $response->getStatus(),
+            'error_code' => $response->getErrorCode(),
+            'error_message' => $response->getErrorMessage(),
+            'error_group' => $response->getErrorGroup(),
+            'conversation_id' => $response->getConversationId(),
+            'payment_id' => $response->getPaymentId(),
+            'payment_status' => $response->getPaymentStatus(),
+            'fraud_status' => $response->getFraudStatus(),
+            'price' => $response->getPrice(),
+            'paid_price' => $response->getPaidPrice(),
+            'currency' => $response->getCurrency(),
+            'installment' => $response->getInstallment(),
+            'auth_code' => $response->getAuthCode(),
+            'bin_number' => $response->getBinNumber(),
+            'last_four_digits' => $response->getLastFourDigits(),
+            'card_type' => $response->getCardType(),
+            'card_association' => $response->getCardAssociation(),
+            'card_family' => $response->getCardFamily(),
+            'basket_id' => $response->getBasketId(),
+            'phase' => $response->getPhase(),
+        ];
     }
 
     public function retrieve(string $token): PaymentRetrievalResult
@@ -306,7 +362,59 @@ class IyzicoPaymentGateway implements PaymentGateway
             errorMessage: $response->getPaymentStatus() === 'SUCCESS'
                 ? null
                 : ($response->getErrorMessage() ?: 'Ödeme tamamlanamadı.'),
+            installment: $response->getInstallment() !== null
+                ? (int) $response->getInstallment()
+                : null,
+            paidPrice: $response->getPaidPrice() !== null
+                ? $this->formatAmount((float) $response->getPaidPrice())
+                : null,
         );
+    }
+
+    /**
+     * @return list<InstallmentOption>
+     */
+    public function getInstallmentOptions(string $price, string $binNumber): array
+    {
+        $request = new RetrieveInstallmentInfoRequest;
+        $request->setLocale(Locale::TR);
+        $request->setConversationId('installment-'.uniqid());
+        $request->setBinNumber(substr($binNumber, 0, 6));
+        $request->setPrice($price);
+
+        $response = InstallmentInfo::retrieve($request, $this->options());
+
+        if ($response->getStatus() !== 'success') {
+            throw new RuntimeException($response->getErrorMessage() ?: 'Taksit seçenekleri alınamadı.');
+        }
+
+        $details = $response->getInstallmentDetails() ?? [];
+
+        if ($details === []) {
+            return [new InstallmentOption(
+                number: 1,
+                monthlyPrice: $price,
+                totalPrice: $price,
+            )];
+        }
+
+        $options = [];
+
+        foreach ($details as $detail) {
+            foreach ($detail->getInstallmentPrices() ?? [] as $installmentPrice) {
+                $options[] = new InstallmentOption(
+                    number: (int) $installmentPrice->getInstallmentNumber(),
+                    monthlyPrice: (string) $installmentPrice->getInstallmentPrice(),
+                    totalPrice: (string) $installmentPrice->getTotalPrice(),
+                );
+            }
+
+            break;
+        }
+
+        usort($options, fn (InstallmentOption $a, InstallmentOption $b): int => $a->number <=> $b->number);
+
+        return $options;
     }
 
     private function options(): Options

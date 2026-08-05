@@ -21,6 +21,9 @@ class OrderResource extends JsonResource
             'status_label' => $this->status->label(),
             'payment_status' => $this->payment_status->value,
             'payment_status_label' => $this->payment_status->label(),
+            'installment' => $this->installment,
+            'paid_price' => $this->paid_price !== null ? (float) $this->paid_price : null,
+            'iyzico_payment_id' => $this->iyzico_payment_id,
             'created_at' => $this->created_at?->toIso8601String(),
             'address' => new AddressResource($this->whenLoaded('address')),
             'items' => $this->whenLoaded('items', fn () => $this->items->map(function ($item): array {
