@@ -15,7 +15,7 @@ class FakePaymentGateway implements PaymentGateway
 
     public function initialize(Order $order, string $buyerIp): PaymentInitializationResult
     {
-        $token = 'fake-'.Str::uuid();
+        $token = 'fake-'.Str::uuid()->toString();
         $conversationId = 'order-'.$order->id;
 
         $this->tokenOutcomes[$token] = true;
@@ -31,7 +31,7 @@ class FakePaymentGateway implements PaymentGateway
     {
         return new PaymentRetrievalResult(
             successful: true,
-            paymentId: 'fake-direct-'.Str::uuid(),
+            paymentId: 'fake-direct-'.Str::uuid()->toString(),
         );
     }
 
@@ -41,7 +41,7 @@ class FakePaymentGateway implements PaymentGateway
 
         return new PaymentRetrievalResult(
             successful: $successful,
-            paymentId: $successful ? 'fake-payment-'.Str::uuid() : null,
+            paymentId: $successful ? 'fake-payment-'.Str::uuid()->toString() : null,
             errorMessage: $successful ? null : 'Test ödemesi başarısız.',
         );
     }
