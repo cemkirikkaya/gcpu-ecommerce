@@ -60,7 +60,14 @@ export default function CheckoutPage() {
     try {
       const response = await api.checkout(token, payload);
       const payment = await api.initIyzicoPayment(token, response.order.id);
-      window.location.href = payment.payment_page_url;
+      //window.location.href = payment.payment_page_url;
+      if (payment.redirect_url) {
+        window.location.href = payment.redirect_url;
+      } else if (payment.payment_page_url) {
+        window.location.href = payment.payment_page_url;
+      } else {
+        throw new Error("Ödeme yönlendirmesi alınamadı.");
+      }
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Hata");
     } finally {

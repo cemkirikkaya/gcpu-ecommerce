@@ -7,6 +7,7 @@ use App\Models\Order;
 use App\Services\OrderService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class IyzicoPaymentController extends Controller
 {
@@ -31,13 +32,23 @@ class IyzicoPaymentController extends Controller
     {
         $token = $request->string('token')->toString();
 
+        Log::info('Payment callback received', [
+            'token' => $token !== '' ? $token : null,
+        ]);
+
         if ($token === '') {
+            Log::warning('Payment callback missing token');
+
             return $this->redirectToFrontend(null, 'error');
         }
 
         $order = Order::query()->where('iyzico_token', $token)->first();
 
         if ($order === null) {
+            Log::warning('Payment callback order not found', [
+                'token' => $token,
+            ]);
+
             return $this->redirectToFrontend(null, 'error');
         }
 
@@ -46,10 +57,20 @@ class IyzicoPaymentController extends Controller
         if ($result->successful) {
             $this->orderService->completePayment($order, $result->paymentId);
 
+            Log::info('Payment callback succeeded', [
+                'order_id' => $order->id,
+                'payment_id' => $result->paymentId,
+            ]);
+
             return $this->redirectToFrontend($order, 'success');
         }
 
         $this->orderService->failPayment($order);
+
+        Log::warning('Payment callback failed', [
+            'order_id' => $order->id,
+            'error' => $result->errorMessage,
+        ]);
 
         return $this->redirectToFrontend($order, 'failed');
     }

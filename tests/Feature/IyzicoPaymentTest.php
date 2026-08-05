@@ -66,6 +66,28 @@ class IyzicoPaymentTest extends TestCase
     }
 
     #[Test]
+    public function completes_order_with_direct_fake_payment(): void
+    {
+        config(['iyzico.direct' => true]);
+
+        $customer = User::factory()->create();
+        $order = $this->createPendingOrder($customer);
+
+        Sanctum::actingAs($customer);
+
+        $this->postJson("/api/orders/{$order->id}/payments/iyzico/init")
+            ->assertSuccessful()
+            ->assertJsonStructure(['redirect_url'])
+            ->assertJsonMissing(['token', 'payment_page_url']);
+
+        $order->refresh();
+
+        expect($order->payment_status->value)->toBe('paid')
+            ->and($order->status->value)->toBe('processing')
+            ->and(CartItem::query()->count())->toBe(0);
+    }
+
+    #[Test]
     public function keeps_cart_items_when_payment_callback_fails(): void
     {
         $customer = User::factory()->create();

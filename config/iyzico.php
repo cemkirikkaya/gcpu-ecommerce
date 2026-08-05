@@ -14,4 +14,13 @@ return [
 
     'fake' => env('IYZICO_FAKE', false),
 
+    'direct' => env('IYZICO_DIRECT', false),
+
+    'test_card' => [
+        'number' => env('IYZICO_TEST_CARD_NUMBER'),
+        'expire_month' => env('IYZICO_TEST_CARD_EXPIRE_MONTH'),
+        'expire_year' => env('IYZICO_TEST_CARD_EXPIRE_YEAR'),
+        'cvc' => env('IYZICO_TEST_CARD_CVC'),
+        'holder' => env('IYZICO_TEST_CARD_HOLDER'),
+    ],
 ];

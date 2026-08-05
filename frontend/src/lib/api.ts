@@ -149,6 +149,7 @@ export const api = {
       token: string;
       payment_page_url: string;
       conversation_id: string;
+      redirect_url?: string;
     }>(`/orders/${orderId}/payments/iyzico/init`, { method: "POST" }, token),
 
   order: (token: string, orderId: number) =>

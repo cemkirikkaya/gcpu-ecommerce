@@ -7,6 +7,7 @@ use App\Models\Order;
 use App\Services\OrderService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class IyzicoPaymentController extends Controller
 {
@@ -18,7 +19,30 @@ class IyzicoPaymentController extends Controller
     {
         $this->authorize('pay', $order);
 
+        Log::info('Payment init API request', [
+            'order_id' => $order->id,
+            'direct' => (bool) config('iyzico.direct'),
+            'fake' => (bool) config('iyzico.fake'),
+            'ip' => $request->ip(),
+        ]);
+
         try {
+            if (config('iyzico.direct')) {
+                $this->orderService->chargePaymentDirectly(
+                    $order,
+                    $request->ip() ?? '127.0.0.1',
+                );
+
+                $query = http_build_query([
+                    'order_id' => $order->id,
+                    'status' => 'success',
+                ]);
+
+                return response()->json([
+                    'redirect_url' => rtrim((string) config('iyzico.frontend_result_url'), '/').'?'.$query,
+                ]);
+            }
+
             $initialization = $this->orderService->initializePayment(
                 $order,
                 $request->ip() ?? '127.0.0.1',
@@ -30,6 +54,12 @@ class IyzicoPaymentController extends Controller
                 'conversation_id' => $initialization->conversationId,
             ]);
         } catch (\Throwable $exception) {
+            Log::error('Payment init API failed', [
+                'order_id' => $order->id,
+                'direct' => (bool) config('iyzico.direct'),
+                'error' => $exception->getMessage(),
+            ]);
+
             return response()->json([
                 'message' => $exception->getMessage(),
             ], 422);

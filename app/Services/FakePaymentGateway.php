@@ -27,6 +27,14 @@ class FakePaymentGateway implements PaymentGateway
         );
     }
 
+    public function chargeDirectly(Order $order, string $buyerIp): PaymentRetrievalResult
+    {
+        return new PaymentRetrievalResult(
+            successful: true,
+            paymentId: 'fake-direct-'.Str::uuid(),
+        );
+    }
+
     public function retrieve(string $token): PaymentRetrievalResult
     {
         $successful = $this->tokenOutcomes[$token] ?? false;
