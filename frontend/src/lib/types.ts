@@ -95,6 +95,13 @@ export type Address = {
   full_address: string;
 };
 
+export type PaymentProviderOption = {
+  id: "iyzico" | "stripe";
+  label: string;
+  supports_direct: boolean;
+  supports_installments: boolean;
+};
+
 export type InstallmentOption = {
   number: number;
   label: string;
@@ -108,10 +115,13 @@ export type Order = {
   paid_price?: number | null;
   installment?: number;
   iyzico_payment_id?: string | null;
+  stripe_checkout_session_id?: string | null;
+  stripe_payment_intent_id?: string | null;
   status: string;
   status_label: string;
   payment_status: string;
   payment_status_label: string;
+  payment_provider?: string | null;
   created_at: string | null;
   address?: Address | null;
   items?: Array<{

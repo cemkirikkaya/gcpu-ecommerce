@@ -2,9 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Contracts\PaymentGateway;
+use App\Enums\PaymentProvider;
 use App\Models\Order;
 use App\Services\OrderService;
+use App\Services\PaymentGatewayFactory;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -13,7 +14,7 @@ class IyzicoPaymentController extends Controller
 {
     public function __construct(
         private OrderService $orderService,
-        private PaymentGateway $paymentGateway,
+        private PaymentGatewayFactory $gatewayFactory,
     ) {}
 
     public function initialize(Order $order): RedirectResponse
@@ -23,6 +24,7 @@ class IyzicoPaymentController extends Controller
         $initialization = $this->orderService->initializePayment(
             $order,
             request()->ip() ?? '127.0.0.1',
+            PaymentProvider::Iyzico,
         );
 
         return redirect()->away($initialization->paymentPageUrl);
@@ -52,7 +54,9 @@ class IyzicoPaymentController extends Controller
             return $this->redirectToFrontend(null, 'error');
         }
 
-        $result = $this->paymentGateway->retrieve($token);
+        $result = $this->gatewayFactory
+            ->make(PaymentProvider::Iyzico)
+            ->retrieve($token);
 
         if ($result->successful) {
             $this->orderService->completePayment(

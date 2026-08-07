@@ -2,9 +2,9 @@
 
 namespace App\Services;
 
-use App\Contracts\PaymentGateway;
 use App\DataTransferObjects\InstallmentOption;
 use App\DataTransferObjects\PaymentInitializationResult;
+use App\Enums\PaymentProvider;
 use App\Enums\PaymentStatus;
 use App\Models\Order;
 use App\Models\User;
@@ -16,7 +16,7 @@ class OrderService
 {
     public function __construct(
         private OrderRepository $repository,
-        private PaymentGateway $paymentGateway,
+        private PaymentGatewayFactory $gatewayFactory,
     ) {}
 
     public function checkout(User $user, ?int $addressId = null): Order
@@ -24,31 +24,37 @@ class OrderService
         return $this->repository->checkout($user, $addressId);
     }
 
-    public function initializePayment(Order $order, string $buyerIp): PaymentInitializationResult
-    {
+    public function initializePayment(
+        Order $order,
+        string $buyerIp,
+        PaymentProvider $provider,
+    ): PaymentInitializationResult {
         if (! in_array($order->payment_status, [PaymentStatus::Pending, PaymentStatus::Failed], true)) {
             throw new RuntimeException('Bu sipariş için ödeme başlatılamaz.');
         }
 
         Log::info('Payment checkout session starting', [
             'order_id' => $order->id,
+            'provider' => $provider->value,
             'payment_status' => $order->payment_status->value,
             'total_price' => $order->total_price,
             'buyer_ip' => $buyerIp,
             'mode' => 'checkout_form',
         ]);
 
-        $initialization = $this->paymentGateway->initialize($order, $buyerIp);
+        $initialization = $this->gatewayFactory->make($provider)->initialize($order, $buyerIp);
 
         $this->repository->storePaymentSession(
             $order,
+            $provider,
             $initialization->token,
             $initialization->conversationId,
         );
 
         Log::info('Payment checkout session initialized', [
             'order_id' => $order->id,
-            'conversation_id' => $initialization->conversationId,
+            'provider' => $provider->value,
+            'reference' => $initialization->conversationId,
             'token' => $initialization->token,
         ]);
 
@@ -70,7 +76,9 @@ class OrderService
             'mode' => 'direct',
         ]);
 
-        $result = $this->paymentGateway->chargeDirectly($order, $buyerIp, $installment);
+        $result = $this->gatewayFactory
+            ->make(PaymentProvider::Iyzico)
+            ->chargeDirectly($order, $buyerIp, $installment);
 
         if (! $result->successful) {
             Log::warning('Payment direct charge failed', [
@@ -110,7 +118,9 @@ class OrderService
             throw new RuntimeException('Taksit seçenekleri için kart BIN bilgisi tanımlı değil.');
         }
 
-        return $this->paymentGateway->getInstallmentOptions($price, $binNumber);
+        return $this->gatewayFactory
+            ->make(PaymentProvider::Iyzico)
+            ->getInstallmentOptions($price, $binNumber);
     }
 
     public function completePayment(

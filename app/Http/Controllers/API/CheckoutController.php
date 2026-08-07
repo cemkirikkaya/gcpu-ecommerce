@@ -10,6 +10,7 @@ use App\Http\Resources\Api\OrderResource;
 use App\Models\Address;
 use App\Services\CartService;
 use App\Services\OrderService;
+use App\Support\PaymentProviderCatalog;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 
@@ -37,6 +38,7 @@ class CheckoutController extends Controller
             'addresses' => AddressResource::collection($addresses),
             'reservation_minutes' => config('shop.reservation_minutes'),
             'direct_payment' => (bool) config('iyzico.direct'),
+            'payment_providers' => PaymentProviderCatalog::available(),
         ]);
     }
 

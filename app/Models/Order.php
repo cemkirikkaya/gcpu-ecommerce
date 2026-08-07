@@ -27,6 +27,8 @@ class Order extends Model
         'installment',
         'paid_price',
         'iyzico_conversation_id',
+        'stripe_checkout_session_id',
+        'stripe_payment_intent_id',
         'paid_at',
     ];
 
@@ -48,6 +50,19 @@ class Order extends Model
             'payment_status' => PaymentStatus::class,
             'paid_at' => 'datetime',
         ];
+    }
+
+    public function paymentProvider(): ?string
+    {
+        if ($this->stripe_checkout_session_id !== null) {
+            return 'stripe';
+        }
+
+        if ($this->iyzico_token !== null || $this->iyzico_payment_id !== null) {
+            return 'iyzico';
+        }
+
+        return null;
     }
 
     public function cart(): BelongsTo

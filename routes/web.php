@@ -7,6 +7,7 @@ use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\IyzicoPaymentController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\StripePaymentController;
 use Illuminate\Support\Facades\Route;
 
 Route::redirect('/', '/products');
@@ -43,3 +44,9 @@ Route::post('/payment/iyzico/callback', [IyzicoPaymentController::class, 'callba
 
 Route::get('/payment/iyzico/fake/{token}', [IyzicoPaymentController::class, 'fake'])
     ->name('payment.iyzico.fake');
+
+Route::post('/payment/stripe/webhook', [StripePaymentController::class, 'webhook'])
+    ->name('payment.stripe.webhook');
+
+Route::get('/payment/stripe/fake/{sessionId}', [StripePaymentController::class, 'fake'])
+    ->name('payment.stripe.fake');

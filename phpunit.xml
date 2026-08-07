@@ -34,5 +34,7 @@
         <env name="NIGHTWATCH_ENABLED" value="false"/>
         <env name="IYZICO_FAKE" value="true"/>
         <env name="IYZICO_DIRECT" value="false"/>
+        <env name="STRIPE_FAKE" value="true"/>
+        <env name="STRIPE_ENABLED" value="true"/>
     </php>
 </phpunit>

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Enums\PaymentProvider;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Payment\InitIyzicoPaymentRequest;
 use App\Models\Order;
@@ -48,6 +49,7 @@ class IyzicoPaymentController extends Controller
             $initialization = $this->orderService->initializePayment(
                 $order,
                 $request->ip() ?? '127.0.0.1',
+                PaymentProvider::Iyzico,
             );
 
             return response()->json([

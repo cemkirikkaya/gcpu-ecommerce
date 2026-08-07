@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use App\Enums\OrderStatus;
+use App\Enums\PaymentProvider;
 use App\Enums\PaymentStatus;
 use App\Models\Address;
 use App\Models\CartItem;
@@ -119,10 +120,14 @@ class OrderRepository
 
             $order->cart?->items()->delete();
 
+            $paymentIdFields = $order->stripe_checkout_session_id !== null
+                ? ['stripe_payment_intent_id' => $paymentId]
+                : ['iyzico_payment_id' => $paymentId];
+
             $order->update([
                 'payment_status' => PaymentStatus::Paid,
                 'status' => OrderStatus::Processing,
-                'iyzico_payment_id' => $paymentId,
+                ...$paymentIdFields,
                 'installment' => $installment ?? 1,
                 'paid_price' => $paidPrice ?? $order->total_price,
                 'paid_at' => now(),
@@ -147,14 +152,24 @@ class OrderRepository
 
     public function storePaymentSession(
         Order $order,
+        PaymentProvider $provider,
         string $token,
-        string $conversationId,
+        string $reference,
     ): Order {
-        $order->update([
-            'iyzico_token' => $token,
-            'iyzico_conversation_id' => $conversationId,
+        $data = [
             'payment_status' => PaymentStatus::Pending,
-        ]);
+        ];
+
+        if ($provider === PaymentProvider::Iyzico) {
+            $data['iyzico_token'] = $token;
+            $data['iyzico_conversation_id'] = $reference;
+        }
+
+        if ($provider === PaymentProvider::Stripe) {
+            $data['stripe_checkout_session_id'] = $token;
+        }
+
+        $order->update($data);
 
         return $order->fresh(['items.cartItem.productVariant.product', 'address', 'cart.user']);
     }

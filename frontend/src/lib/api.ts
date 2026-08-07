@@ -12,6 +12,7 @@ import type {
   CatalogVariantInput,
   InstallmentOption,
   Order,
+  PaymentProviderOption,
   Product,
   User,
 } from "./types";
@@ -134,6 +135,7 @@ export const api = {
       addresses: Address[];
       reservation_minutes: number;
       direct_payment: boolean;
+      payment_providers: PaymentProviderOption[];
     }>("/checkout", {}, token),
 
   checkoutInstallments: (token: string) =>
@@ -161,6 +163,15 @@ export const api = {
     }>(`/orders/${orderId}/payments/iyzico/init`, {
       method: "POST",
       body: JSON.stringify({ installment }),
+    }, token),
+
+  initStripePayment: (token: string, orderId: number) =>
+    request<{
+      token: string;
+      payment_page_url: string;
+      session_id: string;
+    }>(`/orders/${orderId}/payments/stripe/init`, {
+      method: "POST",
     }, token),
 
   order: (token: string, orderId: number) =>

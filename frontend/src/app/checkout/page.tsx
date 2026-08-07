@@ -5,7 +5,7 @@ import { FormEvent, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/auth-context";
 import { api, formatPrice } from "@/lib/api";
-import type { Address, Cart, InstallmentOption } from "@/lib/types";
+import type { Address, Cart, InstallmentOption, PaymentProviderOption } from "@/lib/types";
 
 export default function CheckoutPage() {
   const { token, loading: authLoading } = useAuth();
@@ -16,6 +16,8 @@ export default function CheckoutPage() {
   const [loadedForToken, setLoadedForToken] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [directPayment, setDirectPayment] = useState(false);
+  const [paymentProviders, setPaymentProviders] = useState<PaymentProviderOption[]>([]);
+  const [selectedProvider, setSelectedProvider] = useState<PaymentProviderOption["id"]>("iyzico");
   const [installments, setInstallments] = useState<InstallmentOption[]>([]);
   const [selectedInstallment, setSelectedInstallment] = useState(1);
 
@@ -30,28 +32,44 @@ export default function CheckoutPage() {
         setCart(preview.cart);
         setAddresses(preview.addresses);
         setDirectPayment(preview.direct_payment);
+        setPaymentProviders(preview.payment_providers);
+        setSelectedProvider(preview.payment_providers[0]?.id ?? "iyzico");
+
         if (preview.addresses.length > 0) {
           const defaultAddress =
             preview.addresses.find((address) => address.is_default) ??
             preview.addresses[0];
           setAddressId(defaultAddress.id);
         }
-
-        if (!preview.direct_payment) {
-          setInstallments([]);
-          setSelectedInstallment(1);
-
-          return;
-        }
-
-        return api.checkoutInstallments(token).then((installmentData) => {
-          setInstallments(installmentData.installments);
-          setSelectedInstallment(installmentData.installments[0]?.number ?? 1);
-        });
       })
       .catch((error) => setMessage(error.message))
       .finally(() => setLoadedForToken(token));
   }, [token, authLoading]);
+
+  const selectedProviderOption = paymentProviders.find(
+    (provider) => provider.id === selectedProvider,
+  );
+  const showInstallments =
+    selectedProvider === "iyzico" &&
+    Boolean(selectedProviderOption?.supports_installments) &&
+    directPayment;
+
+  useEffect(() => {
+    if (!token || !showInstallments) {
+      setInstallments([]);
+      setSelectedInstallment(1);
+
+      return;
+    }
+
+    api
+      .checkoutInstallments(token)
+      .then((installmentData) => {
+        setInstallments(installmentData.installments);
+        setSelectedInstallment(installmentData.installments[0]?.number ?? 1);
+      })
+      .catch((error) => setMessage(error.message));
+  }, [token, showInstallments]);
 
   const loading = authLoading || (Boolean(token) && loadedForToken !== token);
 
@@ -84,12 +102,20 @@ export default function CheckoutPage() {
 
     try {
       const response = await api.checkout(token, payload);
+
+      if (selectedProvider === "stripe") {
+        const payment = await api.initStripePayment(token, response.order.id);
+        window.location.href = payment.payment_page_url;
+
+        return;
+      }
+
       const payment = await api.initIyzicoPayment(
         token,
         response.order.id,
         selectedInstallment,
       );
-      //window.location.href = payment.payment_page_url;
+
       if (payment.redirect_url) {
         window.location.href = payment.redirect_url;
       } else if (payment.payment_page_url) {
@@ -186,6 +212,38 @@ export default function CheckoutPage() {
               </div>
             </section>
           )}
+
+          {paymentProviders.length > 0 && (
+            <section className="rounded-[2rem] border border-line bg-surface p-8">
+              <h2 className="font-display text-2xl">Ödeme Yöntemi</h2>
+              <div className="mt-6 space-y-3">
+                {paymentProviders.map((provider) => (
+                  <label
+                    key={provider.id}
+                    className="flex cursor-pointer gap-4 rounded-[1.5rem] border border-line p-4 transition hover:border-accent/40"
+                  >
+                    <input
+                      type="radio"
+                      name="payment_provider"
+                      checked={selectedProvider === provider.id}
+                      onChange={() => setSelectedProvider(provider.id)}
+                      className="mt-1"
+                    />
+                    <span>
+                      <span className="block font-medium">{provider.label}</span>
+                      <span className="mt-1 block text-sm text-muted">
+                        {provider.id === "stripe"
+                          ? "Kart bilgilerinizi güvenli Stripe Checkout ekranında gireceksiniz."
+                          : provider.supports_direct
+                            ? "Sunucu tarafı test ödemesi"
+                            : "Iyzico ödeme sayfasına yönlendirilirsiniz."}
+                      </span>
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </section>
+          )}
         </div>
 
         <aside className="h-fit rounded-[2rem] border border-line bg-surface p-8">
@@ -198,7 +256,7 @@ export default function CheckoutPage() {
               </li>
             ))}
           </ul>
-          {directPayment && installments.length > 0 && (
+          {showInstallments && installments.length > 0 && (
             <section className="mt-6 border-t border-line pt-4">
               <h3 className="font-medium">Taksit Seçenekleri</h3>
               <div className="mt-3 space-y-2">
@@ -227,7 +285,7 @@ export default function CheckoutPage() {
             </section>
           )}
           <div className="mt-6 flex justify-between border-t border-line pt-4">
-            <span>{directPayment && installments.length > 0 ? "Ödenecek tutar" : "Toplam"}</span>
+            <span>{showInstallments && installments.length > 0 ? "Ödenecek tutar" : "Toplam"}</span>
             <span className="text-right">
               {hasInstallmentMarkup && (
                 <span className="block text-sm text-muted line-through">

@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\CatalogController;
 use App\Http\Controllers\Api\CheckoutController;
 use App\Http\Controllers\Api\IyzicoPaymentController;
 use App\Http\Controllers\Api\OrderController;
+use App\Http\Controllers\Api\StripePaymentController as ApiStripePaymentController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/catalog', [CatalogController::class, 'index']);
@@ -35,6 +36,7 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::get('/orders', [OrderController::class, 'index']);
     Route::get('/orders/{order}', [OrderController::class, 'show']);
     Route::post('/orders/{order}/payments/iyzico/init', [IyzicoPaymentController::class, 'initialize']);
+    Route::post('/orders/{order}/payments/stripe/init', [ApiStripePaymentController::class, 'initialize']);
 
     Route::middleware('admin')->prefix('admin')->group(function (): void {
         Route::get('/summary', AdminSummaryController::class);

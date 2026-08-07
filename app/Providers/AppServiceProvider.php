@@ -3,8 +3,12 @@
 namespace App\Providers;
 
 use App\Contracts\PaymentGateway;
+use App\Enums\PaymentProvider;
 use App\Services\FakePaymentGateway;
+use App\Services\FakeStripePaymentGateway;
 use App\Services\IyzicoPaymentGateway;
+use App\Services\PaymentGatewayFactory;
+use App\Services\StripePaymentGateway;
 use App\View\Composers\ShopLayoutComposer;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\View;
@@ -17,12 +21,14 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        $this->app->singleton(PaymentGateway::class, function (): PaymentGateway {
-            if (config('iyzico.fake')) {
-                return new FakePaymentGateway;
-            }
+        $this->app->singleton(FakePaymentGateway::class);
+        $this->app->singleton(FakeStripePaymentGateway::class);
+        $this->app->singleton(IyzicoPaymentGateway::class);
+        $this->app->singleton(StripePaymentGateway::class);
+        $this->app->singleton(PaymentGatewayFactory::class);
 
-            return new IyzicoPaymentGateway;
+        $this->app->singleton(PaymentGateway::class, function ($app): PaymentGateway {
+            return $app->make(PaymentGatewayFactory::class)->make(PaymentProvider::Iyzico);
         });
     }
 
