@@ -3,15 +3,17 @@
 import { useEffect, useState } from "react";
 
 import { OrderStatusBadge } from "@/components/orders/order-status-badge";
+import { OrderPaymentRetry } from "@/components/orders/order-payment-retry";
 import { ButtonLink } from "@/components/ui/button";
 import { useAuth } from "@/context/auth-context";
 import { api, formatOrderDate, formatPrice } from "@/lib/api";
-import type { Order } from "@/lib/types";
+import type { Order, PaymentOptions } from "@/lib/types";
 
 export function OrderDetailClient({ orderId }: { orderId: string }) {
   const parsedOrderId = Number(orderId);
   const { token, loading: authLoading } = useAuth();
   const [order, setOrder] = useState<Order | null>(null);
+  const [paymentOptions, setPaymentOptions] = useState<PaymentOptions | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
 
@@ -37,13 +39,15 @@ export function OrderDetailClient({ orderId }: { orderId: string }) {
     let cancelled = false;
     setReady(false);
     setOrder(null);
+    setPaymentOptions(null);
     setMessage(null);
 
     api
       .order(token, parsedOrderId)
       .then((data) => {
         if (!cancelled) {
-          setOrder(data);
+          setOrder(data.order);
+          setPaymentOptions(data.payment_options ?? null);
           setMessage(null);
         }
       })
@@ -127,6 +131,17 @@ export function OrderDetailClient({ orderId }: { orderId: string }) {
           ))}
         </ul>
       </div>
+
+      {paymentOptions && token && (
+        <OrderPaymentRetry
+          token={token}
+          orderId={order.id}
+          paymentOptions={paymentOptions}
+          onError={setMessage}
+        />
+      )}
+
+      {message && <p className="mt-4 text-sm text-red-600">{message}</p>}
 
       <div className="mt-8 flex flex-wrap gap-3">
         <ButtonLink href="/orders">Siparişlerim</ButtonLink>

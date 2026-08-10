@@ -38,6 +38,7 @@ Route::middleware('auth:sanctum')->group(function (): void {
 
     Route::get('/orders', [OrderController::class, 'index']);
     Route::get('/orders/{order}', [OrderController::class, 'show']);
+    Route::get('/orders/{order}/installments', [OrderController::class, 'installments']);
     Route::post('/orders/{order}/payments/iyzico/init', [IyzicoPaymentController::class, 'initialize']);
     Route::post('/orders/{order}/payments/stripe/init', [ApiStripePaymentController::class, 'initialize']);
 

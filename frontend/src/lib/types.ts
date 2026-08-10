@@ -136,6 +136,16 @@ export type InstallmentOption = {
   total_price: string;
 };
 
+export type PaymentOptions = {
+  direct_payment: boolean;
+  payment_providers: PaymentProviderOption[];
+};
+
+export type OrderDetailResponse = {
+  order: Order;
+  payment_options?: PaymentOptions;
+};
+
 export type Order = {
   id: number;
   total_price: number;

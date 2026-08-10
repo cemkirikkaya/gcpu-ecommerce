@@ -12,6 +12,7 @@ import type {
   CatalogVariantInput,
   InstallmentOption,
   Order,
+  OrderDetailResponse,
   PaymentProviderOption,
   Product,
   ProductListParams,
@@ -197,7 +198,14 @@ export const api = {
     }, token),
 
   order: (token: string, orderId: number) =>
-    request<{ order: Order }>(`/orders/${orderId}`, {}, token).then((r) => r.order),
+    request<OrderDetailResponse>(`/orders/${orderId}`, {}, token),
+
+  orderInstallments: (token: string, orderId: number) =>
+    request<{ installments: InstallmentOption[]; direct_payment: boolean }>(
+      `/orders/${orderId}/installments`,
+      {},
+      token,
+    ),
 
   orders: (token: string) =>
     request<{ orders: Order[] }>("/orders", {}, token).then((r) => r.orders),
