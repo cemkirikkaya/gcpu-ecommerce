@@ -5,13 +5,14 @@ import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
+import { GoogleSignInButton } from "@/components/auth/google-sign-in-button";
 import { useAuth } from "@/context/auth-context";
 import { getHomePathForUser } from "@/lib/auth";
 import type { AccountType } from "@/lib/types";
 
 export default function RegisterPage() {
   const router = useRouter();
-  const { register } = useAuth();
+  const { register, loginWithGoogle } = useAuth();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [accountType, setAccountType] = useState<AccountType>("customer");
@@ -114,6 +115,32 @@ export default function RegisterPage() {
             {loading ? "Kaydediliyor..." : "Kayıt Ol"}
           </Button>
         </form>
+
+        {accountType === "customer" && (
+          <>
+            <div className="my-6 flex items-center gap-4">
+              <div className="h-px flex-1 bg-line" />
+              <span className="text-xs uppercase tracking-[0.2em] text-muted">veya</span>
+              <div className="h-px flex-1 bg-line" />
+            </div>
+
+            <GoogleSignInButton
+              disabled={loading}
+              onError={setError}
+              onSuccess={async (idToken) => {
+                setLoading(true);
+                setError(null);
+                try {
+                  const user = await loginWithGoogle(idToken);
+                  router.push(getHomePathForUser(user));
+                } finally {
+                  setLoading(false);
+                }
+              }}
+            />
+          </>
+        )}
+
         <p className="mt-6 text-center text-sm text-muted">
           Zaten hesabınız var mı?{" "}
           <Link href="/login" className="text-accent hover:underline">

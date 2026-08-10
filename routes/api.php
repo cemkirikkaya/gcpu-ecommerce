@@ -19,6 +19,7 @@ Route::get('/products/{product}', [CatalogController::class, 'show']);
 
 Route::post('/auth/register', [AuthController::class, 'register']);
 Route::post('/auth/login', [AuthController::class, 'login']);
+Route::post('/auth/google', [AuthController::class, 'google']);
 
 Route::middleware('auth:sanctum')->group(function (): void {
     Route::get('/auth/me', [AuthController::class, 'me']);

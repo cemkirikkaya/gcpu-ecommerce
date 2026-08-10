@@ -96,6 +96,12 @@ export const api = {
   login: (payload: { email: string; password: string }) =>
     request<AuthResponse>("/auth/login", { method: "POST", body: JSON.stringify(payload) }),
 
+  loginWithGoogle: (idToken: string) =>
+    request<AuthResponse>("/auth/google", {
+      method: "POST",
+      body: JSON.stringify({ id_token: idToken }),
+    }),
+
   logout: (token: string) =>
     request<{ message: string }>("/auth/logout", { method: "POST" }, token),
 

@@ -5,12 +5,13 @@ import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
+import { GoogleSignInButton } from "@/components/auth/google-sign-in-button";
 import { useAuth } from "@/context/auth-context";
 import { getHomePathForUser } from "@/lib/auth";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login } = useAuth();
+  const { login, loginWithGoogle } = useAuth();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -59,6 +60,28 @@ export default function LoginPage() {
             {loading ? "Giriş yapılıyor..." : "Giriş Yap"}
           </Button>
         </form>
+
+        <div className="my-6 flex items-center gap-4">
+          <div className="h-px flex-1 bg-line" />
+          <span className="text-xs uppercase tracking-[0.2em] text-muted">veya</span>
+          <div className="h-px flex-1 bg-line" />
+        </div>
+
+        <GoogleSignInButton
+          disabled={loading}
+          onError={setError}
+          onSuccess={async (idToken) => {
+            setLoading(true);
+            setError(null);
+            try {
+              const user = await loginWithGoogle(idToken);
+              router.push(getHomePathForUser(user));
+            } finally {
+              setLoading(false);
+            }
+          }}
+        />
+
         <p className="mt-6 text-center text-sm text-muted">
           Hesabınız yok mu?{" "}
           <Link href="/register" className="text-accent hover:underline">

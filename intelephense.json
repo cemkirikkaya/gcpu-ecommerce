@@ -3,6 +3,8 @@
     "includePaths": [
       ".vscode/phpstorm-stubs",
       "vendor/laravel/framework/src",
+      "vendor/laravel/socialite/src",
+      "vendor/mockery/mockery/library",
       "vendor/iyzico/iyzipay-php/src"
     ],
     "phpVersion": "8.5.0"

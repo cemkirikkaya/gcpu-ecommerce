@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Cormorant_Garamond, DM_Sans } from "next/font/google";
 
 import { AuthProvider } from "@/context/auth-context";
+import { GoogleAuthProvider } from "@/components/auth/google-auth-provider";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { SiteHeader } from "@/components/layout/site-header";
 
@@ -34,11 +35,13 @@ export default function RootLayout({
   return (
     <html lang="tr" className={`${dmSans.variable} ${cormorant.variable} h-full`}>
       <body className="min-h-full bg-background text-foreground antialiased">
-        <AuthProvider>
-          <SiteHeader />
-          <main className="flex-1">{children}</main>
-          <SiteFooter />
-        </AuthProvider>
+        <GoogleAuthProvider>
+          <AuthProvider>
+            <SiteHeader />
+            <main className="flex-1">{children}</main>
+            <SiteFooter />
+          </AuthProvider>
+        </GoogleAuthProvider>
       </body>
     </html>
   );

@@ -6,6 +6,7 @@ use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Api\UserResource;
 use App\Models\User;
+use App\Services\GoogleAuthService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -13,6 +14,8 @@ use Illuminate\Validation\Rules\Password;
 
 class AuthController extends Controller
 {
+    public function __construct(private GoogleAuthService $googleAuth) {}
+
     public function register(Request $request): JsonResponse
     {
         $validated = $request->validate([
@@ -92,6 +95,38 @@ class AuthController extends Controller
     {
         return response()->json([
             'user' => new UserResource($request->user()),
+        ]);
+    }
+
+    public function google(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'id_token' => ['required', 'string'],
+        ], [
+            'id_token.required' => 'Google kimlik doğrulama bilgisi eksik.',
+        ]);
+
+        try {
+            $googleUser = $this->googleAuth->verifyIdToken($validated['id_token']);
+        } catch (\Exception) {
+            return response()->json([
+                'message' => 'Google ile giriş doğrulanamadı.',
+            ], 422);
+        }
+
+        if (! $googleUser->email) {
+            return response()->json([
+                'message' => 'Google hesabınızda e-posta adresi bulunamadı.',
+            ], 422);
+        }
+
+        $user = $this->googleAuth->authenticate($googleUser);
+
+        $token = $user->createToken('frontend')->plainTextToken;
+
+        return response()->json([
+            'user' => new UserResource($user),
+            'token' => $token,
         ]);
     }
 }

@@ -35,6 +35,7 @@ services:
             NEXT_PUBLIC_API_URL: '${NEXT_PUBLIC_API_URL:-http://localhost/api}'
             API_INTERNAL_URL: 'http://laravel.test/api'
             NEXT_PUBLIC_APP_URL: '${FRONTEND_URL:-http://localhost:3000}'
+            NEXT_PUBLIC_GOOGLE_CLIENT_ID: '${NEXT_PUBLIC_GOOGLE_CLIENT_ID:-}'
             WATCHPACK_POLLING: 'true'
         volumes:
             - './frontend:/app'
