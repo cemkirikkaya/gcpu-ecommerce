@@ -61,6 +61,33 @@ export type Catalog = {
   uncategorized: Product[];
 };
 
+export type CatalogCategoryOption = {
+  id: number;
+  name: string;
+  slug: string;
+};
+
+export type ProductListResponse = {
+  products: Product[];
+  categories: CatalogCategoryOption[];
+  meta: {
+    current_page: number;
+    last_page: number;
+    per_page: number;
+    total: number;
+  };
+};
+
+export type ProductListParams = {
+  search?: string;
+  category?: string;
+  min_price?: number;
+  max_price?: number;
+  sort?: "latest" | "price_asc" | "price_desc" | "name_asc";
+  page?: number;
+  per_page?: number;
+};
+
 export type CartItem = {
   id: number;
   quantity: number;

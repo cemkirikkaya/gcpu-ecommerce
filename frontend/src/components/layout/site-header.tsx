@@ -72,6 +72,12 @@ export function SiteHeader() {
                     Siparişlerim
                   </Link>
                   <Link
+                    href="/addresses"
+                    className="rounded-full px-4 py-2 text-stone-700 transition hover:bg-accent-soft/70"
+                  >
+                    Adreslerim
+                  </Link>
+                  <Link
                     href="/cart"
                     className="relative rounded-full px-4 py-2 text-stone-700 transition hover:bg-accent-soft/70"
                   >

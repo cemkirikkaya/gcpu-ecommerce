@@ -40,4 +40,9 @@ class OrderPolicy
     {
         return app(AdminOrderService::class)->canViewOrder($user, $order);
     }
+
+    public function adminUpdate(User $user, Order $order): bool
+    {
+        return $user->isAdmin();
+    }
 }

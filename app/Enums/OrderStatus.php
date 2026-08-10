@@ -20,4 +20,18 @@ enum OrderStatus: string
             self::Cancelled => 'İptal Edildi',
         };
     }
+
+    public function canTransitionTo(self $status): bool
+    {
+        if ($this === $status) {
+            return true;
+        }
+
+        return match ($this) {
+            self::Pending => in_array($status, [self::Processing, self::Cancelled], true),
+            self::Processing => in_array($status, [self::Shipped, self::Cancelled], true),
+            self::Shipped => $status === self::Delivered,
+            self::Delivered, self::Cancelled => false,
+        };
+    }
 }

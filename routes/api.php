@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\AddressController;
 use App\Http\Controllers\Api\Admin\CategoryController as AdminCategoryController;
 use App\Http\Controllers\Api\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Api\Admin\ProductController as AdminProductController;
@@ -15,6 +16,7 @@ use App\Http\Controllers\Api\StripePaymentController as ApiStripePaymentControll
 use Illuminate\Support\Facades\Route;
 
 Route::get('/catalog', [CatalogController::class, 'index']);
+Route::get('/products', [CatalogController::class, 'products']);
 Route::get('/products/{product}', [CatalogController::class, 'show']);
 
 Route::post('/auth/register', [AuthController::class, 'register']);
@@ -39,11 +41,18 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::post('/orders/{order}/payments/iyzico/init', [IyzicoPaymentController::class, 'initialize']);
     Route::post('/orders/{order}/payments/stripe/init', [ApiStripePaymentController::class, 'initialize']);
 
+    Route::get('/addresses', [AddressController::class, 'index']);
+    Route::post('/addresses', [AddressController::class, 'store']);
+    Route::put('/addresses/{address}', [AddressController::class, 'update']);
+    Route::delete('/addresses/{address}', [AddressController::class, 'destroy']);
+    Route::patch('/addresses/{address}/default', [AddressController::class, 'setDefault']);
+
     Route::middleware('admin')->prefix('admin')->group(function (): void {
         Route::get('/summary', AdminSummaryController::class);
         Route::get('/categories', [AdminCategoryController::class, 'index']);
         Route::get('/orders', [AdminOrderController::class, 'index']);
         Route::get('/orders/{order}', [AdminOrderController::class, 'show']);
+        Route::patch('/orders/{order}', [AdminOrderController::class, 'update']);
         Route::get('/products', [AdminProductController::class, 'index']);
         Route::post('/products', [AdminProductController::class, 'store']);
         Route::get('/products/{product}', [AdminProductController::class, 'show']);

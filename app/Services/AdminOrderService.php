@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
 use App\Models\Order;
 use App\Models\OrderItem;
@@ -9,6 +10,7 @@ use App\Models\Product;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
+use InvalidArgumentException;
 
 class AdminOrderService
 {
@@ -59,6 +61,22 @@ class AdminOrderService
         }
 
         return $this->itemsForUser($order, $user)->isNotEmpty();
+    }
+
+    public function updateStatus(Order $order, OrderStatus $status): Order
+    {
+        if (! $order->status->canTransitionTo($status)) {
+            throw new InvalidArgumentException('Bu sipariş durumu güncellenemez.');
+        }
+
+        if (in_array($status, [OrderStatus::Shipped, OrderStatus::Delivered], true)
+            && $order->payment_status !== PaymentStatus::Paid) {
+            throw new InvalidArgumentException('Ödenmemiş sipariş kargoya verilemez.');
+        }
+
+        $order->update(['status' => $status]);
+
+        return $order->fresh();
     }
 
     public function vendorSubtotal(Collection $items): float

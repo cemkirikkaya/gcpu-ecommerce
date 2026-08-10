@@ -2,13 +2,16 @@
 
 namespace App\Http\Controllers\Api\Admin;
 
+use App\Enums\OrderStatus;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\UpdateOrderStatusRequest;
 use App\Http\Resources\Api\AdminOrderResource;
 use App\Models\Order;
 use App\Models\User;
 use App\Services\AdminOrderService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use InvalidArgumentException;
 
 class OrderController extends Controller
 {
@@ -64,6 +67,41 @@ class OrderController extends Controller
                 $this->adminOrderService->itemsForUser($order, $user),
                 (float) $order->getRawOriginal('total_price'),
             ),
+        ]);
+    }
+
+    public function update(UpdateOrderStatusRequest $request, Order $order): JsonResponse
+    {
+        $this->authorize('adminUpdate', $order);
+
+        /** @var User $user */
+        $user = $request->user();
+
+        try {
+            $order = $this->adminOrderService->updateStatus(
+                $order,
+                $request->enum('status', OrderStatus::class),
+            );
+        } catch (InvalidArgumentException $exception) {
+            return response()->json([
+                'message' => $exception->getMessage(),
+            ], 422);
+        }
+
+        $order->load([
+            'address',
+            'items.cartItem.productVariant.product.vendor',
+            'items.cartItem.productVariant.variantValues.variantValue.variant',
+        ]);
+
+        return response()->json([
+            'order' => AdminOrderResource::forUser(
+                $order,
+                $user,
+                $this->adminOrderService->itemsForUser($order, $user),
+                (float) $order->getRawOriginal('total_price'),
+            ),
+            'message' => 'Sipariş durumu güncellendi.',
         ]);
     }
 }

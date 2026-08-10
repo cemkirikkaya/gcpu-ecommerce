@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Catalog\ListProductsRequest;
 use App\Http\Resources\Api\CategoryResource;
 use App\Http\Resources\Api\ProductResource;
+use App\Models\Category;
 use App\Models\Product;
 use App\Services\ProductService;
 use Illuminate\Http\JsonResponse;
@@ -25,6 +27,31 @@ class CatalogController extends Controller
             'reservation_minutes' => config('shop.reservation_minutes'),
             'categories' => CategoryResource::collection($categories),
             'uncategorized' => ProductResource::collection($uncategorized),
+        ]);
+    }
+
+    public function products(ListProductsRequest $request): JsonResponse
+    {
+        $products = $this->productService->listFiltered($request->validated());
+
+        $filterCategories = Category::query()
+            ->whereHas('products')
+            ->orderBy('name')
+            ->get(['id', 'name', 'slug']);
+
+        return response()->json([
+            'products' => ProductResource::collection($products->items()),
+            'categories' => $filterCategories->map(fn (Category $category): array => [
+                'id' => $category->id,
+                'name' => $category->name,
+                'slug' => $category->slug,
+            ]),
+            'meta' => [
+                'current_page' => $products->currentPage(),
+                'last_page' => $products->lastPage(),
+                'per_page' => $products->perPage(),
+                'total' => $products->total(),
+            ],
         ]);
     }
 

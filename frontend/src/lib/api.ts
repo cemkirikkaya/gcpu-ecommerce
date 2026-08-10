@@ -14,6 +14,8 @@ import type {
   Order,
   PaymentProviderOption,
   Product,
+  ProductListParams,
+  ProductListResponse,
   User,
 } from "./types";
 
@@ -81,6 +83,20 @@ async function request<T>(
 
 export const api = {
   catalog: () => request<{ data?: never } & Catalog>("/catalog").then((r) => r as Catalog),
+
+  products: (params: ProductListParams = {}) => {
+    const query = new URLSearchParams();
+
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== "") {
+        query.set(key, String(value));
+      }
+    });
+
+    const suffix = query.toString() ? `?${query.toString()}` : "";
+
+    return request<ProductListResponse>(`/products${suffix}`);
+  },
 
   product: (id: number) =>
     request<{ product: Product }>(`/products/${id}`).then((r) => r.product),
@@ -186,6 +202,33 @@ export const api = {
   orders: (token: string) =>
     request<{ orders: Order[] }>("/orders", {}, token).then((r) => r.orders),
 
+  addresses: (token: string) =>
+    request<{ addresses: Address[] }>("/addresses", {}, token).then((r) => r.addresses),
+
+  createAddress: (token: string, payload: Partial<Address>) =>
+    request<{ address: Address; message: string }>(
+      "/addresses",
+      { method: "POST", body: JSON.stringify(payload) },
+      token,
+    ).then((r) => r.address),
+
+  updateAddress: (token: string, addressId: number, payload: Partial<Address>) =>
+    request<{ address: Address; message: string }>(
+      `/addresses/${addressId}`,
+      { method: "PUT", body: JSON.stringify(payload) },
+      token,
+    ).then((r) => r.address),
+
+  deleteAddress: (token: string, addressId: number) =>
+    request<{ message: string }>(`/addresses/${addressId}`, { method: "DELETE" }, token),
+
+  setDefaultAddress: (token: string, addressId: number) =>
+    request<{ address: Address; message: string }>(
+      `/addresses/${addressId}/default`,
+      { method: "PATCH" },
+      token,
+    ).then((r) => r.address),
+
   adminCategories: (token: string) =>
     request<{ categories: AdminCategory[] }>("/admin/categories", {}, token).then(
       (r) => r.categories,
@@ -269,6 +312,13 @@ export const api = {
     request<{ order: AdminOrder }>(`/admin/orders/${orderId}`, {}, token).then(
       (response) => response.order,
     ),
+
+  adminUpdateOrderStatus: (token: string, orderId: number, status: string) =>
+    request<{ order: AdminOrder; message: string }>(
+      `/admin/orders/${orderId}`,
+      { method: "PATCH", body: JSON.stringify({ status }) },
+      token,
+    ).then((response) => response.order),
 };
 
 export function formatPrice(value: number): string {

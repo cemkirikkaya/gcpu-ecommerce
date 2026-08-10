@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Category;
 use App\Models\Product;
 use App\Repositories\ProductRepository;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 
 class ProductService
@@ -33,6 +34,14 @@ class ProductService
     public function getUncategorized(): Collection
     {
         return $this->repository->getUncategorized();
+    }
+
+    /**
+     * @param  array<string, mixed>  $filters
+     */
+    public function listFiltered(array $filters): LengthAwarePaginator
+    {
+        return $this->repository->paginateFiltered($filters);
     }
 
     public function create(array $data): Product
