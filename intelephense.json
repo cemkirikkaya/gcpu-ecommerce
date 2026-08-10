@@ -5,6 +5,7 @@
       "vendor/laravel/framework/src",
       "vendor/laravel/socialite/src",
       "vendor/mockery/mockery/library",
+      "vendor/pestphp/pest/src",
       "vendor/iyzico/iyzipay-php/src"
     ],
     "phpVersion": "8.5.0"
