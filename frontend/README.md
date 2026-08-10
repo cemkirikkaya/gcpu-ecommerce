@@ -2,27 +2,37 @@
 
 Next.js mağaza arayüzü ve admin paneli. Laravel API ile konuşur.
 
+Monorepo kurulumu ve demo hesaplar için kök dizindeki [README](../README.md) dosyasına bakın.
+
 ## Gereksinimler
 
-- Node.js 20+
+- Node.js 20+ (Docker dışında çalıştırırken)
 - Çalışan backend API
 
-## Kurulum
+## Docker ile (önerilen)
+
+Proje kökünden:
+
+```bash
+docker compose up -d
+docker compose exec frontend npm install
+```
+
+Uygulama: http://localhost:3000
+
+Yeni npm paketi eklerken host'ta değil, **frontend container içinde** kurun:
+
+```bash
+docker compose exec frontend npm install <paket-adı>
+docker compose restart frontend
+```
+
+## Docker olmadan
 
 ```bash
 cp .env.local.example .env.local
 npm install
 npm run dev
-```
-
-Uygulama: http://localhost:3000
-
-## Docker ile (monorepo kökünden)
-
-Proje kökündeki `compose.yaml` frontend servisini otomatik başlatır:
-
-```bash
-docker compose up -d
 ```
 
 ## Ortam değişkenleri
@@ -31,8 +41,8 @@ docker compose up -d
 |----------|----------|
 | `NEXT_PUBLIC_API_URL` | Tarayıcının eriştiği API adresi |
 | `NEXT_PUBLIC_APP_URL` | Frontend URL |
-| `API_INTERNAL_URL` | Docker içinden API (SSR) |
+| `NEXT_PUBLIC_MEDIA_URL` | Ürün görselleri için medya kökü |
+| `API_INTERNAL_URL` | Docker/SSR içinden API (`http://laravel.test/api`) |
+| `NEXT_PUBLIC_GOOGLE_CLIENT_ID` | Google ile giriş butonu (boşsa gizlenir) |
 
-## Güvenlik
-
-`.env.local` dosyasını commit etmeyin. Gerçek API adresleri ve gizli anahtarlar yalnızca yerel ortam dosyasında kalmalıdır.
+`.env.local` dosyasını commit etmeyin.
