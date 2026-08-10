@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 
 import { ColorSwatch } from "@/components/catalog/color-swatch";
+import { ProductFavoriteButton } from "@/components/catalog/product-favorite-button";
 import { ProductImage } from "@/components/catalog/product-image";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/auth-context";
@@ -73,30 +74,33 @@ export function ProductCard({ product }: { product: Product }) {
 
   return (
     <article className="group flex h-full flex-col overflow-hidden rounded-[1.75rem] border border-line bg-surface shadow-[0_20px_60px_-40px_rgba(28,25,23,0.35)] transition duration-500 hover:-translate-y-1 hover:shadow-[0_30px_80px_-40px_rgba(28,25,23,0.25)]">
-      <Link
-        href={`/products/${product.id}`}
-        className="relative block aspect-[4/5] overflow-hidden bg-[linear-gradient(145deg,#f3eee8,#faf8f5)]"
-      >
-        {imageSrc ? (
-          <ProductImage
-            src={imageSrc}
-            alt={product.name}
-            className="object-cover opacity-95 transition duration-700 group-hover:scale-[1.03]"
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-          />
-        ) : (
-          <div className="flex h-full items-center justify-center">
-            <span className="font-display text-5xl text-stone-300">
-              {product.name.slice(0, 1)}
-            </span>
-          </div>
-        )}
+      <div className="relative block aspect-[4/5] overflow-hidden bg-[linear-gradient(145deg,#f3eee8,#faf8f5)]">
+        <Link href={`/products/${product.id}`} className="absolute inset-0">
+          {imageSrc ? (
+            <ProductImage
+              src={imageSrc}
+              alt={product.name}
+              className="object-cover opacity-95 transition duration-700 group-hover:scale-[1.03]"
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+            />
+          ) : (
+            <div className="flex h-full items-center justify-center">
+              <span className="font-display text-5xl text-stone-300">
+                {product.name.slice(0, 1)}
+              </span>
+            </div>
+          )}
+        </Link>
         {product.category && (
-          <span className="absolute left-4 top-4 rounded-full border border-line bg-surface/90 px-3 py-1 text-[10px] uppercase tracking-[0.2em] text-muted backdrop-blur">
+          <span className="pointer-events-none absolute left-4 top-4 rounded-full border border-line bg-surface/90 px-3 py-1 text-[10px] uppercase tracking-[0.2em] text-muted backdrop-blur">
             {product.category.name}
           </span>
         )}
-      </Link>
+        <ProductFavoriteButton
+          productId={product.id}
+          className="absolute right-4 top-4 z-10"
+        />
+      </div>
 
       <div className="flex flex-1 flex-col p-5">
         <div className="flex items-start justify-between gap-3">

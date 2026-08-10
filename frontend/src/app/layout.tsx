@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Cormorant_Garamond, DM_Sans } from "next/font/google";
 
 import { AuthProvider } from "@/context/auth-context";
+import { WishlistProvider } from "@/context/wishlist-context";
 import { GoogleAuthProvider } from "@/components/auth/google-auth-provider";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { SiteHeader } from "@/components/layout/site-header";
@@ -37,9 +38,11 @@ export default function RootLayout({
       <body className="min-h-full bg-background text-foreground antialiased">
         <GoogleAuthProvider>
           <AuthProvider>
-            <SiteHeader />
-            <main className="flex-1">{children}</main>
-            <SiteFooter />
+            <WishlistProvider>
+              <SiteHeader />
+              <main className="flex-1">{children}</main>
+              <SiteFooter />
+            </WishlistProvider>
           </AuthProvider>
         </GoogleAuthProvider>
       </body>

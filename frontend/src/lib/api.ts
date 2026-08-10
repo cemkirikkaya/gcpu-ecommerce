@@ -237,6 +237,28 @@ export const api = {
       token,
     ).then((r) => r.address),
 
+  wishlist: (token: string) =>
+    request<{ products: Product[] }>("/wishlist", {}, token).then((r) => r.products),
+
+  wishlistIds: (token: string) =>
+    request<{ product_ids: number[] }>("/wishlist/ids", {}, token).then(
+      (r) => r.product_ids,
+    ),
+
+  addToWishlist: (token: string, productId: number) =>
+    request<{ message: string; product_id: number }>(
+      `/wishlist/products/${productId}`,
+      { method: "POST" },
+      token,
+    ),
+
+  removeFromWishlist: (token: string, productId: number) =>
+    request<{ message: string; product_id: number }>(
+      `/wishlist/products/${productId}`,
+      { method: "DELETE" },
+      token,
+    ),
+
   adminCategories: (token: string) =>
     request<{ categories: AdminCategory[] }>("/admin/categories", {}, token).then(
       (r) => r.categories,

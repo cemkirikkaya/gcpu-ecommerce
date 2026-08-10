@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\CheckoutController;
 use App\Http\Controllers\Api\IyzicoPaymentController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\StripePaymentController as ApiStripePaymentController;
+use App\Http\Controllers\Api\WishlistController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/catalog', [CatalogController::class, 'index']);
@@ -47,6 +48,11 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::put('/addresses/{address}', [AddressController::class, 'update']);
     Route::delete('/addresses/{address}', [AddressController::class, 'destroy']);
     Route::patch('/addresses/{address}/default', [AddressController::class, 'setDefault']);
+
+    Route::get('/wishlist', [WishlistController::class, 'index']);
+    Route::get('/wishlist/ids', [WishlistController::class, 'ids']);
+    Route::post('/wishlist/products/{product}', [WishlistController::class, 'store']);
+    Route::delete('/wishlist/products/{product}', [WishlistController::class, 'destroy']);
 
     Route::middleware('admin')->prefix('admin')->group(function (): void {
         Route::get('/summary', AdminSummaryController::class);
