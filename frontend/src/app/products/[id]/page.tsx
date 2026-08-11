@@ -6,6 +6,8 @@ import { useEffect, useState } from "react";
 import { ColorSwatch } from "@/components/catalog/color-swatch";
 import { ProductFeatures, getProductVariants } from "@/components/catalog/product-features";
 import { ProductImage } from "@/components/catalog/product-image";
+import { ProductRatingStars } from "@/components/catalog/product-rating-stars";
+import { ProductReviews } from "@/components/catalog/product-reviews";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { useAuth } from "@/context/auth-context";
 import { api, formatPrice } from "@/lib/api";
@@ -135,6 +137,15 @@ export default function ProductDetailPage({
           <h1 className="mt-4 font-display text-5xl font-semibold leading-tight">
             {product.name}
           </h1>
+          {product.review_summary && product.review_summary.count > 0 && (
+            <div className="mt-4">
+              <ProductRatingStars
+                rating={product.review_summary.average}
+                showValue
+                reviewCount={product.review_summary.count}
+              />
+            </div>
+          )}
           <p className="mt-6 text-2xl text-accent">{formatPrice(product.price)}</p>
           <ProductFeatures variants={allVariants} />
 
@@ -254,6 +265,11 @@ export default function ProductDetailPage({
           {message && <p className="mt-4 text-sm text-accent">{message}</p>}
         </div>
       </div>
+
+      <ProductReviews
+        productId={product.id}
+        initialSummary={product.review_summary}
+      />
     </div>
   );
 }

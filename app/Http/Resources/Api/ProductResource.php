@@ -36,6 +36,10 @@ class ProductResource extends JsonResource
                     ->values(),
             ),
             'variants' => ProductVariantResource::collection($this->whenLoaded('variants')),
+            'review_summary' => [
+                'average' => round((float) ($this->reviews_avg_rating ?? 0), 1),
+                'count' => (int) ($this->reviews_count ?? 0),
+            ],
         ];
     }
 }

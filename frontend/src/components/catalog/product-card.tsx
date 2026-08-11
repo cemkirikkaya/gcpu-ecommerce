@@ -6,6 +6,7 @@ import { useState } from "react";
 import { ColorSwatch } from "@/components/catalog/color-swatch";
 import { ProductFavoriteButton } from "@/components/catalog/product-favorite-button";
 import { ProductImage } from "@/components/catalog/product-image";
+import { ProductRatingStars } from "@/components/catalog/product-rating-stars";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/auth-context";
 import { api, formatPrice } from "@/lib/api";
@@ -118,6 +119,17 @@ export function ProductCard({ product }: { product: Product }) {
           <p className="mt-2 line-clamp-2 text-sm leading-6 text-muted">
             {product.description}
           </p>
+        )}
+
+        {product.review_summary && product.review_summary.count > 0 && (
+          <div className="mt-3">
+            <ProductRatingStars
+              rating={product.review_summary.average}
+              size="sm"
+              showValue
+              reviewCount={product.review_summary.count}
+            />
+          </div>
         )}
 
         {flatVariants.length > 0 && (

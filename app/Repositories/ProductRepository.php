@@ -64,7 +64,7 @@ class ProductRepository
             'variants.variantValues.variantValue.variant',
             'images',
             'media',
-        ]);
+        ])->withAvg('reviews', 'rating')->withCount('reviews');
     }
 
     public function findById(int $id): Product

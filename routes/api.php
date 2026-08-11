@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\CatalogController;
 use App\Http\Controllers\Api\CheckoutController;
 use App\Http\Controllers\Api\IyzicoPaymentController;
 use App\Http\Controllers\Api\OrderController;
+use App\Http\Controllers\Api\ProductReviewController;
 use App\Http\Controllers\Api\StripePaymentController as ApiStripePaymentController;
 use App\Http\Controllers\Api\WishlistController;
 use Illuminate\Support\Facades\Route;
@@ -19,6 +20,7 @@ use Illuminate\Support\Facades\Route;
 Route::get('/catalog', [CatalogController::class, 'index']);
 Route::get('/products', [CatalogController::class, 'products']);
 Route::get('/products/{product}', [CatalogController::class, 'show']);
+Route::get('/products/{product}/reviews', [ProductReviewController::class, 'index']);
 
 Route::post('/auth/register', [AuthController::class, 'register']);
 Route::post('/auth/login', [AuthController::class, 'login']);
@@ -53,6 +55,11 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::get('/wishlist/ids', [WishlistController::class, 'ids']);
     Route::post('/wishlist/products/{product}', [WishlistController::class, 'store']);
     Route::delete('/wishlist/products/{product}', [WishlistController::class, 'destroy']);
+
+    Route::get('/products/{product}/reviews/mine', [ProductReviewController::class, 'mine']);
+    Route::post('/products/{product}/reviews', [ProductReviewController::class, 'store']);
+    Route::put('/products/{product}/reviews/{review}', [ProductReviewController::class, 'update']);
+    Route::delete('/products/{product}/reviews/{review}', [ProductReviewController::class, 'destroy']);
 
     Route::middleware('admin')->prefix('admin')->group(function (): void {
         Route::get('/summary', AdminSummaryController::class);

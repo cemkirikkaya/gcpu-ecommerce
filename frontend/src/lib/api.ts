@@ -17,6 +17,8 @@ import type {
   Product,
   ProductListParams,
   ProductListResponse,
+  ProductReview,
+  ProductReviewsResponse,
   User,
 } from "./types";
 
@@ -101,6 +103,46 @@ export const api = {
 
   product: (id: number) =>
     request<{ product: Product }>(`/products/${id}`).then((r) => r.product),
+
+  productReviews: (productId: number, page = 1) =>
+    request<ProductReviewsResponse>(`/products/${productId}/reviews?page=${page}`),
+
+  myProductReview: (token: string, productId: number) =>
+    request<{ review: ProductReview | null }>(
+      `/products/${productId}/reviews/mine`,
+      {},
+      token,
+    ).then((r) => r.review),
+
+  createProductReview: (
+    token: string,
+    productId: number,
+    payload: { rating: number; comment: string },
+  ) =>
+    request<{ review: ProductReview; message: string }>(
+      `/products/${productId}/reviews`,
+      { method: "POST", body: JSON.stringify(payload) },
+      token,
+    ).then((r) => r.review),
+
+  updateProductReview: (
+    token: string,
+    productId: number,
+    reviewId: number,
+    payload: { rating: number; comment: string },
+  ) =>
+    request<{ review: ProductReview; message: string }>(
+      `/products/${productId}/reviews/${reviewId}`,
+      { method: "PUT", body: JSON.stringify(payload) },
+      token,
+    ).then((r) => r.review),
+
+  deleteProductReview: (token: string, productId: number, reviewId: number) =>
+    request<{ message: string }>(
+      `/products/${productId}/reviews/${reviewId}`,
+      { method: "DELETE" },
+      token,
+    ),
 
   register: (payload: {
     name: string;

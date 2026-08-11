@@ -43,6 +43,35 @@ export type Product = {
   base_variant?: string | null;
   variant_groups?: VariantGroup[];
   variants?: ProductVariant[];
+  review_summary?: ProductReviewSummary;
+};
+
+export type ProductReviewSummary = {
+  average: number;
+  count: number;
+};
+
+export type ProductReview = {
+  id: number;
+  rating: number;
+  comment: string;
+  created_at: string | null;
+  user?: {
+    id: number;
+    name: string;
+  };
+  is_own?: boolean;
+};
+
+export type ProductReviewsResponse = {
+  reviews: ProductReview[];
+  summary: ProductReviewSummary;
+  meta: {
+    current_page: number;
+    last_page: number;
+    per_page: number;
+    total: number;
+  };
 };
 
 export type Category = {

@@ -70,6 +70,11 @@ class Product extends Model implements HasMedia
         return $this->hasMany(Image::class);
     }
 
+    public function reviews(): HasMany
+    {
+        return $this->hasMany(ProductReview::class);
+    }
+
     public function coverImageUrl(): ?string
     {
         $mediaUrl = $this->getFirstMediaUrl('product-images');

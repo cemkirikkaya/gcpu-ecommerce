@@ -67,6 +67,8 @@ class CatalogController extends Controller
             'images',
             'media',
         ]);
+        $product->loadAvg('reviews', 'rating');
+        $product->loadCount('reviews');
 
         return response()->json([
             'product' => new ProductResource($product),
