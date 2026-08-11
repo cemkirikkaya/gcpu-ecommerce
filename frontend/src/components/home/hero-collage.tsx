@@ -14,7 +14,6 @@ type HeroCollageProps = {
 };
 
 const ROTATE_MS = 4500;
-const MAX_DOTS = 12;
 
 export function HeroCollage({ initialProducts }: HeroCollageProps) {
   const [products, setProducts] = useState(initialProducts);
@@ -75,7 +74,7 @@ export function HeroCollage({ initialProducts }: HeroCollageProps) {
   return (
     <div
       key={activeProduct.id}
-      className="animate-fade-up mx-auto w-full max-w-[300px] overflow-hidden rounded-[1.625rem] border border-line bg-surface shadow-[0_28px_70px_-42px_rgba(28,25,23,0.38)] sm:max-w-[340px] lg:mx-0 lg:ml-auto lg:max-w-[380px]"
+      className="animate-fade-up mx-auto w-full max-w-[260px] overflow-hidden rounded-[1.5rem] border border-line bg-surface shadow-[0_24px_60px_-40px_rgba(28,25,23,0.35)] sm:max-w-[290px] lg:mx-0 lg:ml-auto lg:max-w-[320px]"
     >
       <div className="relative aspect-[4/5] w-full overflow-hidden bg-[linear-gradient(145deg,#f3eee8,#faf8f5)]">
         <Link href={`/products/${activeProduct.id}`} className="absolute inset-0">
@@ -85,57 +84,33 @@ export function HeroCollage({ initialProducts }: HeroCollageProps) {
               alt={activeProduct.name}
               priority
               className="object-cover animate-ken-burns"
-              sizes="(max-width: 1024px) 70vw, 380px"
+              sizes="(max-width: 1024px) 65vw, 320px"
             />
           ) : (
             <div className="flex h-full w-full items-center justify-center">
-              <span className="font-display text-6xl text-stone-300">
+              <span className="font-display text-5xl text-stone-300">
                 {activeProduct.name.slice(0, 1)}
               </span>
             </div>
           )}
         </Link>
 
-        <span className="pointer-events-none absolute left-3.5 top-3.5 z-10 rounded-full border border-line bg-surface/90 px-3 py-1 text-[10px] uppercase tracking-[0.2em] text-accent backdrop-blur">
+        <span className="pointer-events-none absolute left-3 top-3 z-10 rounded-full border border-line bg-surface/90 px-2.5 py-0.5 text-[9px] uppercase tracking-[0.18em] text-accent backdrop-blur">
           Canlı vitrin
         </span>
 
-        {items.length > 1 && (
-          <div className="absolute right-3.5 top-3.5 z-10">
-            {items.length <= MAX_DOTS ? (
-              <div className="flex gap-1.5">
-                {items.map((product, index) => (
-                  <button
-                    key={product.id}
-                    type="button"
-                    aria-label={`${product.name} vitrin`}
-                    onClick={() => setActiveIndex(index)}
-                    className={`h-2 rounded-full transition-all ${
-                      index === activeIndex ? "w-5 bg-white" : "w-2 bg-white/50"
-                    }`}
-                  />
-                ))}
-              </div>
-            ) : (
-              <span className="rounded-full border border-white/20 bg-stone-950/35 px-2.5 py-1 text-[10px] uppercase tracking-[0.18em] text-white/90 backdrop-blur">
-                {activeIndex + 1} / {items.length}
-              </span>
-            )}
-          </div>
-        )}
-
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-stone-950/75 via-stone-950/10 to-transparent" />
 
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 p-5 text-white">
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 p-4 text-white">
           {activeProduct.category && (
-            <p className="text-[10px] uppercase tracking-[0.24em] text-white/75">
+            <p className="text-[9px] uppercase tracking-[0.22em] text-white/75">
               {activeProduct.category.name}
             </p>
           )}
-          <p className="mt-2 font-display text-2xl leading-tight sm:text-[1.75rem]">
+          <p className="mt-1.5 font-display text-xl leading-tight sm:text-2xl">
             {activeProduct.name}
           </p>
-          <p className="mt-1.5 text-sm text-white/85">{formatPrice(activeProduct.price)}</p>
+          <p className="mt-1 text-xs text-white/85">{formatPrice(activeProduct.price)}</p>
         </div>
       </div>
     </div>
