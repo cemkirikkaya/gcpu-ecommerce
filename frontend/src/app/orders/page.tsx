@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
+import { AccountBackLink } from "@/components/account/account-back-link";
 import { OrderStatusBadge } from "@/components/orders/order-status-badge";
 import { ButtonLink } from "@/components/ui/button";
 import { useAuth } from "@/context/auth-context";
@@ -46,7 +47,8 @@ export default function OrdersPage() {
 
   return (
     <div className="mx-auto max-w-4xl px-6 py-16 lg:px-10 lg:py-24">
-      <div className="max-w-2xl">
+      <AccountBackLink />
+      <div className="mt-6 max-w-2xl">
         <p className="text-xs uppercase tracking-[0.35em] text-muted">Hesabım</p>
         <h1 className="mt-3 font-display text-5xl font-semibold">Siparişlerim</h1>
         <p className="mt-4 text-muted">

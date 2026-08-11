@@ -4,10 +4,12 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import { ColorSwatch } from "@/components/catalog/color-swatch";
+import { ProductFavoriteButton } from "@/components/catalog/product-favorite-button";
 import { ProductFeatures, getProductVariants } from "@/components/catalog/product-features";
 import { ProductImage } from "@/components/catalog/product-image";
 import { ProductRatingStars } from "@/components/catalog/product-rating-stars";
 import { ProductReviews } from "@/components/catalog/product-reviews";
+import { RelatedProducts } from "@/components/catalog/related-products";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { useAuth } from "@/context/auth-context";
 import { api, formatPrice } from "@/lib/api";
@@ -116,6 +118,10 @@ export default function ProductDetailPage({
 
       <div className="mt-10 grid gap-12 lg:grid-cols-2 lg:gap-16">
         <div className="relative min-h-[480px] overflow-hidden rounded-[2.5rem] border border-line bg-[linear-gradient(145deg,#f3eee8,#faf8f5)]">
+          <ProductFavoriteButton
+            productId={product.id}
+            className="absolute right-5 top-5 z-10"
+          />
           {displayImageUrl ? (
             <ProductImage
               src={displayImageUrl}
@@ -265,6 +271,12 @@ export default function ProductDetailPage({
           {message && <p className="mt-4 text-sm text-accent">{message}</p>}
         </div>
       </div>
+
+      <RelatedProducts
+        productId={product.id}
+        categorySlug={product.category?.slug}
+        categoryName={product.category?.name}
+      />
 
       <ProductReviews
         productId={product.id}

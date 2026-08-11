@@ -27,6 +27,11 @@ const guestHighlights = (reservationMinutes: number) => [
 
 const customerLinks = [
   {
+    href: "/account",
+    label: "Hesabım",
+    description: "Siparişler, favoriler ve adresler",
+  },
+  {
     href: "/orders",
     label: "Siparişlerim",
     description: "Geçmiş siparişler ve ödeme durumu",

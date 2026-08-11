@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 
+import { AccountBackLink } from "@/components/account/account-back-link";
 import { ProductCard } from "@/components/catalog/product-card";
 import { useAuth } from "@/context/auth-context";
 import { useWishlist } from "@/context/wishlist-context";
@@ -44,7 +45,8 @@ export default function FavoritesPage() {
 
   return (
     <div className="mx-auto max-w-7xl px-6 py-16 lg:px-10">
-      <p className="text-xs uppercase tracking-[0.35em] text-muted">Hesabım</p>
+      <AccountBackLink />
+      <p className="mt-6 text-xs uppercase tracking-[0.35em] text-muted">Hesabım</p>
       <h1 className="mt-3 font-display text-4xl font-semibold">Favorilerim</h1>
       <p className="mt-3 max-w-2xl text-sm leading-7 text-muted">
         Beğendiğiniz ürünleri burada saklayın ve istediğiniz zaman sepete ekleyin.

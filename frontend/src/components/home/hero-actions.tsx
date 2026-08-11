@@ -33,8 +33,8 @@ export function HeroActions() {
     return (
       <div className="mt-10 flex flex-wrap gap-4">
         <ButtonLink href="/products">Koleksiyonu Keşfet</ButtonLink>
-        <ButtonLink href="/favorites" variant="secondary">
-          Favorilerim
+        <ButtonLink href="/account" variant="secondary">
+          Hesabım
         </ButtonLink>
         <Link
           href="/cart"
