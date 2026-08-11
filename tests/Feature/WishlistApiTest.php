@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Product;
+use App\Models\ProductReview;
 use App\Models\User;
 use App\Models\WishlistItem;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -38,6 +39,31 @@ it('lists the authenticated customers favorite products', function () {
         ->assertJsonCount(2, 'products')
         ->assertJsonFragment(['id' => $first->id])
         ->assertJsonFragment(['id' => $second->id]);
+});
+
+it('includes review summary on wishlist products', function () {
+    $customer = User::factory()->create();
+    $reviewer = User::factory()->create();
+    $vendor = User::factory()->vendor()->create();
+    $product = createProductForWishlist($vendor);
+
+    ProductReview::query()->create([
+        'user_id' => $reviewer->id,
+        'product_id' => $product->id,
+        'rating' => 4,
+        'comment' => 'Harika bir ürün, memnun kaldım.',
+    ]);
+
+    WishlistItem::query()->create([
+        'user_id' => $customer->id,
+        'product_id' => $product->id,
+    ]);
+
+    $this->withToken($customer->createToken('test')->plainTextToken)
+        ->getJson('/api/wishlist')
+        ->assertOk()
+        ->assertJsonPath('products.0.review_summary.count', 1)
+        ->assertJsonPath('products.0.review_summary.average', 4);
 });
 
 it('returns favorite product ids for the authenticated customer', function () {

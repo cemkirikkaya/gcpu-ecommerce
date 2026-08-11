@@ -59,9 +59,9 @@ export function HeroCollage({ initialProducts }: HeroCollageProps) {
 
   if (items.length === 0) {
     return (
-      <div className="rounded-[1.75rem] border border-line bg-surface p-10 shadow-[0_40px_100px_-50px_rgba(28,25,23,0.35)]">
+      <div className="rounded-[1.5rem] border border-line bg-surface p-8 shadow-[0_32px_80px_-50px_rgba(28,25,23,0.35)]">
         <p className="text-xs uppercase tracking-[0.3em] text-muted">Canlı vitrin</p>
-        <p className="mt-4 font-display text-4xl leading-tight">
+        <p className="mt-3 font-display text-3xl leading-tight">
           Koleksiyonunuz burada hayat bulacak.
         </p>
       </div>
@@ -74,9 +74,9 @@ export function HeroCollage({ initialProducts }: HeroCollageProps) {
   return (
     <div
       key={activeProduct.id}
-      className="animate-fade-up mx-auto w-full max-w-[260px] overflow-hidden rounded-[1.5rem] border border-line bg-surface shadow-[0_24px_60px_-40px_rgba(28,25,23,0.35)] sm:max-w-[290px] lg:mx-0 lg:ml-auto lg:max-w-[320px]"
+      className="animate-fade-up mx-auto w-full max-w-[300px] overflow-hidden rounded-[1.5rem] border border-line bg-surface shadow-[0_24px_60px_-40px_rgba(28,25,23,0.35)] sm:max-w-[360px] lg:mx-0 lg:ml-auto lg:max-w-[445px]"
     >
-      <div className="relative aspect-[4/5] w-full overflow-hidden bg-[linear-gradient(145deg,#f3eee8,#faf8f5)]">
+      <div className="relative aspect-[891/1024] w-full overflow-hidden bg-[linear-gradient(145deg,#f3eee8,#faf8f5)]">
         <Link href={`/products/${activeProduct.id}`} className="absolute inset-0">
           {imageSrc ? (
             <ProductImage
@@ -84,11 +84,11 @@ export function HeroCollage({ initialProducts }: HeroCollageProps) {
               alt={activeProduct.name}
               priority
               className="object-cover animate-ken-burns"
-              sizes="(max-width: 1024px) 65vw, 320px"
+              sizes="(max-width: 640px) 300px, (max-width: 1024px) 360px, 445px"
             />
           ) : (
             <div className="flex h-full w-full items-center justify-center">
-              <span className="font-display text-5xl text-stone-300">
+              <span className="font-display text-4xl text-stone-300">
                 {activeProduct.name.slice(0, 1)}
               </span>
             </div>
@@ -110,7 +110,7 @@ export function HeroCollage({ initialProducts }: HeroCollageProps) {
           <p className="mt-1.5 font-display text-xl leading-tight sm:text-2xl">
             {activeProduct.name}
           </p>
-          <p className="mt-1 text-xs text-white/85">{formatPrice(activeProduct.price)}</p>
+          <p className="mt-1 text-sm text-white/85">{formatPrice(activeProduct.price)}</p>
         </div>
       </div>
     </div>
