@@ -95,7 +95,7 @@ export function HeroCollage({ initialProducts }: HeroCollageProps) {
           )}
         </Link>
 
-        <span className="pointer-events-none absolute left-3 top-3 z-10 rounded-full border border-line bg-surface/90 px-2.5 py-0.5 text-[9px] uppercase tracking-[0.18em] text-accent backdrop-blur">
+        <span className="pointer-events-none absolute left-3 top-3 z-10 rounded-full border border-line bg-surface/90 px-2 py-0.5 text-[8px] uppercase tracking-[0.14em] text-accent backdrop-blur">
           Canlı vitrin
         </span>
 
