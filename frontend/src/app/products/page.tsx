@@ -1,3 +1,5 @@
+import { Suspense } from "react";
+
 import { ProductsCatalogClient } from "@/components/catalog/products-catalog-client";
 
 export const dynamic = "force-dynamic";
@@ -19,7 +21,9 @@ export default function ProductsPage() {
         </p>
       </div>
 
-      <ProductsCatalogClient />
+      <Suspense fallback={<p className="mt-16 text-sm text-muted">Yükleniyor...</p>}>
+        <ProductsCatalogClient />
+      </Suspense>
     </div>
   );
 }

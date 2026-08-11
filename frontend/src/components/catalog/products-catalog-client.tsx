@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useCallback, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 
 import { ProductCard } from "@/components/catalog/product-card";
 import { Button } from "@/components/ui/button";
@@ -15,11 +16,12 @@ const sortOptions = [
 ] as const;
 
 export function ProductsCatalogClient() {
+  const searchParams = useSearchParams();
   const [data, setData] = useState<ProductListResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
-  const [category, setCategory] = useState("");
+  const [category, setCategory] = useState(() => searchParams.get("category") ?? "");
   const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
   const [sort, setSort] = useState<(typeof sortOptions)[number]["value"]>("latest");
