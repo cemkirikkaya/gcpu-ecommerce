@@ -90,6 +90,31 @@ docker compose restart frontend
 
 Local geliştirmede `STRIPE_FAKE=true` yeterlidir; API anahtarları boş kalabilir.
 
+### E-posta (sipariş onayı)
+
+Sipariş onay e-postaları kuyruğa alınır (`QUEUE_CONNECTION=database`). Docker ile `queue` servisi otomatik worker çalıştırır.
+
+Gerçek e-posta kutusuna göndermek için `.env` içinde SMTP ayarlayın (log yerine):
+
+| Değişken | Örnek (Gmail) |
+|----------|----------------|
+| `MAIL_MAILER` | `smtp` |
+| `MAIL_SCHEME` | `smtp` (port 587) veya `smtps` (port 465) |
+| `MAIL_HOST` | `smtp.gmail.com` |
+| `MAIL_PORT` | `587` |
+| `MAIL_USERNAME` | Gmail adresiniz |
+| `MAIL_PASSWORD` | [Google uygulama şifresi](https://myaccount.google.com/apppasswords) |
+| `MAIL_FROM_ADDRESS` | Gönderen adres (genelde aynı Gmail) |
+
+Değişiklikten sonra:
+
+```bash
+docker compose up -d queue
+docker compose restart laravel.test
+```
+
+Kayıt olurken **gerçek e-posta adresinizi** kullanın; demo `user@blog.test` gerçek bir posta kutusu değildir.
+
 ### Google OAuth (opsiyonel)
 
 | Değişken | Açıklama |

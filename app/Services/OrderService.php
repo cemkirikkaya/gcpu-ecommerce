@@ -6,10 +6,12 @@ use App\DataTransferObjects\InstallmentOption;
 use App\DataTransferObjects\PaymentInitializationResult;
 use App\Enums\PaymentProvider;
 use App\Enums\PaymentStatus;
+use App\Mail\OrderConfirmationMail;
 use App\Models\Order;
 use App\Models\User;
 use App\Repositories\OrderRepository;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use RuntimeException;
 
 class OrderService
@@ -129,6 +131,8 @@ class OrderService
         ?int $installment = null,
         ?string $paidPrice = null,
     ): Order {
+        $wasAlreadyPaid = $order->payment_status === PaymentStatus::Paid;
+
         $completedOrder = $this->repository->completePayment(
             $order,
             $paymentId,
@@ -145,7 +149,28 @@ class OrderService
             'order_status' => $completedOrder->status->value,
         ]);
 
+        if (! $wasAlreadyPaid) {
+            $this->queueOrderConfirmationMail($completedOrder);
+        }
+
         return $completedOrder;
+    }
+
+    private function queueOrderConfirmationMail(Order $order): void
+    {
+        $order->loadMissing([
+            'items.cartItem.productVariant.product',
+            'address',
+            'cart.user',
+        ]);
+
+        $customer = $order->user();
+
+        if ($customer === null || $customer->email === null) {
+            return;
+        }
+
+        Mail::to($customer)->send(new OrderConfirmationMail($order));
     }
 
     public function failPayment(Order $order): Order
