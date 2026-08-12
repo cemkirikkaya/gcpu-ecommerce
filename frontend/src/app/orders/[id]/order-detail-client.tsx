@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 
 import { OrderStatusBadge } from "@/components/orders/order-status-badge";
+import { OrderStatusTimeline } from "@/components/orders/order-status-timeline";
 import { OrderPaymentRetry } from "@/components/orders/order-payment-retry";
 import { ButtonLink } from "@/components/ui/button";
 import { useAuth } from "@/context/auth-context";
@@ -105,6 +106,8 @@ export function OrderDetailClient({ orderId }: { orderId: string }) {
         </div>
         <p className="mt-4 text-muted">{formatOrderDate(order.created_at)}</p>
       </div>
+
+      <OrderStatusTimeline status={order.status} statusLabel={order.status_label} />
 
       <div className="mt-10 space-y-6 rounded-[2rem] border border-line bg-surface p-8">
         <div className="flex justify-between text-sm">
