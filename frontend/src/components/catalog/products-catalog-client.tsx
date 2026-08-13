@@ -20,7 +20,7 @@ export function ProductsCatalogClient() {
   const [data, setData] = useState<ProductListResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState(() => searchParams.get("search") ?? "");
   const [category, setCategory] = useState(() => searchParams.get("category") ?? "");
   const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
@@ -51,6 +51,12 @@ export function ProductsCatalogClient() {
       setLoading(false);
     }
   }, [search, category, minPrice, maxPrice, sort, page]);
+
+  useEffect(() => {
+    setSearch(searchParams.get("search") ?? "");
+    setCategory(searchParams.get("category") ?? "");
+    setPage(1);
+  }, [searchParams]);
 
   useEffect(() => {
     void loadProducts();
