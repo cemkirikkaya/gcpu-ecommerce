@@ -38,6 +38,7 @@ class OrderController extends Controller
             'items.cartItem.productVariant.product',
             'items.cartItem.productVariant.variantValues.variantValue.variant',
             'address',
+            'latestCancellationRequest.user',
         ]);
 
         $payload = [

@@ -104,6 +104,7 @@ class OrderService
             $result->paymentId,
             $result->installment ?? $installment,
             $result->paidPrice,
+            $result->iyzicoPaymentItems,
         );
     }
 
@@ -130,6 +131,7 @@ class OrderService
         ?string $paymentId = null,
         ?int $installment = null,
         ?string $paidPrice = null,
+        array $iyzicoPaymentItems = [],
     ): Order {
         $wasAlreadyPaid = $order->payment_status === PaymentStatus::Paid;
 
@@ -138,6 +140,7 @@ class OrderService
             $paymentId,
             $installment,
             $paidPrice,
+            $iyzicoPaymentItems,
         );
 
         Log::info('Payment completed', [

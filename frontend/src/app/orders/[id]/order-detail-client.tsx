@@ -5,10 +5,11 @@ import { useEffect, useState } from "react";
 import { OrderStatusBadge } from "@/components/orders/order-status-badge";
 import { OrderStatusTimeline } from "@/components/orders/order-status-timeline";
 import { OrderPaymentRetry } from "@/components/orders/order-payment-retry";
+import { OrderCancellationPanel } from "@/components/orders/order-cancellation-panel";
 import { ButtonLink } from "@/components/ui/button";
 import { useAuth } from "@/context/auth-context";
 import { api, formatOrderDate, formatPrice } from "@/lib/api";
-import type { Order, PaymentOptions } from "@/lib/types";
+import type { Order, OrderCancellationRequest, PaymentOptions } from "@/lib/types";
 
 export function OrderDetailClient({ orderId }: { orderId: string }) {
   const parsedOrderId = Number(orderId);
@@ -141,6 +142,18 @@ export function OrderDetailClient({ orderId }: { orderId: string }) {
           orderId={order.id}
           paymentOptions={paymentOptions}
           onError={setMessage}
+        />
+      )}
+
+      {token && (
+        <OrderCancellationPanel
+          token={token}
+          order={order}
+          onUpdated={(request: OrderCancellationRequest) =>
+            setOrder((current) =>
+              current ? { ...current, cancellation_request: request } : current,
+            )
+          }
         />
       )}
 

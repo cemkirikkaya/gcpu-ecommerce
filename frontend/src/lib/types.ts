@@ -187,6 +187,24 @@ export type PaymentOptions = {
   payment_providers: PaymentProviderOption[];
 };
 
+export type OrderCancellationRequest = {
+  id: number;
+  order_id: number;
+  message: string;
+  status: "pending" | "approved" | "rejected";
+  status_label: string;
+  admin_note?: string | null;
+  refund_reference?: string | null;
+  created_at: string | null;
+  reviewed_at?: string | null;
+  customer?: {
+    id: number;
+    name: string;
+    email: string;
+  };
+  order?: Order;
+};
+
 export type OrderDetailResponse = {
   order: Order;
   payment_options?: PaymentOptions;
@@ -207,6 +225,7 @@ export type Order = {
   payment_provider?: string | null;
   created_at: string | null;
   address?: Address | null;
+  cancellation_request?: OrderCancellationRequest | null;
   items?: Array<{
     id: number;
     quantity: number;
@@ -274,6 +293,18 @@ export type AdminSummary = {
   orders_count: number;
   items_sold: number;
   revenue: number;
+  pending_cancellation_requests?: number;
+};
+
+export type CancellationRequestsResponse = {
+  cancellation_requests: OrderCancellationRequest[];
+  pending_count: number;
+  meta: {
+    current_page: number;
+    last_page: number;
+    per_page: number;
+    total: number;
+  };
 };
 
 export type AdminOrder = {

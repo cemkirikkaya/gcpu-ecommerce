@@ -7,6 +7,7 @@ use App\Enums\PaymentStatus;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Order extends Model
@@ -24,6 +25,7 @@ class Order extends Model
         'payment_status',
         'iyzico_token',
         'iyzico_payment_id',
+        'iyzico_payment_items',
         'installment',
         'paid_price',
         'iyzico_conversation_id',
@@ -46,6 +48,7 @@ class Order extends Model
             'total_price' => 'decimal:2',
             'paid_price' => 'decimal:2',
             'installment' => 'integer',
+            'iyzico_payment_items' => 'array',
             'status' => OrderStatus::class,
             'payment_status' => PaymentStatus::class,
             'paid_at' => 'datetime',
@@ -78,6 +81,16 @@ class Order extends Model
     public function items(): HasMany
     {
         return $this->hasMany(OrderItem::class);
+    }
+
+    public function cancellationRequests(): HasMany
+    {
+        return $this->hasMany(OrderCancellationRequest::class);
+    }
+
+    public function latestCancellationRequest(): HasOne
+    {
+        return $this->hasOne(OrderCancellationRequest::class)->latestOfMany();
     }
 
     public function user(): ?User

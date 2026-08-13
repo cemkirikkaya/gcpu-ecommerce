@@ -29,6 +29,9 @@ class OrderResource extends JsonResource
             'stripe_payment_intent_id' => $this->stripe_payment_intent_id,
             'created_at' => $this->created_at?->toIso8601String(),
             'address' => new AddressResource($this->whenLoaded('address')),
+            'cancellation_request' => new OrderCancellationRequestResource(
+                $this->whenLoaded('latestCancellationRequest'),
+            ),
             'items' => $this->whenLoaded('items', fn () => $this->items->map(function ($item): array {
                 $variant = $item->cartItem?->productVariant;
                 $product = $variant?->product;

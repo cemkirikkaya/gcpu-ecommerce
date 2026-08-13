@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Contracts\PaymentGateway;
 use App\DataTransferObjects\InstallmentOption;
 use App\DataTransferObjects\PaymentInitializationResult;
+use App\DataTransferObjects\PaymentRefundResult;
 use App\DataTransferObjects\PaymentRetrievalResult;
 use App\Models\Order;
 use App\Support\IyzicoBuyerData;
@@ -22,11 +23,15 @@ use Iyzipay\Model\Payment;
 use Iyzipay\Model\PaymentCard;
 use Iyzipay\Model\PaymentChannel;
 use Iyzipay\Model\PaymentGroup;
+use Iyzipay\Model\PaymentResource;
+use Iyzipay\Model\Refund;
 use Iyzipay\Options;
 use Iyzipay\Request\CreateCheckoutFormInitializeRequest;
 use Iyzipay\Request\CreatePaymentRequest;
+use Iyzipay\Request\CreateRefundRequest;
 use Iyzipay\Request\RetrieveCheckoutFormRequest;
 use Iyzipay\Request\RetrieveInstallmentInfoRequest;
+use Iyzipay\Request\RetrievePaymentRequest;
 use RuntimeException;
 
 class IyzicoPaymentGateway implements PaymentGateway
@@ -272,6 +277,7 @@ class IyzicoPaymentGateway implements PaymentGateway
             paidPrice: $response->getPaidPrice() !== null
                 ? $this->formatAmount((float) $response->getPaidPrice())
                 : $paidPrice,
+            iyzicoPaymentItems: $successful ? $this->extractPaymentItems($response) : [],
         );
     }
 
@@ -368,6 +374,9 @@ class IyzicoPaymentGateway implements PaymentGateway
             paidPrice: $response->getPaidPrice() !== null
                 ? $this->formatAmount((float) $response->getPaidPrice())
                 : null,
+            iyzicoPaymentItems: $response->getPaymentStatus() === 'SUCCESS'
+                ? $this->extractPaymentItems($response)
+                : [],
         );
     }
 
@@ -415,6 +424,113 @@ class IyzicoPaymentGateway implements PaymentGateway
         usort($options, fn (InstallmentOption $a, InstallmentOption $b): int => $a->number <=> $b->number);
 
         return $options;
+    }
+
+    public function refund(Order $order): PaymentRefundResult
+    {
+        $items = $this->resolveRefundItems($order);
+
+        if ($items === []) {
+            return new PaymentRefundResult(
+                successful: false,
+                errorMessage: 'İade için ödeme kırılım kaydı bulunamadı.',
+            );
+        }
+
+        $refundReferences = [];
+
+        foreach ($items as $item) {
+            $request = new CreateRefundRequest;
+            $request->setLocale(Locale::TR);
+            $request->setConversationId($this->conversationId($order));
+            $request->setPaymentTransactionId($item['payment_transaction_id']);
+            $request->setPrice($this->formatAmount((float) $item['price']));
+            $request->setCurrency(Currency::TL);
+            $request->setIp(request()->ip() ?? '127.0.0.1');
+
+            $response = Refund::create($request, $this->options());
+
+            if ($response->getStatus() !== 'success') {
+                Log::warning('Iyzico refund failed', [
+                    'order_id' => $order->id,
+                    'payment_transaction_id' => $item['payment_transaction_id'],
+                    'error' => $response->getErrorMessage(),
+                ]);
+
+                return new PaymentRefundResult(
+                    successful: false,
+                    errorMessage: $response->getErrorMessage() ?? 'İade işlemi başarısız.',
+                );
+            }
+
+            $refundReferences[] = $response->getPaymentId() ?? $item['payment_transaction_id'];
+        }
+
+        return new PaymentRefundResult(
+            successful: true,
+            refundReference: implode(',', $refundReferences),
+        );
+    }
+
+    /**
+     * @return list<array{payment_transaction_id: string, price: string}>
+     */
+    private function resolveRefundItems(Order $order): array
+    {
+        if (is_array($order->iyzico_payment_items) && $order->iyzico_payment_items !== []) {
+            return $order->iyzico_payment_items;
+        }
+
+        if ($order->iyzico_payment_id === null) {
+            return [];
+        }
+
+        $request = new RetrievePaymentRequest;
+        $request->setLocale(Locale::TR);
+        $request->setConversationId($this->conversationId($order));
+        $request->setPaymentId($order->iyzico_payment_id);
+        $request->setPaymentConversationId(
+            $order->iyzico_conversation_id ?? $this->conversationId($order),
+        );
+
+        $payment = Payment::retrieve($request, $this->options());
+
+        if ($payment->getStatus() !== 'success') {
+            Log::warning('Iyzico payment retrieve for refund failed', [
+                'order_id' => $order->id,
+                'payment_id' => $order->iyzico_payment_id,
+                'error' => $payment->getErrorMessage(),
+            ]);
+
+            return [];
+        }
+
+        return $this->extractPaymentItems($payment);
+    }
+
+    /**
+     * @return list<array{payment_transaction_id: string, price: string}>
+     */
+    private function extractPaymentItems(PaymentResource $response): array
+    {
+        $items = [];
+
+        foreach ($response->getPaymentItems() ?? [] as $paymentItem) {
+            $transactionId = $paymentItem->getPaymentTransactionId();
+
+            if ($transactionId === null || $transactionId === '') {
+                continue;
+            }
+
+            $price = $paymentItem->getPaidPrice() ?? $paymentItem->getPrice();
+
+            $items[] = [
+                'payment_transaction_id' => (string) $transactionId,
+                'price' => $this->formatAmount((float) $price),
+            ];
+        }
+
+        return $items;
     }
 
     private function options(): Options

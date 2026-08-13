@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
+import { PendingCancellationAlerts } from "@/components/admin/pending-cancellation-alerts";
 import { ButtonLink } from "@/components/ui/button";
 import { useAuth } from "@/context/auth-context";
 import { api, formatOrderDate, formatPrice } from "@/lib/api";
@@ -56,7 +57,12 @@ export default function AdminDashboardPage() {
         <ButtonLink href="/admin/orders" variant="secondary">
           Siparişleri Gör
         </ButtonLink>
+        <ButtonLink href="/admin/cancellation-requests" variant="secondary">
+          İptal Talepleri
+        </ButtonLink>
       </div>
+
+      <PendingCancellationAlerts />
 
       <div className="mt-10">
         <div className="flex items-center justify-between gap-4">

@@ -72,4 +72,11 @@ class StockService
             ->where('product_variant_id', $productVariant->id)
             ->decrement('quantity', $quantity);
     }
+
+    public function incrementStock(ProductVariant $productVariant, int $quantity): void
+    {
+        Stock::query()
+            ->where('product_variant_id', $productVariant->id)
+            ->increment('quantity', $quantity);
+    }
 }

@@ -82,8 +82,9 @@ class OrderRepository
         ?string $paymentId = null,
         ?int $installment = null,
         ?string $paidPrice = null,
+        array $iyzicoPaymentItems = [],
     ): Order {
-        return DB::transaction(function () use ($order, $paymentId, $installment, $paidPrice): Order {
+        return DB::transaction(function () use ($order, $paymentId, $installment, $paidPrice, $iyzicoPaymentItems): Order {
             $order = $order->fresh([
                 'items.cartItem.productVariant.product',
                 'items.cartItem.productVariant.stock',
@@ -122,7 +123,10 @@ class OrderRepository
 
             $paymentIdFields = $order->stripe_checkout_session_id !== null
                 ? ['stripe_payment_intent_id' => $paymentId]
-                : ['iyzico_payment_id' => $paymentId];
+                : [
+                    'iyzico_payment_id' => $paymentId,
+                    'iyzico_payment_items' => $iyzicoPaymentItems !== [] ? $iyzicoPaymentItems : null,
+                ];
 
             $order->update([
                 'payment_status' => PaymentStatus::Paid,

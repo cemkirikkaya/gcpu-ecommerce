@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\AddressController;
 use App\Http\Controllers\Api\Admin\CategoryController as AdminCategoryController;
+use App\Http\Controllers\Api\Admin\OrderCancellationController as AdminOrderCancellationController;
 use App\Http\Controllers\Api\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Api\Admin\ProductController as AdminProductController;
 use App\Http\Controllers\Api\Admin\StockController as AdminStockController;
@@ -11,6 +12,7 @@ use App\Http\Controllers\Api\CartController;
 use App\Http\Controllers\Api\CatalogController;
 use App\Http\Controllers\Api\CheckoutController;
 use App\Http\Controllers\Api\IyzicoPaymentController;
+use App\Http\Controllers\Api\OrderCancellationController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\ProductReviewController;
 use App\Http\Controllers\Api\StripePaymentController as ApiStripePaymentController;
@@ -43,6 +45,7 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::get('/orders', [OrderController::class, 'index']);
     Route::get('/orders/{order}', [OrderController::class, 'show']);
     Route::get('/orders/{order}/installments', [OrderController::class, 'installments']);
+    Route::post('/orders/{order}/cancellation-request', [OrderCancellationController::class, 'store']);
     Route::post('/orders/{order}/payments/iyzico/init', [IyzicoPaymentController::class, 'initialize']);
     Route::post('/orders/{order}/payments/stripe/init', [ApiStripePaymentController::class, 'initialize']);
 
@@ -68,6 +71,9 @@ Route::middleware('auth:sanctum')->group(function (): void {
         Route::get('/orders', [AdminOrderController::class, 'index']);
         Route::get('/orders/{order}', [AdminOrderController::class, 'show']);
         Route::patch('/orders/{order}', [AdminOrderController::class, 'update']);
+        Route::get('/cancellation-requests', [AdminOrderCancellationController::class, 'index']);
+        Route::post('/cancellation-requests/{cancellationRequest}/approve', [AdminOrderCancellationController::class, 'approve']);
+        Route::post('/cancellation-requests/{cancellationRequest}/reject', [AdminOrderCancellationController::class, 'reject']);
         Route::get('/products', [AdminProductController::class, 'index']);
         Route::post('/products', [AdminProductController::class, 'store']);
         Route::get('/products/{product}', [AdminProductController::class, 'show']);

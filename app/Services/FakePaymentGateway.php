@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Contracts\PaymentGateway;
 use App\DataTransferObjects\InstallmentOption;
 use App\DataTransferObjects\PaymentInitializationResult;
+use App\DataTransferObjects\PaymentRefundResult;
 use App\DataTransferObjects\PaymentRetrievalResult;
 use App\Models\Order;
 use Illuminate\Support\Str;
@@ -39,6 +40,10 @@ class FakePaymentGateway implements PaymentGateway
             paymentId: 'fake-direct-'.Str::uuid()->toString(),
             installment: $installment,
             paidPrice: null,
+            iyzicoPaymentItems: [[
+                'payment_transaction_id' => 'fake-txn-'.Str::uuid()->toString(),
+                'price' => number_format((float) $order->total_price, 2, '.', ''),
+            ]],
         );
     }
 
@@ -50,6 +55,18 @@ class FakePaymentGateway implements PaymentGateway
             successful: $successful,
             paymentId: $successful ? 'fake-payment-'.Str::uuid()->toString() : null,
             errorMessage: $successful ? null : 'Test ödemesi başarısız.',
+            iyzicoPaymentItems: $successful ? [[
+                'payment_transaction_id' => 'fake-txn-'.Str::uuid()->toString(),
+                'price' => '100.00',
+            ]] : [],
+        );
+    }
+
+    public function refund(Order $order): PaymentRefundResult
+    {
+        return new PaymentRefundResult(
+            successful: true,
+            refundReference: 'fake-refund-'.Str::uuid()->toString(),
         );
     }
 

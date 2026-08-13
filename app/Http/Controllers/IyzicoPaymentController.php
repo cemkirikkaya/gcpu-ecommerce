@@ -64,6 +64,7 @@ class IyzicoPaymentController extends Controller
                 $result->paymentId,
                 $result->installment,
                 $result->paidPrice,
+                $result->iyzicoPaymentItems,
             );
 
             Log::info('Payment callback succeeded', [

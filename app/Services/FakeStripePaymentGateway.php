@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Contracts\PaymentGateway;
 use App\DataTransferObjects\InstallmentOption;
 use App\DataTransferObjects\PaymentInitializationResult;
+use App\DataTransferObjects\PaymentRefundResult;
 use App\DataTransferObjects\PaymentRetrievalResult;
 use App\Models\Order;
 use App\Support\StripeCheckoutData;
@@ -53,6 +54,14 @@ class FakeStripePaymentGateway implements PaymentGateway
     public function chargeDirectly(Order $order, string $buyerIp, int $installment = 1): PaymentRetrievalResult
     {
         throw new RuntimeException('Stripe doğrudan ödeme desteklemiyor.');
+    }
+
+    public function refund(Order $order): PaymentRefundResult
+    {
+        return new PaymentRefundResult(
+            successful: true,
+            refundReference: 'fake-stripe-refund-'.Str::uuid()->toString(),
+        );
     }
 
     /**

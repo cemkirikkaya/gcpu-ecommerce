@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Contracts\PaymentGateway;
 use App\DataTransferObjects\InstallmentOption;
 use App\DataTransferObjects\PaymentInitializationResult;
+use App\DataTransferObjects\PaymentRefundResult;
 use App\DataTransferObjects\PaymentRetrievalResult;
 use App\Models\Order;
 use App\Support\StripeCheckoutData;
@@ -13,6 +14,7 @@ use RuntimeException;
 use Stripe\Checkout\Session;
 use Stripe\Event;
 use Stripe\Exception\ApiErrorException;
+use Stripe\Refund;
 use Stripe\Stripe;
 use Stripe\Webhook;
 
@@ -139,6 +141,37 @@ class StripePaymentGateway implements PaymentGateway
     public function getInstallmentOptions(string $price, string $binNumber): array
     {
         throw new RuntimeException('Stripe taksit sorgusu desteklemiyor.');
+    }
+
+    public function refund(Order $order): PaymentRefundResult
+    {
+        if ($order->stripe_payment_intent_id === null) {
+            return new PaymentRefundResult(
+                successful: false,
+                errorMessage: 'İade için ödeme referansı bulunamadı.',
+            );
+        }
+
+        try {
+            $refund = Refund::create([
+                'payment_intent' => $order->stripe_payment_intent_id,
+            ]);
+
+            return new PaymentRefundResult(
+                successful: true,
+                refundReference: $refund->id,
+            );
+        } catch (ApiErrorException $exception) {
+            Log::warning('Stripe refund failed', [
+                'order_id' => $order->id,
+                'error' => $exception->getMessage(),
+            ]);
+
+            return new PaymentRefundResult(
+                successful: false,
+                errorMessage: $exception->getMessage(),
+            );
+        }
     }
 
     private function resultFromSession(object $session): PaymentRetrievalResult

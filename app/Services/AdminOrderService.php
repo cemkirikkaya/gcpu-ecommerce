@@ -92,6 +92,7 @@ class AdminOrderService
      *     orders_count: int,
      *     items_sold: int,
      *     revenue: float,
+     *     pending_cancellation_requests: int,
      * }
      */
     public function summaryFor(User $user): array
@@ -139,6 +140,7 @@ class AdminOrderService
             'orders_count' => $soldItems->pluck('order_id')->unique()->count(),
             'items_sold' => (int) $soldItems->sum('quantity'),
             'revenue' => (float) $soldItems->sum(fn (OrderItem $item): float => $item->subtotal()),
+            'pending_cancellation_requests' => app(OrderCancellationService::class)->pendingCountFor($user),
         ];
     }
 }

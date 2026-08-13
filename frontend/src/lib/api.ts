@@ -7,12 +7,14 @@ import type {
   AdminSummary,
   ApiError,
   AuthResponse,
+  CancellationRequestsResponse,
   Cart,
   Catalog,
   CatalogVariantInput,
   CategoryDetail,
   CategoryDetailResponse,
   InstallmentOption,
+  OrderCancellationRequest,
   Order,
   OrderDetailResponse,
   PaymentProviderOption,
@@ -246,6 +248,34 @@ export const api = {
 
   order: (token: string, orderId: number) =>
     request<OrderDetailResponse>(`/orders/${orderId}`, {}, token),
+
+  requestOrderCancellation: (token: string, orderId: number, message: string) =>
+    request<{ cancellation_request: OrderCancellationRequest; message: string }>(
+      `/orders/${orderId}/cancellation-request`,
+      { method: "POST", body: JSON.stringify({ message }) },
+      token,
+    ).then((response) => response),
+
+  adminCancellationRequests: (token: string, status = "pending") =>
+    request<CancellationRequestsResponse>(
+      `/admin/cancellation-requests?status=${status}`,
+      {},
+      token,
+    ),
+
+  adminApproveCancellation: (token: string, requestId: number, adminNote?: string) =>
+    request<{ cancellation_request: OrderCancellationRequest; message: string }>(
+      `/admin/cancellation-requests/${requestId}/approve`,
+      { method: "POST", body: JSON.stringify({ admin_note: adminNote ?? null }) },
+      token,
+    ),
+
+  adminRejectCancellation: (token: string, requestId: number, adminNote?: string) =>
+    request<{ cancellation_request: OrderCancellationRequest; message: string }>(
+      `/admin/cancellation-requests/${requestId}/reject`,
+      { method: "POST", body: JSON.stringify({ admin_note: adminNote ?? null }) },
+      token,
+    ),
 
   orderInstallments: (token: string, orderId: number) =>
     request<{ installments: InstallmentOption[]; direct_payment: boolean }>(
