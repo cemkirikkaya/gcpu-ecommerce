@@ -41,4 +41,32 @@ class Category extends Model
             'category_variant'
         );
     }
+
+    public function getRouteKeyName(): string
+    {
+        return 'slug';
+    }
+
+    /**
+     * @return list<int>
+     */
+    public static function idsInSubtree(int $rootId): array
+    {
+        $categories = static::query()->get(['id', 'parent_id']);
+        $ids = collect([$rootId]);
+
+        while (true) {
+            $childIds = $categories
+                ->whereIn('parent_id', $ids)
+                ->pluck('id');
+
+            if ($childIds->isEmpty()) {
+                break;
+            }
+
+            $ids = $ids->merge($childIds);
+        }
+
+        return $ids->unique()->values()->all();
+    }
 }

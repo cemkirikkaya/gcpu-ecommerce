@@ -49,7 +49,7 @@ export function CategoryShowcase({
           return (
             <Link
               key={category.id}
-              href={`/products?category=${category.slug}`}
+              href={`/categories/${category.slug}`}
               className="group relative overflow-hidden rounded-[1.75rem] border border-line bg-surface shadow-[0_20px_60px_-45px_rgba(28,25,23,0.35)] transition duration-500 hover:-translate-y-1"
             >
               <div className="relative aspect-[5/4] overflow-hidden bg-[linear-gradient(145deg,#f3eee8,#faf8f5)]">

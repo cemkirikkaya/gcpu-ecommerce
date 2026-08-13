@@ -96,6 +96,23 @@ export type CatalogCategoryOption = {
   slug: string;
 };
 
+export type CategorySummary = {
+  id: number;
+  name: string;
+  slug: string;
+  description: string | null;
+  products_count: number;
+};
+
+export type CategoryDetail = CategorySummary & {
+  parent: Pick<CategorySummary, "id" | "name" | "slug"> | null;
+  children: CategorySummary[];
+};
+
+export type CategoryDetailResponse = {
+  category: CategoryDetail;
+};
+
 export type ProductListResponse = {
   products: Product[];
   categories: CatalogCategoryOption[];

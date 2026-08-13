@@ -10,6 +10,8 @@ import type {
   Cart,
   Catalog,
   CatalogVariantInput,
+  CategoryDetail,
+  CategoryDetailResponse,
   InstallmentOption,
   Order,
   OrderDetailResponse,
@@ -86,6 +88,9 @@ async function request<T>(
 
 export const api = {
   catalog: () => request<{ data?: never } & Catalog>("/catalog").then((r) => r as Catalog),
+
+  category: (slug: string) =>
+    request<CategoryDetailResponse>(`/categories/${slug}`).then((r) => r.category),
 
   products: (params: ProductListParams = {}) => {
     const query = new URLSearchParams();

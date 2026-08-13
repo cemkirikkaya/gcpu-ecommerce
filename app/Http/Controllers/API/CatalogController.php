@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Catalog\ListProductsRequest;
+use App\Http\Resources\Api\CategoryDetailResource;
 use App\Http\Resources\Api\CategoryResource;
 use App\Http\Resources\Api\ProductResource;
 use App\Models\Category;
@@ -27,6 +28,23 @@ class CatalogController extends Controller
             'reservation_minutes' => config('shop.reservation_minutes'),
             'categories' => CategoryResource::collection($categories),
             'uncategorized' => ProductResource::collection($uncategorized),
+        ]);
+    }
+
+    public function category(Category $category): JsonResponse
+    {
+        $category->load([
+            'parent',
+            'children' => fn ($query) => $query->orderBy('name')->withCount('products'),
+        ]);
+
+        $subtreeIds = Category::idsInSubtree($category->id);
+        $category->products_count_in_subtree = Product::query()
+            ->whereIn('category_id', $subtreeIds)
+            ->count();
+
+        return response()->json([
+            'category' => new CategoryDetailResource($category),
         ]);
     }
 

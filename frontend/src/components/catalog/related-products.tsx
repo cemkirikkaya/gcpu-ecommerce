@@ -82,7 +82,7 @@ export function RelatedProducts({
         </div>
         {categorySlug && (
           <Link
-            href={`/products?category=${categorySlug}`}
+            href={`/categories/${categorySlug}`}
             className="rounded-full border border-line bg-background px-5 py-2.5 text-sm transition hover:border-accent hover:text-accent"
           >
             Kategoriye git

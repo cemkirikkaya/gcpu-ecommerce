@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useCallback, useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import { ProductCard } from "@/components/catalog/product-card";
 import { Button } from "@/components/ui/button";
@@ -16,17 +16,24 @@ const sortOptions = [
 ] as const;
 
 export function ProductsCatalogClient() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const [data, setData] = useState<ProductListResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState(() => searchParams.get("search") ?? "");
-  const [category, setCategory] = useState(() => searchParams.get("category") ?? "");
   const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
   const [sort, setSort] = useState<(typeof sortOptions)[number]["value"]>("latest");
   const [page, setPage] = useState(1);
   const [categories, setCategories] = useState<CatalogCategoryOption[]>([]);
+
+  useEffect(() => {
+    const categoryParam = searchParams.get("category");
+    if (categoryParam) {
+      router.replace(`/categories/${categoryParam}`);
+    }
+  }, [router, searchParams]);
 
   const loadProducts = useCallback(async () => {
     setLoading(true);
@@ -35,7 +42,6 @@ export function ProductsCatalogClient() {
     try {
       const response = await api.products({
         search: search || undefined,
-        category: category || undefined,
         min_price: minPrice ? Number(minPrice) : undefined,
         max_price: maxPrice ? Number(maxPrice) : undefined,
         sort,
@@ -50,21 +56,45 @@ export function ProductsCatalogClient() {
     } finally {
       setLoading(false);
     }
-  }, [search, category, minPrice, maxPrice, sort, page]);
+  }, [search, minPrice, maxPrice, sort, page]);
 
   useEffect(() => {
+    if (searchParams.get("category")) {
+      return;
+    }
+
     setSearch(searchParams.get("search") ?? "");
-    setCategory(searchParams.get("category") ?? "");
     setPage(1);
   }, [searchParams]);
 
   useEffect(() => {
+    if (searchParams.get("category")) {
+      return;
+    }
+
     void loadProducts();
-  }, [loadProducts]);
+  }, [loadProducts, searchParams]);
+
+  function handleCategoryChange(slug: string) {
+    if (slug) {
+      router.push(`/categories/${slug}`);
+      return;
+    }
+
+    router.push("/products");
+  }
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setPage(1);
+
+    const params = new URLSearchParams();
+    if (search.trim()) {
+      params.set("search", search.trim());
+    }
+
+    const query = params.toString();
+    router.push(query ? `/products?${query}` : "/products");
     void loadProducts();
   }
 
@@ -81,11 +111,11 @@ export function ProductsCatalogClient() {
           className="rounded-full border border-line bg-background px-5 py-3 text-sm outline-none focus:border-accent"
         />
         <select
-          value={category}
-          onChange={(event) => setCategory(event.target.value)}
+          defaultValue=""
+          onChange={(event) => handleCategoryChange(event.target.value)}
           className="rounded-full border border-line bg-background px-5 py-3 text-sm outline-none focus:border-accent"
         >
-          <option value="">Tüm kategoriler</option>
+          <option value="">Kategori seç...</option>
           {categories.map((item) => (
             <option key={item.id} value={item.slug}>
               {item.name}

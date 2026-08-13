@@ -37,7 +37,7 @@ export default async function Home() {
   const marqueeItems = [
     ...categoryOptions.map((category) => ({
       label: category.name,
-      href: `/products?category=${category.slug}`,
+      href: `/categories/${category.slug}`,
     })),
     { label: `${catalog.reservation_minutes} dk stok rezervasyonu` },
     { label: "Net fiyatlandırma" },

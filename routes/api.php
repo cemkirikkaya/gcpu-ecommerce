@@ -18,6 +18,7 @@ use App\Http\Controllers\Api\WishlistController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/catalog', [CatalogController::class, 'index']);
+Route::get('/categories/{category}', [CatalogController::class, 'category']);
 Route::get('/products', [CatalogController::class, 'products']);
 Route::get('/products/{product}', [CatalogController::class, 'show']);
 Route::get('/products/{product}/reviews', [ProductReviewController::class, 'index']);

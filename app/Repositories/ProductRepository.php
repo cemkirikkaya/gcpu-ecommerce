@@ -93,10 +93,19 @@ class ProductRepository
 
         if (! empty($filters['category'])) {
             $category = $filters['category'];
-            $query->whereHas('category', function ($categoryQuery) use ($category): void {
-                $categoryQuery->where('slug', $category)
-                    ->orWhere('id', is_numeric($category) ? (int) $category : 0);
-            });
+            $categoryModel = Category::query()
+                ->when(
+                    is_numeric($category),
+                    fn ($builder) => $builder->where('id', (int) $category),
+                    fn ($builder) => $builder->where('slug', $category),
+                )
+                ->first();
+
+            if ($categoryModel === null) {
+                $query->whereRaw('0 = 1');
+            } else {
+                $query->whereIn('category_id', Category::idsInSubtree($categoryModel->id));
+            }
         }
 
         if (isset($filters['min_price'])) {
