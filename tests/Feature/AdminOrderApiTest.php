@@ -56,7 +56,18 @@ it('returns vendor-scoped admin summary metrics', function () {
         ->assertJsonPath('summary.products_count', 1)
         ->assertJsonPath('summary.orders_count', 1)
         ->assertJsonPath('summary.items_sold', 2)
-        ->assertJsonPath('summary.revenue', 1000);
+        ->assertJsonPath('summary.revenue', 1000)
+        ->assertJsonStructure([
+            'summary' => [
+                'charts' => [
+                    'revenue_trend',
+                    'orders_by_status',
+                    'top_products',
+                ],
+            ],
+        ])
+        ->assertJsonPath('summary.charts.top_products.0.name', 'Vendor Kulaklık')
+        ->assertJsonPath('summary.charts.top_products.0.quantity', 2);
 });
 
 it('lists only orders containing vendor products', function () {

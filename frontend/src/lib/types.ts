@@ -294,6 +294,26 @@ export type AdminSummary = {
   items_sold: number;
   revenue: number;
   pending_cancellation_requests?: number;
+  charts?: AdminCharts;
+};
+
+export type AdminCharts = {
+  revenue_trend: Array<{
+    date: string;
+    label: string;
+    revenue: number;
+    orders: number;
+  }>;
+  orders_by_status: Array<{
+    status: string;
+    label: string;
+    count: number;
+  }>;
+  top_products: Array<{
+    name: string;
+    revenue: number;
+    quantity: number;
+  }>;
 };
 
 export type CancellationRequestsResponse = {

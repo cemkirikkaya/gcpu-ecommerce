@@ -93,6 +93,11 @@ class AdminOrderService
      *     items_sold: int,
      *     revenue: float,
      *     pending_cancellation_requests: int,
+     *     charts: array{
+     *         revenue_trend: list<array{date: string, label: string, revenue: float, orders: int}>,
+     *         orders_by_status: list<array{status: string, label: string, count: int}>,
+     *         top_products: list<array{name: string, revenue: float, quantity: int}>,
+     *     },
      * }
      */
     public function summaryFor(User $user): array
@@ -141,6 +146,157 @@ class AdminOrderService
             'items_sold' => (int) $soldItems->sum('quantity'),
             'revenue' => (float) $soldItems->sum(fn (OrderItem $item): float => $item->subtotal()),
             'pending_cancellation_requests' => app(OrderCancellationService::class)->pendingCountFor($user),
+            'charts' => $this->chartsFor($user),
         ];
+    }
+
+    /**
+     * @return array{
+     *     revenue_trend: list<array{date: string, label: string, revenue: float, orders: int}>,
+     *     orders_by_status: list<array{status: string, label: string, count: int}>,
+     *     top_products: list<array{name: string, revenue: float, quantity: int}>,
+     * }
+     */
+    public function chartsFor(User $user): array
+    {
+        return [
+            'revenue_trend' => $this->revenueTrendFor($user),
+            'orders_by_status' => $this->ordersByStatusFor($user),
+            'top_products' => $this->topProductsFor($user),
+        ];
+    }
+
+    /**
+     * @return list<array{date: string, label: string, revenue: float, orders: int}>
+     */
+    private function revenueTrendFor(User $user, int $days = 14): array
+    {
+        $start = now()->subDays($days - 1)->startOfDay();
+
+        $items = $this->paidOrderItemsQueryFor($user)
+            ->whereHas('order', fn (Builder $orderQuery) => $orderQuery->where('paid_at', '>=', $start))
+            ->with(['order:id,paid_at'])
+            ->get(['id', 'order_id', 'quantity', 'price']);
+
+        $trend = [];
+
+        for ($offset = 0; $offset < $days; $offset++) {
+            $date = $start->copy()->addDays($offset)->toDateString();
+            $trend[$date] = [
+                'date' => $date,
+                'label' => $start->copy()->addDays($offset)->format('d.m'),
+                'revenue' => 0.0,
+                'orders' => 0,
+            ];
+        }
+
+        $orderIdsByDate = [];
+
+        foreach ($items as $item) {
+            $paidAt = $item->order?->paid_at;
+
+            if ($paidAt === null) {
+                continue;
+            }
+
+            $date = $paidAt->toDateString();
+
+            if (! isset($trend[$date])) {
+                continue;
+            }
+
+            $trend[$date]['revenue'] += $item->subtotal();
+            $orderIdsByDate[$date][$item->order_id] = true;
+        }
+
+        foreach ($orderIdsByDate as $date => $orderIds) {
+            if (isset($trend[$date])) {
+                $trend[$date]['orders'] = count($orderIds);
+            }
+        }
+
+        return array_values($trend);
+    }
+
+    /**
+     * @return list<array{status: string, label: string, count: int}>
+     */
+    private function ordersByStatusFor(User $user): array
+    {
+        return $this->ordersQueryFor($user)
+            ->selectRaw('status, COUNT(*) as total')
+            ->groupBy('status')
+            ->reorder()
+            ->orderByDesc('total')
+            ->get()
+            ->map(function ($row): array {
+                $status = $row->status instanceof OrderStatus
+                    ? $row->status
+                    : OrderStatus::from((string) $row->status);
+
+                return [
+                    'status' => $status->value,
+                    'label' => $status->label(),
+                    'count' => (int) $row->total,
+                ];
+            })
+            ->values()
+            ->all();
+    }
+
+    /**
+     * @return list<array{name: string, revenue: float, quantity: int}>
+     */
+    private function topProductsFor(User $user, int $limit = 5): array
+    {
+        $items = $this->paidOrderItemsQueryFor($user)
+            ->with(['cartItem.productVariant.product:id,name'])
+            ->get(['id', 'quantity', 'price', 'cart_item_id']);
+
+        /** @var array<string, array{name: string, revenue: float, quantity: int}> $products */
+        $products = [];
+
+        foreach ($items as $item) {
+            $name = $item->cartItem?->productVariant?->product?->name ?? 'Ürün';
+
+            if (! isset($products[$name])) {
+                $products[$name] = [
+                    'name' => $name,
+                    'revenue' => 0.0,
+                    'quantity' => 0,
+                ];
+            }
+
+            $products[$name]['revenue'] += $item->subtotal();
+            $products[$name]['quantity'] += $item->quantity;
+        }
+
+        return collect($products)
+            ->sortByDesc('revenue')
+            ->take($limit)
+            ->values()
+            ->all();
+    }
+
+    /**
+     * @return Builder<OrderItem>
+     */
+    private function paidOrderItemsQueryFor(User $user): Builder
+    {
+        $query = OrderItem::query()->whereHas(
+            'order',
+            fn (Builder $orderQuery) => $orderQuery
+                ->where('payment_status', PaymentStatus::Paid)
+                ->whereNotNull('paid_at'),
+        );
+
+        if ($user->isVendor()) {
+            $query->whereHas(
+                'cartItem.productVariant.product',
+                fn (Builder $productQuery) => $productQuery->where('user_id', $user->id),
+            );
+        }
+
+        return $query;
     }
 }

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
+import { AdminChartsSection } from "@/components/admin/admin-charts";
 import { PendingCancellationAlerts } from "@/components/admin/pending-cancellation-alerts";
 import { ButtonLink } from "@/components/ui/button";
 import { useAuth } from "@/context/auth-context";
@@ -48,6 +49,8 @@ export default function AdminDashboardPage() {
           formatted
         />
       </div>
+
+      <AdminChartsSection charts={summary?.charts ?? null} loading={loading} />
 
       <div className="mt-10 flex flex-wrap gap-3">
         <ButtonLink href="/admin/products/new">Yeni Ürün Ekle</ButtonLink>
