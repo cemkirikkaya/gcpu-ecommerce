@@ -8,6 +8,7 @@ import { OrderStatusBadge } from "@/components/orders/order-status-badge";
 import { ButtonLink } from "@/components/ui/button";
 import { useAuth } from "@/context/auth-context";
 import { api, formatOrderDate, formatPrice } from "@/lib/api";
+import { splitOrdersByStatus } from "@/lib/orders";
 import type { Order } from "@/lib/types";
 
 export default function OrdersPage() {
@@ -45,6 +46,32 @@ export default function OrdersPage() {
     );
   }
 
+  const { activeOrders, cancelledOrders } = splitOrdersByStatus(orders);
+
+  function renderOrderCard(order: Order) {
+    return (
+      <Link
+        key={order.id}
+        href={`/orders/${order.id}`}
+        className="block rounded-[2rem] border border-line bg-surface p-6 transition hover:border-accent/40"
+      >
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <p className="text-sm text-muted">Sipariş #{order.id}</p>
+            <p className="mt-2 font-display text-2xl text-accent">
+              {formatPrice(order.total_price)}
+            </p>
+            <p className="mt-2 text-sm text-muted">{formatOrderDate(order.created_at)}</p>
+          </div>
+          <div className="flex flex-col items-end gap-2">
+            <OrderStatusBadge status={order.status} label={order.status_label} />
+            <span className="text-xs text-muted">{order.payment_status_label}</span>
+          </div>
+        </div>
+      </Link>
+    );
+  }
+
   return (
     <div className="mx-auto max-w-4xl px-6 py-16 lg:px-10 lg:py-24">
       <AccountBackLink />
@@ -52,7 +79,11 @@ export default function OrdersPage() {
         <p className="text-xs uppercase tracking-[0.35em] text-muted">Hesabım</p>
         <h1 className="mt-3 font-display text-5xl font-semibold">Siparişlerim</h1>
         <p className="mt-4 text-muted">
-          Yalnızca bu hesaba ait siparişler listelenir.
+          {activeOrders.length > 0
+            ? `${activeOrders.length} aktif sipariş${cancelledOrders.length > 0 ? ` · ${cancelledOrders.length} iptal edildi` : ""}`
+            : cancelledOrders.length > 0
+              ? `${cancelledOrders.length} iptal edilmiş sipariş`
+              : "Yalnızca bu hesaba ait siparişler listelenir."}
         </p>
       </div>
 
@@ -66,35 +97,32 @@ export default function OrdersPage() {
           </ButtonLink>
         </div>
       ) : (
-        <div className="mt-16 space-y-4">
-          {orders.map((order) => (
-            <Link
-              key={order.id}
-              href={`/orders/${order.id}`}
-              className="block rounded-[2rem] border border-line bg-surface p-6 transition hover:border-accent/40"
-            >
-              <div className="flex flex-wrap items-start justify-between gap-4">
-                <div>
-                  <p className="text-sm text-muted">Sipariş #{order.id}</p>
-                  <p className="mt-2 font-display text-2xl text-accent">
-                    {formatPrice(order.total_price)}
-                  </p>
-                  <p className="mt-2 text-sm text-muted">
-                    {formatOrderDate(order.created_at)}
-                  </p>
-                </div>
-                <div className="flex flex-col items-end gap-2">
-                  <OrderStatusBadge
-                    status={order.status}
-                    label={order.status_label}
-                  />
-                  <span className="text-xs text-muted">
-                    {order.payment_status_label}
-                  </span>
-                </div>
+        <div className="mt-16 space-y-10">
+          {activeOrders.length > 0 && (
+            <div className="space-y-4">
+              {activeOrders.map(renderOrderCard)}
+            </div>
+          )}
+
+          {activeOrders.length === 0 && cancelledOrders.length > 0 && (
+            <div className="rounded-[2rem] border border-line bg-surface p-10 text-center">
+              <p className="text-muted">Aktif siparişiniz yok.</p>
+              <ButtonLink href="/products" className="mt-6">
+                Alışverişe Başla
+              </ButtonLink>
+            </div>
+          )}
+
+          {cancelledOrders.length > 0 && (
+            <section>
+              <p className="text-xs uppercase tracking-[0.35em] text-muted">
+                İptal edilen siparişler
+              </p>
+              <div className="mt-4 space-y-4 opacity-80">
+                {cancelledOrders.map(renderOrderCard)}
               </div>
-            </Link>
-          ))}
+            </section>
+          )}
         </div>
       )}
     </div>

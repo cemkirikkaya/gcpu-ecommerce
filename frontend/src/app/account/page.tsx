@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/context/auth-context";
 import { useWishlist } from "@/context/wishlist-context";
 import { api } from "@/lib/api";
+import { countActiveOrders } from "@/lib/orders";
 
 type AccountStats = {
   orderCount: number;
@@ -77,7 +78,7 @@ export default function AccountPage() {
     ])
       .then(([orders, addresses, cart]) => {
         setStats({
-          orderCount: orders.length,
+          orderCount: countActiveOrders(orders),
           favoriteCount: productIds.length,
           addressCount: addresses.length,
           cartCount: cart.item_count,
