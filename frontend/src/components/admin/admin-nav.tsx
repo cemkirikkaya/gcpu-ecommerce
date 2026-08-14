@@ -12,6 +12,25 @@ const links = [
   { href: "/admin/products/new", label: "Yeni Ürün" },
 ];
 
+function isNavLinkActive(pathname: string, href: string): boolean {
+  if (href === "/admin") {
+    return pathname === "/admin";
+  }
+
+  if (href === "/admin/products/new") {
+    return pathname === "/admin/products/new";
+  }
+
+  if (href === "/admin/products") {
+    return (
+      pathname === "/admin/products" ||
+      (pathname.startsWith("/admin/products/") && pathname !== "/admin/products/new")
+    );
+  }
+
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
+
 export function AdminNav() {
   const pathname = usePathname();
   const { user, logout } = useAuth();
@@ -26,10 +45,7 @@ export function AdminNav() {
 
       <nav className="flex flex-col gap-1">
         {links.map((link) => {
-          const active =
-            link.href === "/admin"
-              ? pathname === "/admin"
-              : pathname.startsWith(link.href);
+          const active = isNavLinkActive(pathname, link.href);
 
           return (
             <Link

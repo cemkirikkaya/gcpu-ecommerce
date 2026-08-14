@@ -11,20 +11,25 @@ function maxValue(values: number[]): number {
   return Math.max(...values, 1);
 }
 
-function BarChart({
+function RevenueLineChart({
   title,
   subtitle,
-  bars,
-  valueFormatter = (value) => String(value),
+  points,
 }: {
   title: string;
   subtitle?: string;
-  bars: ChartBar[];
-  valueFormatter?: (value: number) => string;
+  points: Array<{ label: string; revenue: number; orders: number }>;
 }) {
-  const peak = maxValue(bars.map((bar) => bar.value));
+  const width = 640;
+  const height = 220;
+  const padding = { top: 16, right: 12, bottom: 28, left: 12 };
+  const chartWidth = width - padding.left - padding.right;
+  const chartHeight = height - padding.top - padding.bottom;
+  const peak = maxValue(points.map((point) => point.revenue));
+  const periodRevenue = points.reduce((sum, point) => sum + point.revenue, 0);
+  const periodOrders = points.reduce((sum, point) => sum + point.orders, 0);
 
-  if (bars.length === 0) {
+  if (points.length === 0) {
     return (
       <div className="rounded-[1.5rem] border border-line bg-surface p-6">
         <p className="text-sm text-muted">{title}</p>
@@ -33,35 +38,106 @@ function BarChart({
     );
   }
 
+  const coordinates = points.map((point, index) => {
+    const x =
+      points.length === 1
+        ? padding.left + chartWidth / 2
+        : padding.left + (index / (points.length - 1)) * chartWidth;
+    const y = padding.top + chartHeight - (point.revenue / peak) * chartHeight;
+
+    return { ...point, x, y };
+  });
+
+  const linePath = coordinates
+    .map((point, index) => `${index === 0 ? "M" : "L"} ${point.x} ${point.y}`)
+    .join(" ");
+
+  const areaPath = `${linePath} L ${coordinates.at(-1)?.x ?? padding.left} ${
+    padding.top + chartHeight
+  } L ${coordinates[0]?.x ?? padding.left} ${padding.top + chartHeight} Z`;
+
   return (
     <div className="rounded-[1.5rem] border border-line bg-surface p-6">
-      <div className="flex items-end justify-between gap-4">
+      <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="text-sm text-muted">{title}</p>
           {subtitle && <p className="mt-1 text-xs text-muted">{subtitle}</p>}
         </div>
+        <div className="text-right">
+          <p className="text-2xl font-semibold">{formatPrice(periodRevenue)}</p>
+          <p className="mt-1 text-xs text-muted">{periodOrders} sipariş</p>
+        </div>
       </div>
 
-      <div className="mt-8 flex h-56 items-end gap-2 sm:gap-3">
-        {bars.map((bar) => {
-          const height = Math.max(8, Math.round((bar.value / peak) * 100));
+      <div className="mt-6 overflow-x-auto">
+        <svg
+          viewBox={`0 0 ${width} ${height}`}
+          className="min-w-full"
+          role="img"
+          aria-label={`${title} grafiği`}
+        >
+          <defs>
+            <linearGradient id="revenue-area" x1="0" x2="0" y1="0" y2="1">
+              <stop offset="0%" stopColor="#c9a96e" stopOpacity="0.35" />
+              <stop offset="100%" stopColor="#c9a96e" stopOpacity="0.02" />
+            </linearGradient>
+          </defs>
 
-          return (
-            <div key={bar.label} className="group flex min-w-0 flex-1 flex-col items-center gap-2">
-              <span className="text-[10px] font-medium text-accent opacity-0 transition group-hover:opacity-100">
-                {valueFormatter(bar.value)}
-              </span>
-              <div className="flex h-full w-full items-end">
-                <div
-                  title={bar.hint ?? `${bar.label}: ${valueFormatter(bar.value)}`}
-                  className="w-full rounded-t-2xl bg-[linear-gradient(180deg,#c9a96e,#8f7348)] transition hover:opacity-90"
-                  style={{ height: `${height}%` }}
-                />
-              </div>
-              <span className="truncate text-[10px] text-muted">{bar.label}</span>
-            </div>
-          );
-        })}
+          {[0, 0.25, 0.5, 0.75, 1].map((ratio) => {
+            const y = padding.top + chartHeight * (1 - ratio);
+
+            return (
+              <line
+                key={ratio}
+                x1={padding.left}
+                x2={width - padding.right}
+                y1={y}
+                y2={y}
+                stroke="currentColor"
+                className="text-line/60"
+                strokeDasharray="4 6"
+              />
+            );
+          })}
+
+          <path d={areaPath} fill="url(#revenue-area)" />
+          <path
+            d={linePath}
+            fill="none"
+            stroke="#c9a96e"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+
+          {coordinates.map((point) => (
+            <g key={point.label}>
+              <circle cx={point.x} cy={point.y} r="4.5" fill="#c9a96e" />
+              <circle cx={point.x} cy={point.y} r="8" fill="#c9a96e" fillOpacity="0.15" />
+              <title>
+                {point.label}: {formatPrice(point.revenue)} ({point.orders} sipariş)
+              </title>
+            </g>
+          ))}
+
+          {coordinates.map((point, index) => {
+            if (points.length > 10 && index % 2 !== 0 && index !== points.length - 1) {
+              return null;
+            }
+
+            return (
+              <text
+                key={`${point.label}-label`}
+                x={point.x}
+                y={height - 6}
+                textAnchor="middle"
+                className="fill-muted text-[10px]"
+              >
+                {point.label}
+              </text>
+            );
+          })}
+        </svg>
       </div>
     </div>
   );
@@ -137,10 +213,10 @@ export function AdminChartsSection({ charts, loading }: AdminChartsSectionProps)
     return null;
   }
 
-  const revenueBars: ChartBar[] = charts.revenue_trend.map((point) => ({
+  const revenuePoints = charts.revenue_trend.map((point) => ({
     label: point.label,
-    value: point.revenue,
-    hint: `${point.orders} sipariş`,
+    revenue: point.revenue,
+    orders: point.orders,
   }));
 
   const statusBars: ChartBar[] = charts.orders_by_status.map((item) => ({
@@ -157,11 +233,10 @@ export function AdminChartsSection({ charts, loading }: AdminChartsSectionProps)
   return (
     <div className="mt-10 grid gap-4 xl:grid-cols-2">
       <div className="xl:col-span-2">
-        <BarChart
+        <RevenueLineChart
           title="Son 14 gün ciro"
           subtitle="Ödenmiş siparişler"
-          bars={revenueBars}
-          valueFormatter={(value) => formatPrice(value)}
+          points={revenuePoints}
         />
       </div>
       <HorizontalBarChart
