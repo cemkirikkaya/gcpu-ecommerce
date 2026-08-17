@@ -23,6 +23,7 @@ import type {
   ProductListResponse,
   ProductReview,
   ProductReviewsResponse,
+  MyProductReviewResponse,
   User,
 } from "./types";
 
@@ -115,11 +116,11 @@ export const api = {
     request<ProductReviewsResponse>(`/products/${productId}/reviews?page=${page}`),
 
   myProductReview: (token: string, productId: number) =>
-    request<{ review: ProductReview | null }>(
+    request<MyProductReviewResponse>(
       `/products/${productId}/reviews/mine`,
       {},
       token,
-    ).then((r) => r.review),
+    ),
 
   createProductReview: (
     token: string,

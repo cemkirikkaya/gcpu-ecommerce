@@ -8,11 +8,14 @@ use App\Http\Requests\ProductReview\UpdateProductReviewRequest;
 use App\Http\Resources\Api\ProductReviewResource;
 use App\Models\Product;
 use App\Models\ProductReview;
+use App\Services\ProductReviewService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class ProductReviewController extends Controller
 {
+    public function __construct(private ProductReviewService $productReviewService) {}
+
     public function index(Product $product): JsonResponse
     {
         $this->authorize('viewAny', ProductReview::class);
@@ -47,8 +50,16 @@ class ProductReviewController extends Controller
     {
         $this->authorize('create', ProductReview::class);
 
+        $user = $request->user();
+
+        if (! $this->productReviewService->canReview($user, $product)) {
+            return response()->json([
+                'message' => 'Yorum yazmak için bu ürünü satın alıp teslim almış olmanız gerekir.',
+            ], 422);
+        }
+
         if (ProductReview::query()
-            ->where('user_id', $request->user()->id)
+            ->where('user_id', $user->id)
             ->where('product_id', $product->id)
             ->exists()) {
             return response()->json([
@@ -57,10 +68,11 @@ class ProductReviewController extends Controller
         }
 
         $review = ProductReview::query()->create([
-            'user_id' => $request->user()->id,
+            'user_id' => $user->id,
             'product_id' => $product->id,
             'rating' => $request->integer('rating'),
             'comment' => $request->string('comment')->toString(),
+            'is_verified_purchase' => true,
         ]);
 
         $review->load('user:id,name');
@@ -110,14 +122,17 @@ class ProductReviewController extends Controller
     {
         $this->authorize('create', ProductReview::class);
 
+        $user = $request->user();
+
         $review = ProductReview::query()
-            ->where('user_id', $request->user()->id)
+            ->where('user_id', $user->id)
             ->where('product_id', $product->id)
             ->with('user:id,name')
             ->first();
 
         return response()->json([
             'review' => $review ? new ProductReviewResource($review) : null,
+            'can_review' => $review === null && $this->productReviewService->canReview($user, $product),
         ]);
     }
 }

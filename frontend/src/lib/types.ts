@@ -60,7 +60,13 @@ export type ProductReview = {
     id: number;
     name: string;
   };
+  is_verified_purchase?: boolean;
   is_own?: boolean;
+};
+
+export type MyProductReviewResponse = {
+  review: ProductReview | null;
+  can_review: boolean;
 };
 
 export type ProductReviewsResponse = {

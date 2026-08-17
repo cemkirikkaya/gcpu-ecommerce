@@ -23,6 +23,14 @@ const emptyForm: ReviewFormState = {
   comment: "",
 };
 
+function VerifiedPurchaseBadge() {
+  return (
+    <span className="inline-flex items-center rounded-full bg-accent/10 px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.18em] text-accent">
+      Doğrulanmış alıcı
+    </span>
+  );
+}
+
 function StarPicker({
   value,
   onChange,
@@ -65,6 +73,7 @@ export function ProductReviews({ productId, initialSummary }: ProductReviewsProp
     initialSummary ?? { average: 0, count: 0 },
   );
   const [ownReview, setOwnReview] = useState<ProductReview | null>(null);
+  const [canReview, setCanReview] = useState(false);
   const [form, setForm] = useState<ReviewFormState>(emptyForm);
   const [editing, setEditing] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -82,27 +91,32 @@ export function ProductReviews({ productId, initialSummary }: ProductReviewsProp
     setLastPage(response.meta.last_page);
   }, [productId]);
 
+  const loadMine = useCallback(async () => {
+    if (!token || user?.role !== "customer") {
+      setOwnReview(null);
+      setCanReview(false);
+      return;
+    }
+
+    const mineResponse = await api.myProductReview(token, productId);
+    setOwnReview(mineResponse.review);
+    setCanReview(mineResponse.can_review);
+
+    if (mineResponse.review) {
+      setForm({ rating: mineResponse.review.rating, comment: mineResponse.review.comment });
+    }
+  }, [productId, token, user?.role]);
+
   useEffect(() => {
     setLoading(true);
     setError(null);
 
-    Promise.all([
-      loadReviews(1),
-      token && user?.role === "customer"
-        ? api.myProductReview(token, productId)
-        : Promise.resolve(null),
-    ])
-      .then(([, mine]) => {
-        setOwnReview(mine);
-        if (mine) {
-          setForm({ rating: mine.rating, comment: mine.comment });
-        }
-      })
+    Promise.all([loadReviews(1), loadMine()])
       .catch((err) => {
         setError(err instanceof Error ? err.message : "Yorumlar yüklenemedi.");
       })
       .finally(() => setLoading(false));
-  }, [productId, token, user?.role, loadReviews]);
+  }, [loadMine, loadReviews]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -129,6 +143,7 @@ export function ProductReviews({ productId, initialSummary }: ProductReviewsProp
       }
 
       await loadReviews(1);
+      await loadMine();
       setForm(emptyForm);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Yorum kaydedilemedi.");
@@ -153,6 +168,7 @@ export function ProductReviews({ productId, initialSummary }: ProductReviewsProp
       setEditing(false);
       setMessage("Yorumunuz silindi.");
       await loadReviews(1);
+      await loadMine();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Yorum silinemedi.");
     } finally {
@@ -183,11 +199,14 @@ export function ProductReviews({ productId, initialSummary }: ProductReviewsProp
       {error && <p className="mt-6 text-sm text-red-600">{error}</p>}
       {message && <p className="mt-6 text-sm text-green-700">{message}</p>}
 
-      {user?.role === "customer" && token && (
+      {user?.role === "customer" && token && (ownReview || canReview) && (
         <div className="mt-10 rounded-[1.75rem] border border-line bg-surface p-6 sm:p-8">
           {ownReview && !editing ? (
             <div>
-              <p className="text-xs uppercase tracking-[0.25em] text-muted">Yorumunuz</p>
+              <div className="flex flex-wrap items-center gap-3">
+                <p className="text-xs uppercase tracking-[0.25em] text-muted">Yorumunuz</p>
+                {ownReview.is_verified_purchase && <VerifiedPurchaseBadge />}
+              </div>
               <div className="mt-4">
                 <ProductRatingStars rating={ownReview.rating} />
                 <p className="mt-4 text-sm leading-7 text-foreground">{ownReview.comment}</p>
@@ -258,6 +277,12 @@ export function ProductReviews({ productId, initialSummary }: ProductReviewsProp
         </div>
       )}
 
+      {user?.role === "customer" && token && !ownReview && !canReview && (
+        <p className="mt-10 rounded-[1.5rem] border border-line bg-surface px-6 py-5 text-sm text-muted">
+          Yorum yazmak için bu ürünü satın alıp teslim almış olmanız gerekir.
+        </p>
+      )}
+
       {!token && (
         <p className="mt-10 text-sm text-muted">
           Yorum yazmak için{" "}
@@ -271,7 +296,7 @@ export function ProductReviews({ productId, initialSummary }: ProductReviewsProp
       <div className="mt-10 space-y-4">
         {reviews.length === 0 ? (
           <p className="rounded-[1.5rem] border border-line bg-surface px-6 py-8 text-sm text-muted">
-            Henüz yorum yok. İlk değerlendirmeyi siz yapın.
+            Henüz yorum yok.
           </p>
         ) : (
           reviews.map((review) => (
@@ -281,7 +306,10 @@ export function ProductReviews({ productId, initialSummary }: ProductReviewsProp
             >
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <p className="font-medium">{review.user?.name ?? "Müşteri"}</p>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="font-medium">{review.user?.name ?? "Müşteri"}</p>
+                    {review.is_verified_purchase && <VerifiedPurchaseBadge />}
+                  </div>
                   <p className="mt-1 text-xs text-muted">
                     {formatOrderDate(review.created_at)}
                   </p>

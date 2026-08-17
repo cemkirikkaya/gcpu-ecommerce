@@ -20,6 +20,7 @@ class ProductReview extends Model
         'product_id',
         'rating',
         'comment',
+        'is_verified_purchase',
     ];
 
     /**
@@ -29,6 +30,7 @@ class ProductReview extends Model
     {
         return [
             'rating' => 'integer',
+            'is_verified_purchase' => 'boolean',
         ];
     }
 
