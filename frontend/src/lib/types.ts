@@ -292,10 +292,20 @@ export type CatalogVariantInput = {
   size?: string;
 };
 
+export type LowStockAlert = {
+  product_id: number;
+  product_name: string;
+  variant_id: number;
+  sku: string;
+  quantity: number;
+};
+
 export type AdminSummary = {
   products_count: number;
   total_stock: number;
   low_stock_variants: number;
+  low_stock_threshold: number;
+  low_stock_alerts: LowStockAlert[];
   orders_count: number;
   items_sold: number;
   revenue: number;

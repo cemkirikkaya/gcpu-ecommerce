@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import { AdminChartsSection } from "@/components/admin/admin-charts";
+import { LowStockAlerts } from "@/components/admin/low-stock-alerts";
 import { PendingCancellationAlerts } from "@/components/admin/pending-cancellation-alerts";
 import { ButtonLink } from "@/components/ui/button";
 import { useAuth } from "@/context/auth-context";
@@ -38,6 +39,9 @@ export default function AdminDashboardPage() {
         <StatCard
           label="Düşük Stoklu Varyant"
           value={summary?.low_stock_variants}
+          hint={
+            summary ? `Eşik: ${summary.low_stock_threshold} adet ve altı` : undefined
+          }
           loading={loading}
         />
         <StatCard label="Sipariş" value={summary?.orders_count} loading={loading} />
@@ -64,6 +68,12 @@ export default function AdminDashboardPage() {
           İptal Talepleri
         </ButtonLink>
       </div>
+
+      <LowStockAlerts
+        alerts={summary?.low_stock_alerts ?? []}
+        threshold={summary?.low_stock_threshold ?? 5}
+        loading={loading}
+      />
 
       <PendingCancellationAlerts />
 
@@ -103,11 +113,13 @@ export default function AdminDashboardPage() {
 function StatCard({
   label,
   value,
+  hint,
   loading,
   formatted = false,
 }: {
   label: string;
   value?: number | string;
+  hint?: string;
   loading: boolean;
   formatted?: boolean;
 }) {
@@ -121,6 +133,7 @@ function StatCard({
     <div className="rounded-[1.5rem] border border-line bg-surface p-6">
       <p className="text-sm text-muted">{label}</p>
       <p className="mt-2 text-3xl font-semibold">{displayValue}</p>
+      {hint && !loading && <p className="mt-2 text-xs text-muted">{hint}</p>}
     </div>
   );
 }

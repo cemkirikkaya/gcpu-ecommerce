@@ -14,7 +14,10 @@ use InvalidArgumentException;
 
 class AdminOrderService
 {
-    public function __construct(private OrderMailService $orderMailService) {}
+    public function __construct(
+        private OrderMailService $orderMailService,
+        private LowStockService $lowStockService,
+    ) {}
 
     /**
      * @return Builder<Order>
@@ -103,6 +106,14 @@ class AdminOrderService
      *     products_count: int,
      *     total_stock: int,
      *     low_stock_variants: int,
+     *     low_stock_threshold: int,
+     *     low_stock_alerts: list<array{
+     *         product_id: int,
+     *         product_name: string,
+     *         variant_id: int,
+     *         sku: string,
+     *         quantity: int,
+     *     }>,
      *     orders_count: int,
      *     items_sold: int,
      *     revenue: float,
@@ -127,16 +138,10 @@ class AdminOrderService
             ->get();
 
         $totalStock = 0;
-        $lowStockVariants = 0;
 
         foreach ($products as $product) {
             foreach ($product->variants as $variant) {
-                $quantity = $variant->stock?->quantity ?? 0;
-                $totalStock += $quantity;
-
-                if ($quantity <= 5) {
-                    $lowStockVariants++;
-                }
+                $totalStock += $variant->stock?->quantity ?? 0;
             }
         }
 
@@ -155,7 +160,9 @@ class AdminOrderService
         return [
             'products_count' => $products->count(),
             'total_stock' => $totalStock,
-            'low_stock_variants' => $lowStockVariants,
+            'low_stock_variants' => $this->lowStockService->countFor($user),
+            'low_stock_threshold' => $this->lowStockService->threshold(),
+            'low_stock_alerts' => $this->lowStockService->alertsFor($user, 5),
             'orders_count' => $soldItems->pluck('order_id')->unique()->count(),
             'items_sold' => (int) $soldItems->sum('quantity'),
             'revenue' => (float) $soldItems->sum(fn (OrderItem $item): float => $item->subtotal()),

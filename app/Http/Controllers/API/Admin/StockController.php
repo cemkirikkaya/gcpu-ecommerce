@@ -5,10 +5,13 @@ namespace App\Http\Controllers\Api\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\UpdateStockRequest;
 use App\Models\Stock;
+use App\Services\LowStockService;
 use Illuminate\Http\JsonResponse;
 
 class StockController extends Controller
 {
+    public function __construct(private LowStockService $lowStockService) {}
+
     public function update(UpdateStockRequest $request, Stock $stock): JsonResponse
     {
         $stock->load('productVariant.product');
@@ -21,11 +24,16 @@ class StockController extends Controller
 
         $this->authorize('update', $product);
 
+        $previousQuantity = $stock->quantity;
+
         $stock->update([
             'quantity' => $request->validated('quantity'),
         ]);
 
-        $stock->load('productVariant.product');
+        $stock->refresh();
+        $stock->productVariant?->unsetRelation('stock');
+        $stock->load('productVariant.product.vendor');
+        $this->lowStockService->evaluateVariant($stock->productVariant, $previousQuantity);
 
         return response()->json([
             'stock' => [
