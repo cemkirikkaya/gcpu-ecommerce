@@ -21,6 +21,7 @@ class OrderCancellationService
         private PaymentGatewayFactory $gatewayFactory,
         private StockService $stockService,
         private AdminOrderService $adminOrderService,
+        private OrderMailService $orderMailService,
     ) {}
 
     public function request(Order $order, User $customer, string $message): OrderCancellationRequest
@@ -162,12 +163,16 @@ class OrderCancellationService
                 'refund_reference' => $refundResult->refundReference,
             ]);
 
-            return $cancellationRequest->fresh([
+            $freshRequest = $cancellationRequest->fresh([
                 'order.cart.user',
                 'order.items.cartItem.productVariant.product',
                 'user',
                 'reviewer',
             ]);
+
+            $this->orderMailService->queueCancellationApproved($freshRequest);
+
+            return $freshRequest;
         });
     }
 
@@ -188,12 +193,16 @@ class OrderCancellationService
             'admin_note' => $adminNote,
         ]);
 
-        return $cancellationRequest->fresh([
+        $freshRequest = $cancellationRequest->fresh([
             'order.cart.user',
             'order.items.cartItem.productVariant.product',
             'user',
             'reviewer',
         ]);
+
+        $this->orderMailService->queueCancellationRejected($freshRequest);
+
+        return $freshRequest;
     }
 
     private function resolvePaymentProvider(Order $order): PaymentProvider

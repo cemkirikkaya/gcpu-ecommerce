@@ -14,6 +14,8 @@ use InvalidArgumentException;
 
 class AdminOrderService
 {
+    public function __construct(private OrderMailService $orderMailService) {}
+
     /**
      * @return Builder<Order>
      */
@@ -74,9 +76,21 @@ class AdminOrderService
             throw new InvalidArgumentException('Ödenmemiş sipariş kargoya verilemez.');
         }
 
+        $previousStatus = $order->status;
+
         $order->update(['status' => $status]);
 
-        return $order->fresh();
+        $updatedOrder = $order->fresh();
+
+        if ($previousStatus !== $status) {
+            match ($status) {
+                OrderStatus::Shipped => $this->orderMailService->queueShipped($updatedOrder),
+                OrderStatus::Delivered => $this->orderMailService->queueDelivered($updatedOrder),
+                default => null,
+            };
+        }
+
+        return $updatedOrder;
     }
 
     public function vendorSubtotal(Collection $items): float
