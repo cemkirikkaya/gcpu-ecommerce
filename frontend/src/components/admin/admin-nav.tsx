@@ -9,6 +9,7 @@ const links = [
   { href: "/admin", label: "Özet" },
   { href: "/admin/products", label: "Ürünler" },
   { href: "/admin/orders", label: "Siparişler" },
+  { href: "/admin/cancellation-requests", label: "İptal Talepleri" },
   { href: "/admin/products/new", label: "Yeni Ürün" },
 ];
 
