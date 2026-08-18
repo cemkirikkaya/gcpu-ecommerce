@@ -175,6 +175,44 @@ export const api = {
   me: (token: string) =>
     request<{ user: User }>("/auth/me", {}, token).then((r) => r.user),
 
+  updateProfile: (token: string, payload: { name: string; email: string }) =>
+    request<{ user: User; message: string }>(
+      "/auth/profile",
+      { method: "PUT", body: JSON.stringify(payload) },
+      token,
+    ),
+
+  updatePassword: (
+    token: string,
+    payload: {
+      current_password?: string;
+      password: string;
+      password_confirmation: string;
+    },
+  ) =>
+    request<{ user: User; message: string }>(
+      "/auth/password",
+      { method: "PUT", body: JSON.stringify(payload) },
+      token,
+    ),
+
+  forgotPassword: (email: string) =>
+    request<{ message: string }>("/auth/forgot-password", {
+      method: "POST",
+      body: JSON.stringify({ email }),
+    }),
+
+  resetPassword: (payload: {
+    token: string;
+    email: string;
+    password: string;
+    password_confirmation: string;
+  }) =>
+    request<{ message: string }>("/auth/reset-password", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
+
   cart: (token: string) =>
     request<{ cart: Cart }>("/cart", {}, token).then((r) => r.cart),
 

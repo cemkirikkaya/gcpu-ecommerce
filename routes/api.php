@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\AccountController;
 use App\Http\Controllers\Api\AddressController;
 use App\Http\Controllers\Api\Admin\CategoryController as AdminCategoryController;
 use App\Http\Controllers\Api\Admin\OrderCancellationController as AdminOrderCancellationController;
@@ -14,6 +15,7 @@ use App\Http\Controllers\Api\CheckoutController;
 use App\Http\Controllers\Api\IyzicoPaymentController;
 use App\Http\Controllers\Api\OrderCancellationController;
 use App\Http\Controllers\Api\OrderController;
+use App\Http\Controllers\Api\PasswordResetController;
 use App\Http\Controllers\Api\ProductReviewController;
 use App\Http\Controllers\Api\StripePaymentController as ApiStripePaymentController;
 use App\Http\Controllers\Api\WishlistController;
@@ -28,10 +30,14 @@ Route::get('/products/{product}/reviews', [ProductReviewController::class, 'inde
 Route::post('/auth/register', [AuthController::class, 'register']);
 Route::post('/auth/login', [AuthController::class, 'login']);
 Route::post('/auth/google', [AuthController::class, 'google']);
+Route::post('/auth/forgot-password', [PasswordResetController::class, 'forgot']);
+Route::post('/auth/reset-password', [PasswordResetController::class, 'reset']);
 
 Route::middleware('auth:sanctum')->group(function (): void {
     Route::get('/auth/me', [AuthController::class, 'me']);
     Route::post('/auth/logout', [AuthController::class, 'logout']);
+    Route::put('/auth/profile', [AccountController::class, 'updateProfile']);
+    Route::put('/auth/password', [AccountController::class, 'updatePassword']);
 
     Route::get('/cart', [CartController::class, 'show']);
     Route::post('/cart/items', [CartController::class, 'store']);

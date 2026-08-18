@@ -55,6 +55,11 @@ export default function LoginPage() {
             placeholder="Şifre"
             className="w-full rounded-full border border-line bg-background px-5 py-3 text-sm outline-none focus:border-accent"
           />
+          <div className="text-right">
+            <Link href="/forgot-password" className="text-sm text-accent hover:underline">
+              Şifremi unuttum
+            </Link>
+          </div>
           {error && <p className="text-sm text-red-600">{error}</p>}
           <Button type="submit" disabled={loading} className="w-full">
             {loading ? "Giriş yapılıyor..." : "Giriş Yap"}

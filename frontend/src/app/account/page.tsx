@@ -44,6 +44,11 @@ const accountLinks = [
     statKey: "cartCount" as const,
     statLabel: "ürün",
   },
+  {
+    href: "/account/settings",
+    label: "Hesap Ayarları",
+    description: "Profil ve şifre yönetimi",
+  },
 ];
 
 export default function AccountPage() {
@@ -115,10 +120,16 @@ export default function AccountPage() {
             href={item.href}
             className="group rounded-[1.5rem] border border-line bg-surface p-6 transition hover:-translate-y-0.5 hover:border-accent/40 hover:shadow-[0_20px_50px_-40px_rgba(28,25,23,0.35)]"
           >
-            <p className="font-display text-3xl text-accent">{stats[item.statKey]}</p>
-            <p className="mt-1 text-xs uppercase tracking-[0.2em] text-muted">
-              {item.statLabel}
-            </p>
+            {"statKey" in item && item.statKey ? (
+              <>
+                <p className="font-display text-3xl text-accent">{stats[item.statKey]}</p>
+                <p className="mt-1 text-xs uppercase tracking-[0.2em] text-muted">
+                  {item.statLabel}
+                </p>
+              </>
+            ) : (
+              <p className="font-display text-3xl text-accent">⚙︎</p>
+            )}
             <p className="mt-5 font-display text-2xl text-foreground transition group-hover:text-accent">
               {item.label}
             </p>
