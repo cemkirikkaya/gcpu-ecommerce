@@ -65,6 +65,12 @@ export function SiteHeader() {
               >
                 Koleksiyon
               </Link>
+              <Link
+                href="/blog"
+                className="rounded-full px-3 py-2 text-stone-700 transition hover:bg-accent-soft/70"
+              >
+                Blog
+              </Link>
               {mounted && !loading && user && token && !isPanelUser(user) && (
                 <Link
                   href="/cart"
@@ -93,6 +99,12 @@ export function SiteHeader() {
               className="rounded-full px-4 py-2 text-stone-700 transition hover:bg-accent-soft/70 hover:text-foreground"
             >
               Koleksiyon
+            </Link>
+            <Link
+              href="/blog"
+              className="rounded-full px-4 py-2 text-stone-700 transition hover:bg-accent-soft/70 hover:text-foreground"
+            >
+              Blog
             </Link>
 
             {mounted && !loading && user && token ? (

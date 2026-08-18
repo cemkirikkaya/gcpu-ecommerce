@@ -4,13 +4,16 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import { useAuth } from "@/context/auth-context";
+import { isAdmin } from "@/lib/auth";
 
 const links = [
   { href: "/admin", label: "Özet" },
   { href: "/admin/products", label: "Ürünler" },
   { href: "/admin/orders", label: "Siparişler" },
   { href: "/admin/cancellation-requests", label: "İptal Talepleri" },
+  { href: "/admin/posts", label: "Blog", adminOnly: true },
   { href: "/admin/products/new", label: "Yeni Ürün" },
+  { href: "/admin/posts/new", label: "Yeni Yazı", adminOnly: true },
 ];
 
 function isNavLinkActive(pathname: string, href: string): boolean {
@@ -29,12 +32,25 @@ function isNavLinkActive(pathname: string, href: string): boolean {
     );
   }
 
+  if (href === "/admin/posts/new") {
+    return pathname === "/admin/posts/new";
+  }
+
+  if (href === "/admin/posts") {
+    return (
+      pathname === "/admin/posts" ||
+      (pathname.startsWith("/admin/posts/") && pathname !== "/admin/posts/new")
+    );
+  }
+
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
 export function AdminNav() {
   const pathname = usePathname();
   const { user, logout } = useAuth();
+
+  const visibleLinks = links.filter((link) => !link.adminOnly || isAdmin(user));
 
   return (
     <aside className="flex w-full flex-col gap-8 border-b border-line bg-surface p-6 lg:min-h-screen lg:w-64 lg:border-b-0 lg:border-r">
@@ -45,7 +61,7 @@ export function AdminNav() {
       </div>
 
       <nav className="flex flex-col gap-1">
-        {links.map((link) => {
+        {visibleLinks.map((link) => {
           const active = isNavLinkActive(pathname, link.href);
 
           return (

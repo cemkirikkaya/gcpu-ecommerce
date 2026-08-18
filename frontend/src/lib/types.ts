@@ -372,3 +372,39 @@ export type ApiError = {
   message: string;
   errors?: Record<string, string[]>;
 };
+
+export type PostSummary = {
+  id: number;
+  title: string;
+  slug: string;
+  excerpt: string | null;
+  published_at: string | null;
+  author_name: string | null;
+};
+
+export type Post = PostSummary & {
+  content: string;
+};
+
+export type PostListResponse = {
+  posts: PostSummary[];
+  meta: {
+    current_page: number;
+    last_page: number;
+    per_page: number;
+    total: number;
+  };
+};
+
+export type AdminPost = {
+  id: number;
+  title: string;
+  slug: string;
+  excerpt: string | null;
+  content: string;
+  published_at: string | null;
+  is_published: boolean;
+  author_name: string | null;
+  created_at: string | null;
+  updated_at: string | null;
+};

@@ -3,6 +3,7 @@ import type {
   AccountType,
   AdminCategory,
   AdminOrder,
+  AdminPost,
   AdminProduct,
   AdminSummary,
   ApiError,
@@ -24,6 +25,8 @@ import type {
   ProductReview,
   ProductReviewsResponse,
   MyProductReviewResponse,
+  Post,
+  PostListResponse,
   User,
 } from "./types";
 
@@ -111,6 +114,10 @@ export const api = {
 
   product: (id: number) =>
     request<{ product: Product }>(`/products/${id}`).then((r) => r.product),
+
+  posts: (page = 1) => request<PostListResponse>(`/posts?page=${page}`),
+
+  post: (slug: string) => request<{ post: Post }>(`/posts/${slug}`).then((r) => r.post),
 
   productReviews: (productId: number, page = 1) =>
     request<ProductReviewsResponse>(`/products/${productId}/reviews?page=${page}`),
@@ -490,6 +497,52 @@ export const api = {
       { method: "PATCH", body: JSON.stringify({ status }) },
       token,
     ).then((response) => response.order),
+
+  adminPosts: (token: string) =>
+    request<{ posts: AdminPost[] }>("/admin/posts", {}, token).then(
+      (response) => response.posts,
+    ),
+
+  adminPost: (token: string, postId: number) =>
+    request<{ post: AdminPost }>(`/admin/posts/${postId}`, {}, token).then(
+      (response) => response.post,
+    ),
+
+  adminCreatePost: (
+    token: string,
+    payload: {
+      title: string;
+      slug: string;
+      excerpt?: string | null;
+      content: string;
+      published_at?: string | null;
+    },
+  ) =>
+    request<{ post: AdminPost; message: string }>(
+      "/admin/posts",
+      { method: "POST", body: JSON.stringify(payload) },
+      token,
+    ),
+
+  adminUpdatePost: (
+    token: string,
+    postId: number,
+    payload: {
+      title: string;
+      slug: string;
+      excerpt?: string | null;
+      content: string;
+      published_at?: string | null;
+    },
+  ) =>
+    request<{ post: AdminPost; message: string }>(
+      `/admin/posts/${postId}`,
+      { method: "PUT", body: JSON.stringify(payload) },
+      token,
+    ).then((response) => response.post),
+
+  adminDeletePost: (token: string, postId: number) =>
+    request<{ message: string }>(`/admin/posts/${postId}`, { method: "DELETE" }, token),
 };
 
 export function formatPrice(value: number): string {
@@ -512,4 +565,21 @@ export function formatOrderDate(value: string | null): string {
   const [, year, month, day, hours, minutes] = match;
 
   return `${day}.${month}.${year} ${hours}:${minutes}`;
+}
+
+export function formatPublishDate(value: string | null): string {
+  if (!value) {
+    return "—";
+  }
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return "—";
+  }
+
+  return date.toLocaleDateString("tr-TR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
 }
