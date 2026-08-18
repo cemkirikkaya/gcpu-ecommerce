@@ -288,6 +288,31 @@ export const api = {
   order: (token: string, orderId: number) =>
     request<OrderDetailResponse>(`/orders/${orderId}`, {}, token),
 
+  downloadOrderInvoice: async (token: string, orderId: number) => {
+    const response = await fetch(`${getApiUrl()}/orders/${orderId}/invoice`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/pdf",
+      },
+      cache: "no-store",
+    });
+
+    if (!response.ok) {
+      const payload = (await response.json().catch(() => null)) as ApiError | null;
+      throw new ApiClientError(payload?.message ?? "Fatura indirilemedi.", response.status);
+    }
+
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `fatura-siparis-${orderId}.pdf`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  },
+
   requestOrderCancellation: (token: string, orderId: number, message: string) =>
     request<{ cancellation_request: OrderCancellationRequest; message: string }>(
       `/orders/${orderId}/cancellation-request`,

@@ -31,6 +31,18 @@ class OrderPolicy
         ], true);
     }
 
+    public function downloadInvoice(User $user, Order $order): bool
+    {
+        if (! $this->view($user, $order)) {
+            return false;
+        }
+
+        return in_array($order->payment_status, [
+            PaymentStatus::Paid,
+            PaymentStatus::Refunded,
+        ], true);
+    }
+
     public function adminViewAny(User $user): bool
     {
         return $user->canAccessAdminApi();

@@ -6,14 +6,19 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\Api\OrderResource;
 use App\Models\Order;
 use App\Models\User;
+use App\Services\OrderInvoiceService;
 use App\Services\OrderService;
 use App\Support\PaymentProviderCatalog;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 
 class OrderController extends Controller
 {
-    public function __construct(private OrderService $orderService) {}
+    public function __construct(
+        private OrderService $orderService,
+        private OrderInvoiceService $orderInvoiceService,
+    ) {}
 
     public function index(): JsonResponse
     {
@@ -56,6 +61,15 @@ class OrderController extends Controller
         }
 
         return response()->json($payload);
+    }
+
+    public function invoice(Order $order): Response
+    {
+        $this->authorize('downloadInvoice', $order);
+
+        return $this->orderInvoiceService
+            ->generatePdf($order)
+            ->download($this->orderInvoiceService->filename($order));
     }
 
     public function installments(Order $order): JsonResponse

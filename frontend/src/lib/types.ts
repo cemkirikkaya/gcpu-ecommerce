@@ -231,6 +231,7 @@ export type Order = {
   payment_status_label: string;
   payment_provider?: string | null;
   created_at: string | null;
+  can_download_invoice?: boolean;
   address?: Address | null;
   cancellation_request?: OrderCancellationRequest | null;
   items?: Array<{

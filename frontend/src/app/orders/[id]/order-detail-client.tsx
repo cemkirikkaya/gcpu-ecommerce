@@ -6,7 +6,7 @@ import { OrderStatusBadge } from "@/components/orders/order-status-badge";
 import { OrderStatusTimeline } from "@/components/orders/order-status-timeline";
 import { OrderPaymentRetry } from "@/components/orders/order-payment-retry";
 import { OrderCancellationPanel } from "@/components/orders/order-cancellation-panel";
-import { ButtonLink } from "@/components/ui/button";
+import { Button, ButtonLink } from "@/components/ui/button";
 import { useAuth } from "@/context/auth-context";
 import { api, formatOrderDate, formatPrice } from "@/lib/api";
 import type { Order, OrderCancellationRequest, PaymentOptions } from "@/lib/types";
@@ -18,6 +18,7 @@ export function OrderDetailClient({ orderId }: { orderId: string }) {
   const [paymentOptions, setPaymentOptions] = useState<PaymentOptions | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
+  const [invoiceDownloading, setInvoiceDownloading] = useState(false);
 
   useEffect(() => {
     if (authLoading) {
@@ -160,6 +161,27 @@ export function OrderDetailClient({ orderId }: { orderId: string }) {
       {message && <p className="mt-4 text-sm text-red-600">{message}</p>}
 
       <div className="mt-8 flex flex-wrap gap-3">
+        {order.can_download_invoice && token && (
+          <Button
+            type="button"
+            variant="secondary"
+            disabled={invoiceDownloading}
+            onClick={async () => {
+              setInvoiceDownloading(true);
+              setMessage(null);
+
+              try {
+                await api.downloadOrderInvoice(token, order.id);
+              } catch (error) {
+                setMessage(error instanceof Error ? error.message : "Fatura indirilemedi.");
+              } finally {
+                setInvoiceDownloading(false);
+              }
+            }}
+          >
+            {invoiceDownloading ? "İndiriliyor..." : "Faturayı İndir"}
+          </Button>
+        )}
         <ButtonLink href="/orders">Siparişlerim</ButtonLink>
         <ButtonLink href="/products" variant="secondary">
           Alışverişe Devam Et
