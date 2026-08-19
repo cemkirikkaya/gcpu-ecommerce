@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 
 import { ColorSwatch } from "@/components/catalog/color-swatch";
 import { ProductFavoriteButton } from "@/components/catalog/product-favorite-button";
+import { StockAlertButton } from "@/components/catalog/stock-alert-button";
 import { ProductFeatures, getProductVariants } from "@/components/catalog/product-features";
 import { ProductImage } from "@/components/catalog/product-image";
 import { ProductRatingStars } from "@/components/catalog/product-rating-stars";
@@ -254,18 +255,24 @@ export default function ProductDetailPage({
           </div>
 
           <div className="mt-10 flex flex-wrap gap-3 border-t border-line pt-10">
-            <input
-              type="number"
-              min={1}
-              max={Math.min(99, selectedVariant?.available_quantity ?? 1)}
-              value={quantity}
-              onChange={(event) => setQuantity(Number(event.target.value))}
-              className="w-20 rounded-full border border-line px-4 py-3 text-center text-sm"
-            />
-            <Button onClick={handleAddToCart}>Sepete Ekle</Button>
-            <ButtonLink href="/cart" variant="secondary">
-              Sepete Git
-            </ButtonLink>
+            {(selectedVariant?.available_quantity ?? 0) > 0 ? (
+              <>
+                <input
+                  type="number"
+                  min={1}
+                  max={Math.min(99, selectedVariant?.available_quantity ?? 1)}
+                  value={quantity}
+                  onChange={(event) => setQuantity(Number(event.target.value))}
+                  className="w-20 rounded-full border border-line px-4 py-3 text-center text-sm"
+                />
+                <Button onClick={handleAddToCart}>Sepete Ekle</Button>
+                <ButtonLink href="/cart" variant="secondary">
+                  Sepete Git
+                </ButtonLink>
+              </>
+            ) : selectedVariant ? (
+              <StockAlertButton variantId={selectedVariant.id} />
+            ) : null}
           </div>
 
           {message && <p className="mt-4 text-sm text-accent">{message}</p>}

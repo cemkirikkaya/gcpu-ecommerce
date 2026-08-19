@@ -21,6 +21,7 @@ use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\PasswordResetController;
 use App\Http\Controllers\Api\PostController;
 use App\Http\Controllers\Api\ProductReviewController;
+use App\Http\Controllers\Api\StockAlertController;
 use App\Http\Controllers\Api\StripePaymentController as ApiStripePaymentController;
 use App\Http\Controllers\Api\WishlistController;
 use Illuminate\Support\Facades\Route;
@@ -73,6 +74,10 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::get('/wishlist/ids', [WishlistController::class, 'ids']);
     Route::post('/wishlist/products/{product}', [WishlistController::class, 'store']);
     Route::delete('/wishlist/products/{product}', [WishlistController::class, 'destroy']);
+
+    Route::get('/stock-alerts/variant-ids', [StockAlertController::class, 'variantIds']);
+    Route::post('/stock-alerts/variants/{variant}', [StockAlertController::class, 'store']);
+    Route::delete('/stock-alerts/variants/{variant}', [StockAlertController::class, 'destroy']);
 
     Route::get('/products/{product}/reviews/mine', [ProductReviewController::class, 'mine']);
     Route::post('/products/{product}/reviews', [ProductReviewController::class, 'store']);

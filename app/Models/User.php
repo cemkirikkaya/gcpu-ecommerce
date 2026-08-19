@@ -100,6 +100,11 @@ class User extends Authenticatable implements FilamentUser
         return $this->hasMany(WishlistItem::class);
     }
 
+    public function stockAlerts(): HasMany
+    {
+        return $this->hasMany(StockAlert::class);
+    }
+
     public function favoriteProducts(): BelongsToMany
     {
         return $this->belongsToMany(Product::class, 'wishlist_items')->withTimestamps();

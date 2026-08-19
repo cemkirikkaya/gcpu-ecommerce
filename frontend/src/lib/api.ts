@@ -407,6 +407,25 @@ export const api = {
       token,
     ),
 
+  stockAlertVariantIds: (token: string) =>
+    request<{ variant_ids: number[] }>("/stock-alerts/variant-ids", {}, token).then(
+      (response) => response.variant_ids,
+    ),
+
+  subscribeStockAlert: (token: string, variantId: number) =>
+    request<{ message: string; variant_id: number }>(
+      `/stock-alerts/variants/${variantId}`,
+      { method: "POST" },
+      token,
+    ),
+
+  unsubscribeStockAlert: (token: string, variantId: number) =>
+    request<{ message: string; variant_id: number }>(
+      `/stock-alerts/variants/${variantId}`,
+      { method: "DELETE" },
+      token,
+    ),
+
   adminCategories: (token: string) =>
     request<{ categories: AdminCategory[] }>("/admin/categories", {}, token).then(
       (r) => r.categories,

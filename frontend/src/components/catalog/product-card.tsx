@@ -5,6 +5,7 @@ import { useState } from "react";
 
 import { ColorSwatch } from "@/components/catalog/color-swatch";
 import { ProductFavoriteButton } from "@/components/catalog/product-favorite-button";
+import { StockAlertButton } from "@/components/catalog/stock-alert-button";
 import { ProductImage } from "@/components/catalog/product-image";
 import { ProductRatingStars } from "@/components/catalog/product-rating-stars";
 import { Button } from "@/components/ui/button";
@@ -192,25 +193,27 @@ export function ProductCard({ product }: { product: Product }) {
         )}
 
         <div className="mt-auto flex flex-wrap items-center gap-2 border-t border-line pt-4">
-          <input
-            type="number"
-            min={1}
-            max={Math.min(99, selectedVariant?.available_quantity ?? 1)}
-            value={quantity}
-            onChange={(event) => setQuantity(Number(event.target.value))}
-            className="w-16 rounded-full border border-line bg-background px-3 py-2 text-center text-sm outline-none focus:border-accent"
-          />
-          <Button
-            onClick={handleAddToCart}
-            disabled={
-              loading ||
-              !selectedVariant ||
-              selectedVariant.available_quantity <= 0
-            }
-            className="min-w-0 flex-1 px-4 py-2 text-sm"
-          >
-            {loading ? "..." : "Sepete Ekle"}
-          </Button>
+          {(selectedVariant?.available_quantity ?? 0) > 0 ? (
+            <>
+              <input
+                type="number"
+                min={1}
+                max={Math.min(99, selectedVariant?.available_quantity ?? 1)}
+                value={quantity}
+                onChange={(event) => setQuantity(Number(event.target.value))}
+                className="w-16 rounded-full border border-line bg-background px-3 py-2 text-center text-sm outline-none focus:border-accent"
+              />
+              <Button
+                onClick={handleAddToCart}
+                disabled={loading || !selectedVariant}
+                className="min-w-0 flex-1 px-4 py-2 text-sm"
+              >
+                {loading ? "..." : "Sepete Ekle"}
+              </Button>
+            </>
+          ) : selectedVariant ? (
+            <StockAlertButton variantId={selectedVariant.id} className="w-full" />
+          ) : null}
         </div>
 
         {message && <p className="mt-2 text-xs text-accent">{message}</p>}

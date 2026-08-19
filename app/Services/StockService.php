@@ -9,7 +9,10 @@ use Illuminate\Support\Carbon;
 
 class StockService
 {
-    public function __construct(private LowStockService $lowStockService) {}
+    public function __construct(
+        private LowStockService $lowStockService,
+        private BackInStockService $backInStockService,
+    ) {}
 
     public function reservationMinutes(): int
     {
@@ -79,16 +82,20 @@ class StockService
         $productVariant->unsetRelation('stock');
         $productVariant->load(['stock', 'product.vendor']);
         $this->lowStockService->evaluateVariant($productVariant, $previousQuantity);
+        $this->backInStockService->evaluateVariant($productVariant, $previousQuantity);
     }
 
     public function incrementStock(ProductVariant $productVariant, int $quantity): void
     {
+        $previousQuantity = $this->physicalQuantity($productVariant);
+
         Stock::query()
             ->where('product_variant_id', $productVariant->id)
             ->increment('quantity', $quantity);
 
         $productVariant->unsetRelation('stock');
         $productVariant->load(['stock', 'product.vendor']);
-        $this->lowStockService->evaluateVariant($productVariant);
+        $this->lowStockService->evaluateVariant($productVariant, $previousQuantity);
+        $this->backInStockService->evaluateVariant($productVariant, $previousQuantity);
     }
 }

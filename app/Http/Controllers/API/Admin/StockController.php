@@ -5,12 +5,16 @@ namespace App\Http\Controllers\Api\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\UpdateStockRequest;
 use App\Models\Stock;
+use App\Services\BackInStockService;
 use App\Services\LowStockService;
 use Illuminate\Http\JsonResponse;
 
 class StockController extends Controller
 {
-    public function __construct(private LowStockService $lowStockService) {}
+    public function __construct(
+        private LowStockService $lowStockService,
+        private BackInStockService $backInStockService,
+    ) {}
 
     public function update(UpdateStockRequest $request, Stock $stock): JsonResponse
     {
@@ -34,6 +38,7 @@ class StockController extends Controller
         $stock->productVariant?->unsetRelation('stock');
         $stock->load('productVariant.product.vendor');
         $this->lowStockService->evaluateVariant($stock->productVariant, $previousQuantity);
+        $this->backInStockService->evaluateVariant($stock->productVariant, $previousQuantity);
 
         return response()->json([
             'stock' => [
