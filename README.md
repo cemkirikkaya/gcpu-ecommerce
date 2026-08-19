@@ -4,21 +4,51 @@ Laravel API + Next.js mağaza ve admin panelinden oluşan e-ticaret monorepo'su.
 
 ```
 .
-├── app/              # Laravel backend (API, ödeme, auth)
+├── app/              # Laravel backend (API, ödeme, kargo, auth)
 ├── frontend/         # Next.js mağaza + admin paneli
-├── compose.yaml      # Docker: API + frontend + PostgreSQL
+├── compose.yaml      # Docker: API + frontend + PostgreSQL + queue
 └── tests/            # Pest feature/unit testleri
 ```
 
 ## Özellikler
 
-- **Mağaza:** Katalog, ürün detayı, sepet, checkout, sipariş takibi
+### Mağaza (müşteri)
+
 - **Katalog:** Arama, kategori/fiyat filtresi, sıralama, sayfalama
-- **Auth:** E-posta/şifre kayıt ve giriş, Google OAuth (ID token)
-- **Hesap:** Adres defteri (CRUD, varsayılan adres)
-- **Ödeme:** Iyzico (sandbox/direct) ve Stripe (fake mod ile local test)
-- **Admin (Next.js):** Ürün/stok yönetimi, sipariş listesi, sipariş durumu güncelleme
-- **Filament:** Laravel tarafında ürün/kategori/stok CMS (`/admin`)
+- **Ürün:** Varyant seçimi, renk swatch, ürün yorumları, ilgili ürünler
+- **Sepet & checkout:** Stok rezervasyonu, taksit seçenekleri (Iyzico)
+- **Auth:** E-posta/şifre, Google OAuth, şifre sıfırlama
+- **Hesap:** Profil ve şifre güncelleme, adres defteri, sipariş geçmişi
+- **Favoriler:** Ürün kaydetme
+- **Stok bildirimi:** Stokta olmayan varyantlar için “Stoğa dönünce haber ver” (e-posta)
+- **Sipariş:** Durum takibi, fatura PDF indirme, iptal talebi
+- **Blog:** `/blog` vitrin ve yazı detayı
+
+### Ödeme
+
+- **Iyzico:** Sandbox / direct ödeme, `IYZICO_FAKE` ile local test
+- **Stripe:** Checkout, `STRIPE_FAKE` ile local test
+
+### Kargo (Geliver)
+
+- Ödeme sonrası **otomatik kargo oluşturma** (Geliver API)
+- Sipariş durumu **Geliver webhook** ile güncellenir (`shipped` → `delivered`)
+- Müşteri sipariş detayında **kargo takip linki**
+- Test modu: `GELIVER_FAKE=true` (API’ye gitmeden), `GELIVER_TEST=true` (Geliver test gönderisi)
+
+### Admin (Next.js — `/admin/*`)
+
+Sanctum API; vendor kendi ürün/siparişlerini görür, platform admin hepsini görür.
+
+- Dashboard özeti, düşük stok uyarıları, grafikler
+- Ürün CRUD, stok güncelleme, kapak görseli
+- Sipariş listesi/detay, kargo bilgisi
+- İptal talepleri onay/red
+- Blog yazıları (yalnızca platform admin)
+
+### Filament (Laravel — `/admin`)
+
+Ayrı Laravel paneli; ürün/kategori CMS (session auth).
 
 ## Gereksinimler
 
@@ -90,11 +120,30 @@ docker compose restart frontend
 
 Local geliştirmede `STRIPE_FAKE=true` yeterlidir; API anahtarları boş kalabilir.
 
-### E-posta (sipariş onayı)
+### Geliver (kargo)
 
-Sipariş onay e-postaları kuyruğa alınır (`QUEUE_CONNECTION=database`). Docker ile `queue` servisi otomatik worker çalıştırır.
+| Değişken | Açıklama |
+|----------|----------|
+| `GELIVER_API_TOKEN` | [Geliver panel](https://app.geliver.io/apitokens) API token |
+| `GELIVER_SENDER_ADDRESS_ID` | Gönderici adres UUID |
+| `GELIVER_FAKE=true` | Gerçek API’ye gitmeden sahte kargo (local) |
+| `GELIVER_TEST=true` | Gerçek API ile test gönderisi (`test: true`) |
+| `GELIVER_AUTO_CREATE_ON_PAYMENT=true` | Ödeme sonrası otomatik kargo |
+| `GELIVER_SYNC_STATUS_FROM_WEBHOOK=true` | Webhook ile sipariş durumu senkronu |
 
-Gerçek e-posta kutusuna göndermek için `.env` içinde SMTP ayarlayın (log yerine):
+Gerçek Geliver testi için `GELIVER_FAKE=false` yapın. Webhook URL:
+
+```
+https://<api-adresiniz>/api/webhooks/geliver
+```
+
+Yerelde Geliver’in erişebilmesi için ngrok gibi bir tünel gerekir.
+
+### E-posta
+
+Sipariş, kargo, stok bildirimi ve düşük stok mailleri kuyruğa alınır (`QUEUE_CONNECTION=database`). Docker ile `queue` servisi otomatik worker çalıştırır.
+
+Gerçek e-posta kutusuna göndermek için `.env` içinde SMTP ayarlayın:
 
 | Değişken | Örnek (Gmail) |
 |----------|----------------|
@@ -104,7 +153,7 @@ Gerçek e-posta kutusuna göndermek için `.env` içinde SMTP ayarlayın (log ye
 | `MAIL_PORT` | `587` |
 | `MAIL_USERNAME` | Gmail adresiniz |
 | `MAIL_PASSWORD` | [Google uygulama şifresi](https://myaccount.google.com/apppasswords) |
-| `MAIL_FROM_ADDRESS` | Gönderen adres (genelde aynı Gmail) |
+| `MAIL_FROM_ADDRESS` | Gönderen adres |
 
 Değişiklikten sonra:
 
@@ -123,20 +172,14 @@ Kayıt olurken **gerçek e-posta adresinizi** kullanın; demo `user@blog.test` g
 | `GOOGLE_CLIENT_SECRET` | Backend |
 | `NEXT_PUBLIC_GOOGLE_CLIENT_ID` | Frontend Google butonu |
 
-Google Cloud Console'da **Authorized JavaScript origins** listesine `http://localhost:3000` ekleyin. Testing modundaysanız giriş yapacağınız Gmail'i test kullanıcısı olarak ekleyin.
-
-Frontend paketleri container'a kurulurken:
-
-```bash
-docker compose exec frontend npm install @react-oauth/google   # gerekirse
-```
+Google Cloud Console'da **Authorized JavaScript origins** listesine `http://localhost:3000` ekleyin.
 
 ## Yararlı komutlar
 
 Sail kurulduktan sonra `./vendor/bin/sail` kısayolunu kullanabilirsiniz:
 
 ```bash
-./vendor/bin/sail artisan test              # 75+ Pest testi
+./vendor/bin/sail artisan test              # Pest testleri
 ./vendor/bin/sail artisan migrate
 ./vendor/bin/sail artisan db:seed --class=CatalogSeeder
 ./vendor/bin/sail exec frontend npm install # frontend paketi ekleme
@@ -162,7 +205,8 @@ cd frontend && npm install && npm run dev
 - **Next.js admin** (`/admin/*`): Sanctum API — vendor kendi ürün/siparişlerini görür, platform admin hepsini görür.
 - **Filament** (`/admin`): Ayrı Laravel paneli; ürün/kategori yönetimi için.
 - **Ödeme akışı:** Checkout → sipariş oluştur → Iyzico veya Stripe init → `/payment/result`.
-- **Sipariş durumları:** `pending` → `processing` (ödeme) → `shipped` → `delivered` (admin panelden güncellenir).
+- **Sipariş durumları:** `pending` → `processing` (ödeme) → `shipped` (Geliver kargo) → `delivered` (Geliver webhook).
+- **Stok bildirimi:** `stock_alerts` tablosu; stok 0’dan pozitife çıkınca abonelere `BackInStockMail` gider.
 
 ## Güvenlik
 
