@@ -34,6 +34,8 @@ class OrderShippedMail extends Mailable implements ShouldQueue
             with: [
                 'customerName' => $this->order->user()?->name ?? 'Müşterimiz',
                 'orderUrl' => rtrim((string) config('app.frontend_url'), '/')."/orders/{$this->order->id}",
+                'trackingUrl' => $this->order->tracking_url,
+                'trackingNumber' => $this->order->tracking_number,
             ],
         );
     }

@@ -6,6 +6,7 @@ use App\DataTransferObjects\InstallmentOption;
 use App\DataTransferObjects\PaymentInitializationResult;
 use App\Enums\PaymentProvider;
 use App\Enums\PaymentStatus;
+use App\Jobs\CreateOrderShipmentJob;
 use App\Models\Order;
 use App\Models\User;
 use App\Repositories\OrderRepository;
@@ -153,6 +154,10 @@ class OrderService
 
         if (! $wasAlreadyPaid) {
             $this->orderMailService->queueConfirmation($completedOrder);
+
+            if (config('geliver.auto_create_on_payment')) {
+                CreateOrderShipmentJob::dispatch($completedOrder);
+            }
         }
 
         return $completedOrder;

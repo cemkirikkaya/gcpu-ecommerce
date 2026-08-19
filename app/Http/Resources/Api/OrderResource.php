@@ -28,6 +28,8 @@ class OrderResource extends JsonResource
             'stripe_checkout_session_id' => $this->stripe_checkout_session_id,
             'stripe_payment_intent_id' => $this->stripe_payment_intent_id,
             'created_at' => $this->created_at?->toIso8601String(),
+            'tracking_number' => $this->tracking_number,
+            'tracking_url' => $this->tracking_url,
             'can_download_invoice' => $request->user()?->can('downloadInvoice', $this->resource) ?? false,
             'address' => new AddressResource($this->whenLoaded('address')),
             'cancellation_request' => new OrderCancellationRequestResource(

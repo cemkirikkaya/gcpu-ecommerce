@@ -1,0 +1,120 @@
+<?php
+
+namespace App\Services;
+
+use App\Enums\OrderStatus;
+use App\Enums\PaymentStatus;
+use App\Models\Order;
+use InvalidArgumentException;
+use RuntimeException;
+
+class OrderShipmentService
+{
+    public function __construct(
+        private ShippingGatewayFactory $shippingGatewayFactory,
+        private AdminOrderService $adminOrderService,
+        private GeliverTrackingStatusMapper $trackingStatusMapper,
+    ) {}
+
+    public function createShipment(Order $order): Order
+    {
+        $order->loadMissing(['address', 'cart.user']);
+
+        if ($order->payment_status !== PaymentStatus::Paid) {
+            throw new InvalidArgumentException('Ödenmemiş sipariş için kargo oluşturulamaz.');
+        }
+
+        if ($order->geliver_shipment_id !== null) {
+            throw new InvalidArgumentException('Bu sipariş için kargo zaten oluşturulmuş.');
+        }
+
+        if (! in_array($order->status, [OrderStatus::Processing, OrderStatus::Pending], true)) {
+            throw new InvalidArgumentException('Kargo yalnızca hazırlanan siparişler için oluşturulabilir.');
+        }
+
+        if ($order->address === null) {
+            throw new InvalidArgumentException('Sipariş teslimat adresi bulunamadı.');
+        }
+
+        if (blank($order->address->phone)) {
+            throw new InvalidArgumentException('Teslimat adresinde telefon numarası zorunludur.');
+        }
+
+        try {
+            $result = $this->shippingGatewayFactory->make()->createShipment($order);
+        } catch (RuntimeException $exception) {
+            throw new InvalidArgumentException($exception->getMessage(), previous: $exception);
+        }
+
+        $order->update([
+            'geliver_shipment_id' => $result->shipmentId,
+            'tracking_number' => $result->trackingNumber,
+            'tracking_url' => $result->trackingUrl,
+        ]);
+
+        $order = $order->fresh();
+
+        if ($order->status === OrderStatus::Pending) {
+            $order = $this->adminOrderService->updateStatus($order, OrderStatus::Processing);
+        }
+
+        if ($order->status === OrderStatus::Processing) {
+            $order = $this->adminOrderService->updateStatus($order, OrderStatus::Shipped);
+        }
+
+        return $order;
+    }
+
+    /**
+     * @param  array<string, mixed>  $shipmentData
+     */
+    public function syncFromWebhook(Order $order, array $shipmentData): Order
+    {
+        $this->syncTrackingFromWebhook(
+            $order,
+            isset($shipmentData['trackingNumber']) ? (string) $shipmentData['trackingNumber'] : null,
+            isset($shipmentData['trackingUrl']) ? (string) $shipmentData['trackingUrl'] : null,
+        );
+
+        if (! config('geliver.sync_status_from_webhook')) {
+            return $order->fresh();
+        }
+
+        $targetStatus = $this->trackingStatusMapper->resolveOrderStatus($shipmentData);
+
+        if ($targetStatus === null) {
+            return $order->fresh();
+        }
+
+        $order = $order->fresh();
+
+        if ($order->status->canTransitionTo($targetStatus)) {
+            return $this->adminOrderService->updateStatus($order, $targetStatus);
+        }
+
+        if ($targetStatus === OrderStatus::Delivered && $order->status === OrderStatus::Delivered) {
+            return $order;
+        }
+
+        return $order;
+    }
+
+    public function syncTrackingFromWebhook(Order $order, ?string $trackingNumber, ?string $trackingUrl): Order
+    {
+        $attributes = [];
+
+        if (filled($trackingNumber)) {
+            $attributes['tracking_number'] = $trackingNumber;
+        }
+
+        if (filled($trackingUrl)) {
+            $attributes['tracking_url'] = $trackingUrl;
+        }
+
+        if ($attributes !== []) {
+            $order->update($attributes);
+        }
+
+        return $order->fresh();
+    }
+}

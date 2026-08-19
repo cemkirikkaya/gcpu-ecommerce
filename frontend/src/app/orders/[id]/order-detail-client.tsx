@@ -111,6 +111,23 @@ export function OrderDetailClient({ orderId }: { orderId: string }) {
 
       <OrderStatusTimeline status={order.status} statusLabel={order.status_label} />
 
+      {order.tracking_url && (
+        <div className="mt-8 rounded-[2rem] border border-line bg-surface p-6 text-center">
+          <p className="text-sm text-muted">Kargo takibi</p>
+          {order.tracking_number && (
+            <p className="mt-2 font-medium">Takip No: {order.tracking_number}</p>
+          )}
+          <a
+            href={order.tracking_url}
+            target="_blank"
+            rel="noreferrer"
+            className="mt-4 inline-flex rounded-full bg-accent px-5 py-3 text-sm font-medium text-white transition hover:bg-stone-800"
+          >
+            Kargoyu Takip Et
+          </a>
+        </div>
+      )}
+
       <div className="mt-10 space-y-6 rounded-[2rem] border border-line bg-surface p-8">
         <div className="flex justify-between text-sm">
           <span className="text-muted">Toplam</span>

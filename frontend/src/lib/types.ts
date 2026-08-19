@@ -230,6 +230,8 @@ export type Order = {
   payment_status: string;
   payment_status_label: string;
   payment_provider?: string | null;
+  tracking_number?: string | null;
+  tracking_url?: string | null;
   created_at: string | null;
   can_download_invoice?: boolean;
   address?: Address | null;
@@ -354,6 +356,9 @@ export type AdminOrder = {
   status_label: string;
   payment_status: string;
   payment_status_label: string;
+  tracking_number?: string | null;
+  tracking_url?: string | null;
+  geliver_shipment_id?: string | null;
   created_at: string | null;
   items_count?: number;
   address?: Address | null;

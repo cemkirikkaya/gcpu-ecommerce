@@ -57,4 +57,9 @@ class OrderPolicy
     {
         return $user->isAdmin();
     }
+
+    public function adminCreateShipment(User $user, Order $order): bool
+    {
+        return $user->isAdmin();
+    }
 }

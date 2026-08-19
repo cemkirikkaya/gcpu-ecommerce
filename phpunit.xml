@@ -35,6 +35,10 @@
         <env name="IYZICO_FAKE" value="true"/>
         <env name="IYZICO_DIRECT" value="false"/>
         <env name="STRIPE_FAKE" value="true"/>
+        <env name="GELIVER_FAKE" value="true"/>
+        <env name="GELIVER_TEST" value="true"/>
+        <env name="GELIVER_AUTO_CREATE_ON_PAYMENT" value="false"/>
+        <env name="GELIVER_SYNC_STATUS_FROM_WEBHOOK" value="true"/>
         <env name="STRIPE_ENABLED" value="true"/>
     </php>
 </phpunit>

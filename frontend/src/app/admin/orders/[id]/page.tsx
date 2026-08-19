@@ -18,6 +18,7 @@ export default function AdminOrderDetailPage() {
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState<string | null>(null);
   const [statusUpdating, setStatusUpdating] = useState(false);
+  const [shipmentCreating, setShipmentCreating] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState("");
 
   useEffect(() => {
@@ -48,6 +49,24 @@ export default function AdminOrderDetailPage() {
       setMessage(error instanceof Error ? error.message : "Durum güncellenemedi.");
     } finally {
       setStatusUpdating(false);
+    }
+  }
+
+  async function handleCreateShipment() {
+    if (!token || !order) return;
+
+    setShipmentCreating(true);
+    setMessage(null);
+
+    try {
+      const updated = await api.adminCreateOrderShipment(token, order.id);
+      setOrder(updated);
+      setSelectedStatus(updated.status);
+      setMessage("Kargo oluşturuldu.");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Kargo oluşturulamadı.");
+    } finally {
+      setShipmentCreating(false);
     }
   }
 
@@ -84,7 +103,7 @@ export default function AdminOrderDetailPage() {
         </div>
       </div>
 
-      {isAdmin(user) && (
+      {isAdmin(user) && order.payment_status !== "paid" && (
         <div className="mt-8 flex flex-wrap items-end gap-3 rounded-[1.5rem] border border-line bg-surface p-6">
           <div>
             <label htmlFor="order-status" className="text-sm text-muted">
@@ -111,6 +130,49 @@ export default function AdminOrderDetailPage() {
           >
             {statusUpdating ? "Kaydediliyor..." : "Durumu Güncelle"}
           </button>
+        </div>
+      )}
+
+      {isAdmin(user) && order.payment_status === "paid" && !order.geliver_shipment_id && (
+        <div className="mt-8 rounded-[1.5rem] border border-line bg-surface p-6">
+          <p className="text-sm text-muted">
+            Kargo otomatik oluşturuluyor. Birkaç dakika içinde tamamlanmazsa tekrar deneyin.
+          </p>
+          <button
+            type="button"
+            disabled={shipmentCreating}
+            onClick={() => void handleCreateShipment()}
+            className="mt-4 rounded-full border border-line bg-background px-5 py-3 text-sm font-medium transition hover:border-accent disabled:opacity-50"
+          >
+            {shipmentCreating ? "Kargo oluşturuluyor..." : "Kargoyu Tekrar Oluştur"}
+          </button>
+        </div>
+      )}
+
+      {isAdmin(user) && order.geliver_shipment_id && (
+        <div className="mt-8 rounded-[1.5rem] border border-dashed border-line bg-surface p-6">
+          <p className="text-sm text-muted">
+            Kargo durumu Geliver webhook ile otomatik güncellenir.
+          </p>
+        </div>
+      )}
+
+      {(order.tracking_number || order.tracking_url) && (
+        <div className="mt-8 rounded-[1.5rem] border border-line bg-surface p-6">
+          <p className="text-sm text-muted">Kargo Takibi</p>
+          {order.tracking_number && (
+            <p className="mt-2 font-medium">Takip No: {order.tracking_number}</p>
+          )}
+          {order.tracking_url && (
+            <a
+              href={order.tracking_url}
+              target="_blank"
+              rel="noreferrer"
+              className="mt-3 inline-block text-sm text-accent underline-offset-4 hover:underline"
+            >
+              Kargoyu takip et
+            </a>
+          )}
         </div>
       )}
 

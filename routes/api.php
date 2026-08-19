@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\AddressController;
 use App\Http\Controllers\Api\Admin\CategoryController as AdminCategoryController;
 use App\Http\Controllers\Api\Admin\OrderCancellationController as AdminOrderCancellationController;
 use App\Http\Controllers\Api\Admin\OrderController as AdminOrderController;
+use App\Http\Controllers\Api\Admin\OrderShipmentController as AdminOrderShipmentController;
 use App\Http\Controllers\Api\Admin\PostController as AdminPostController;
 use App\Http\Controllers\Api\Admin\ProductController as AdminProductController;
 use App\Http\Controllers\Api\Admin\StockController as AdminStockController;
@@ -13,6 +14,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CartController;
 use App\Http\Controllers\Api\CatalogController;
 use App\Http\Controllers\Api\CheckoutController;
+use App\Http\Controllers\Api\GeliverWebhookController;
 use App\Http\Controllers\Api\IyzicoPaymentController;
 use App\Http\Controllers\Api\OrderCancellationController;
 use App\Http\Controllers\Api\OrderController;
@@ -36,6 +38,7 @@ Route::post('/auth/login', [AuthController::class, 'login']);
 Route::post('/auth/google', [AuthController::class, 'google']);
 Route::post('/auth/forgot-password', [PasswordResetController::class, 'forgot']);
 Route::post('/auth/reset-password', [PasswordResetController::class, 'reset']);
+Route::post('/webhooks/geliver', GeliverWebhookController::class);
 
 Route::middleware('auth:sanctum')->group(function (): void {
     Route::get('/auth/me', [AuthController::class, 'me']);
@@ -82,6 +85,7 @@ Route::middleware('auth:sanctum')->group(function (): void {
         Route::get('/orders', [AdminOrderController::class, 'index']);
         Route::get('/orders/{order}', [AdminOrderController::class, 'show']);
         Route::patch('/orders/{order}', [AdminOrderController::class, 'update']);
+        Route::post('/orders/{order}/shipment', [AdminOrderShipmentController::class, 'store']);
         Route::get('/cancellation-requests', [AdminOrderCancellationController::class, 'index']);
         Route::post('/cancellation-requests/{cancellationRequest}/approve', [AdminOrderCancellationController::class, 'approve']);
         Route::post('/cancellation-requests/{cancellationRequest}/reject', [AdminOrderCancellationController::class, 'reject']);
