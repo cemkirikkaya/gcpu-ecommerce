@@ -19,35 +19,56 @@ export function RelatedProducts({
   categoryName,
 }: RelatedProductsProps) {
   const [products, setProducts] = useState<Product[]>([]);
+  const [source, setSource] = useState<"cross_sell" | "category">("category");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
 
+    async function loadCategoryFallback(): Promise<Product[]> {
+      let items: Product[] = [];
+
+      if (categorySlug) {
+        const response = await api.products({ category: categorySlug, per_page: 8 });
+        items = response.products.filter((product) => product.id !== productId);
+      }
+
+      if (items.length < 4) {
+        const response = await api.products({ per_page: 12, sort: "latest" });
+        const extras = response.products.filter(
+          (product) =>
+            product.id !== productId && !items.some((item) => item.id === product.id),
+        );
+        items = [...items, ...extras];
+      }
+
+      return items.slice(0, 4);
+    }
+
     async function load() {
       try {
-        let items: Product[] = [];
+        const crossSellProducts = await api.productCrossSell(productId);
 
-        if (categorySlug) {
-          const response = await api.products({ category: categorySlug, per_page: 8 });
-          items = response.products.filter((product) => product.id !== productId);
-        }
-
-        if (items.length < 4) {
-          const response = await api.products({ per_page: 12, sort: "latest" });
-          const extras = response.products.filter(
-            (product) =>
-              product.id !== productId && !items.some((item) => item.id === product.id),
-          );
-          items = [...items, ...extras];
+        if (!cancelled && crossSellProducts.length > 0) {
+          setProducts(crossSellProducts.slice(0, 4));
+          setSource("cross_sell");
+          return;
         }
 
         if (!cancelled) {
-          setProducts(items.slice(0, 4));
+          setProducts(await loadCategoryFallback());
+          setSource("category");
         }
       } catch {
-        if (!cancelled) {
-          setProducts([]);
+        try {
+          if (!cancelled) {
+            setProducts(await loadCategoryFallback());
+            setSource("category");
+          }
+        } catch {
+          if (!cancelled) {
+            setProducts([]);
+          }
         }
       } finally {
         if (!cancelled) {
@@ -64,23 +85,31 @@ export function RelatedProducts({
   }, [productId, categorySlug]);
 
   if (loading) {
-    return <p className="mt-20 text-sm text-muted">Benzer ürünler yükleniyor...</p>;
+    return <p className="mt-20 text-sm text-muted">Önerilen ürünler yükleniyor...</p>;
   }
 
   if (products.length === 0) {
     return null;
   }
 
-  const title = categoryName ? `${categoryName} kategorisinden` : "Benzer ürünler";
+  const title =
+    source === "cross_sell"
+      ? "Bunu alanlar bunları da aldı"
+      : categoryName
+        ? `${categoryName} kategorisinden`
+        : "Benzer ürünler";
+
+  const subtitle =
+    source === "cross_sell" ? "Birlikte sık tercih edilenler" : "Keşfet";
 
   return (
     <section className="mt-20 border-t border-line pt-16">
       <div className="flex flex-wrap items-end justify-between gap-6">
         <div>
-          <p className="text-xs uppercase tracking-[0.35em] text-muted">Keşfet</p>
+          <p className="text-xs uppercase tracking-[0.35em] text-muted">{subtitle}</p>
           <h2 className="mt-3 font-display text-4xl font-semibold">{title}</h2>
         </div>
-        {categorySlug && (
+        {source === "category" && categorySlug && (
           <Link
             href={`/categories/${categorySlug}`}
             className="rounded-full border border-line bg-background px-5 py-2.5 text-sm transition hover:border-accent hover:text-accent"

@@ -53,6 +53,11 @@ class ProductRepository
             ->get();
     }
 
+    public function loadForListing($query): void
+    {
+        $this->productWithRelations($query);
+    }
+
     private function productWithRelations($query): void
     {
         $query->with([

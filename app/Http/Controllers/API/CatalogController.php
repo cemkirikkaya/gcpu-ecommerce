@@ -9,6 +9,7 @@ use App\Http\Resources\Api\CategoryResource;
 use App\Http\Resources\Api\ProductResource;
 use App\Models\Category;
 use App\Models\Product;
+use App\Services\ProductCrossSellService;
 use App\Services\ProductSearchService;
 use App\Services\ProductService;
 use Illuminate\Http\JsonResponse;
@@ -18,6 +19,7 @@ class CatalogController extends Controller
     public function __construct(
         private ProductService $productService,
         private ProductSearchService $productSearchService,
+        private ProductCrossSellService $productCrossSellService,
     ) {}
 
     public function index(): JsonResponse
@@ -98,6 +100,15 @@ class CatalogController extends Controller
 
         return response()->json([
             'product' => new ProductResource($product),
+        ]);
+    }
+
+    public function crossSell(Product $product): JsonResponse
+    {
+        $products = $this->productCrossSellService->forProduct($product);
+
+        return response()->json([
+            'products' => ProductResource::collection($products),
         ]);
     }
 }

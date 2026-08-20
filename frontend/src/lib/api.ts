@@ -125,6 +125,9 @@ export const api = {
   product: (id: number) =>
     request<{ product: Product }>(`/products/${id}`).then((r) => r.product),
 
+  productCrossSell: (id: number) =>
+    request<{ products: Product[] }>(`/products/${id}/cross-sell`).then((r) => r.products),
+
   posts: (page = 1) => request<PostListResponse>(`/posts?page=${page}`),
 
   post: (slug: string) => request<{ post: Post }>(`/posts/${slug}`).then((r) => r.post),

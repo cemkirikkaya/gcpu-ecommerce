@@ -32,6 +32,7 @@ Route::get('/categories/{category}', [CatalogController::class, 'category']);
 Route::get('/products', [CatalogController::class, 'products']);
 Route::get('/products/search/suggest', [ProductSearchController::class, 'suggest']);
 Route::get('/products/search/popular', [ProductSearchController::class, 'popular']);
+Route::get('/products/{product}/cross-sell', [CatalogController::class, 'crossSell']);
 Route::get('/products/{product}', [CatalogController::class, 'show']);
 Route::get('/products/{product}/reviews', [ProductReviewController::class, 'index']);
 Route::get('/posts', [PostController::class, 'index']);
