@@ -141,6 +141,30 @@ export type ProductListParams = {
   per_page?: number;
 };
 
+export type ProductSearchSuggestion = {
+  id: number;
+  name: string;
+  price: number;
+  image_url: string | null;
+  category?: {
+    name: string;
+    slug: string;
+  } | null;
+};
+
+export type ProductSearchSuggestResponse = {
+  suggestions: ProductSearchSuggestion[];
+};
+
+export type PopularSearch = {
+  term: string;
+  count: number;
+};
+
+export type ProductSearchPopularResponse = {
+  popular: PopularSearch[];
+};
+
 export type CartItem = {
   id: number;
   quantity: number;

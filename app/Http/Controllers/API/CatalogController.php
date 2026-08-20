@@ -9,6 +9,7 @@ use App\Http\Resources\Api\CategoryResource;
 use App\Http\Resources\Api\ProductResource;
 use App\Models\Category;
 use App\Models\Product;
+use App\Services\ProductSearchService;
 use App\Services\ProductService;
 use Illuminate\Http\JsonResponse;
 
@@ -16,6 +17,7 @@ class CatalogController extends Controller
 {
     public function __construct(
         private ProductService $productService,
+        private ProductSearchService $productSearchService,
     ) {}
 
     public function index(): JsonResponse
@@ -50,7 +52,13 @@ class CatalogController extends Controller
 
     public function products(ListProductsRequest $request): JsonResponse
     {
-        $products = $this->productService->listFiltered($request->validated());
+        $filters = $request->validated();
+
+        if (! empty($filters['search'])) {
+            $this->productSearchService->recordSearch($filters['search']);
+        }
+
+        $products = $this->productService->listFiltered($filters);
 
         $filterCategories = Category::query()
             ->whereHas('products')

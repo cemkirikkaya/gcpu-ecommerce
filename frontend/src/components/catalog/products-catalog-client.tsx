@@ -1,9 +1,10 @@
 "use client";
 
-import { FormEvent, useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { ProductCard } from "@/components/catalog/product-card";
+import { ProductSearchAutocomplete } from "@/components/catalog/product-search-autocomplete";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
 import type { CatalogCategoryOption, ProductListResponse } from "@/lib/types";
@@ -84,31 +85,31 @@ export function ProductsCatalogClient() {
     router.push("/products");
   }
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  function handleSearchSubmit(value: string) {
     setPage(1);
+    setSearch(value);
 
     const params = new URLSearchParams();
-    if (search.trim()) {
-      params.set("search", search.trim());
+    const trimmed = value.trim();
+
+    if (trimmed) {
+      params.set("search", trimmed);
     }
 
     const query = params.toString();
     router.push(query ? `/products?${query}` : "/products");
-    void loadProducts();
   }
 
   return (
     <div>
-      <form
-        onSubmit={handleSubmit}
-        className="mt-16 grid gap-4 rounded-[2rem] border border-line bg-surface p-6 lg:grid-cols-[2fr_1fr_1fr_1fr_1fr_auto]"
-      >
-        <input
+      <div className="mt-16 grid gap-4 rounded-[2rem] border border-line bg-surface p-6 lg:grid-cols-[2fr_1fr_1fr_1fr_1fr_auto]">
+        <ProductSearchAutocomplete
           value={search}
-          onChange={(event) => setSearch(event.target.value)}
-          placeholder="Ürün ara..."
-          className="rounded-full border border-line bg-background px-5 py-3 text-sm outline-none focus:border-accent"
+          onChange={setSearch}
+          onSubmit={handleSearchSubmit}
+          showSubmitButton={false}
+          className="rounded-full border border-line bg-background px-5 py-1"
+          inputClassName="py-2"
         />
         <select
           defaultValue=""
@@ -149,8 +150,10 @@ export function ProductsCatalogClient() {
             </option>
           ))}
         </select>
-        <Button type="submit">Filtrele</Button>
-      </form>
+        <Button type="button" onClick={() => handleSearchSubmit(search)}>
+          Filtrele
+        </Button>
+      </div>
 
       {loading && <p className="mt-10 text-sm text-muted">Yükleniyor...</p>}
       {error && <p className="mt-10 text-sm text-red-600">{error}</p>}

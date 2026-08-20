@@ -22,6 +22,8 @@ import type {
   Product,
   ProductListParams,
   ProductListResponse,
+  ProductSearchPopularResponse,
+  ProductSearchSuggestResponse,
   ProductReview,
   ProductReviewsResponse,
   MyProductReviewResponse,
@@ -111,6 +113,14 @@ export const api = {
 
     return request<ProductListResponse>(`/products${suffix}`);
   },
+
+  productSearchSuggest: (q: string, limit = 8) => {
+    const query = new URLSearchParams({ q, limit: String(limit) });
+
+    return request<ProductSearchSuggestResponse>(`/products/search/suggest?${query.toString()}`);
+  },
+
+  productSearchPopular: () => request<ProductSearchPopularResponse>("/products/search/popular"),
 
   product: (id: number) =>
     request<{ product: Product }>(`/products/${id}`).then((r) => r.product),
