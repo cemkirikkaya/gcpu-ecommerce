@@ -13,7 +13,7 @@ type HeroCollageProps = {
   initialProducts: Product[];
 };
 
-const ROTATE_MS = 4500;
+const ROTATE_MS = 5000;
 
 export function HeroCollage({ initialProducts }: HeroCollageProps) {
   const [products, setProducts] = useState(initialProducts);
@@ -43,76 +43,117 @@ export function HeroCollage({ initialProducts }: HeroCollageProps) {
     };
   }, [initialProducts]);
 
-  const items = products;
-
   useEffect(() => {
-    if (items.length <= 1) {
+    if (products.length <= 1) {
       return;
     }
 
     const timer = window.setInterval(() => {
-      setActiveIndex((current) => (current + 1) % items.length);
+      setActiveIndex((current) => (current + 1) % products.length);
     }, ROTATE_MS);
 
     return () => window.clearInterval(timer);
-  }, [items.length]);
+  }, [products.length]);
 
-  if (items.length === 0) {
+  if (products.length === 0) {
     return (
-      <div className="rounded-[1.5rem] border border-line bg-surface p-8 shadow-[0_32px_80px_-50px_rgba(28,25,23,0.35)]">
-        <p className="text-xs uppercase tracking-[0.3em] text-muted">Canlı vitrin</p>
-        <p className="mt-3 font-display text-3xl leading-tight">
-          Koleksiyonunuz burada hayat bulacak.
+      <div className="relative mx-auto w-full max-w-md rounded-sm border border-gold/30 bg-surface/80 p-12 shadow-[0_40px_100px_-60px_rgba(18,16,14,0.45)] backdrop-blur-sm">
+        <p className="text-[10px] uppercase tracking-[0.4em] text-gold">Editoryal vitrin</p>
+        <p className="mt-4 font-display text-4xl font-light leading-tight text-foreground">
+          Koleksiyonunuz burada parlayacak.
         </p>
       </div>
     );
   }
 
-  const activeProduct = items[activeIndex % items.length];
+  const activeProduct = products[activeIndex % products.length];
   const imageSrc = resolveImageSrc(activeProduct.image_url);
+  const nextProduct = products[(activeIndex + 1) % products.length];
 
   return (
-    <div
-      key={activeProduct.id}
-      className="animate-fade-up mx-auto w-full max-w-[300px] overflow-hidden rounded-[1.5rem] border border-line bg-surface shadow-[0_24px_60px_-40px_rgba(28,25,23,0.35)] sm:max-w-[360px] lg:mx-0 lg:ml-auto lg:max-w-[445px]"
-    >
-      <div className="relative aspect-[891/1024] w-full overflow-hidden bg-[linear-gradient(145deg,#f3eee8,#faf8f5)]">
-        <Link href={`/products/${activeProduct.id}`} className="absolute inset-0">
-          {imageSrc ? (
+    <div className="relative mx-auto w-full max-w-[420px] lg:mx-0 lg:ml-auto">
+      <div
+        aria-hidden="true"
+        className="absolute -right-4 top-8 z-0 hidden w-[72%] overflow-hidden rounded-sm border border-line/80 bg-surface/60 opacity-60 shadow-[0_30px_80px_-50px_rgba(18,16,14,0.5)] lg:block"
+      >
+        <div className="relative aspect-[4/5] bg-[linear-gradient(145deg,#ece4d8,#faf7f2)]">
+          {resolveImageSrc(nextProduct.image_url) ? (
             <ProductImage
-              src={imageSrc}
-              alt={activeProduct.name}
-              priority
-              className="object-cover animate-ken-burns"
-              sizes="(max-width: 640px) 300px, (max-width: 1024px) 360px, 445px"
+              src={resolveImageSrc(nextProduct.image_url)!}
+              alt=""
+              className="object-cover opacity-80"
+              sizes="280px"
             />
-          ) : (
-            <div className="flex h-full w-full items-center justify-center">
-              <span className="font-display text-4xl text-stone-300">
-                {activeProduct.name.slice(0, 1)}
-              </span>
-            </div>
-          )}
-        </Link>
-
-        <span className="pointer-events-none absolute left-3 top-3 z-10 rounded-full border border-line bg-surface/90 px-2 py-0.5 text-[8px] uppercase tracking-[0.14em] text-accent backdrop-blur">
-          Canlı vitrin
-        </span>
-
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-stone-950/75 via-stone-950/10 to-transparent" />
-
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 p-4 text-white">
-          {activeProduct.category && (
-            <p className="text-[9px] uppercase tracking-[0.22em] text-white/75">
-              {activeProduct.category.name}
-            </p>
-          )}
-          <p className="mt-1.5 font-display text-xl leading-tight sm:text-2xl">
-            {activeProduct.name}
-          </p>
-          <p className="mt-1 text-sm text-white/85">{formatPrice(activeProduct.price)}</p>
+          ) : null}
         </div>
       </div>
+
+      <div
+        key={activeProduct.id}
+        className="animate-fade-up relative z-10 overflow-hidden rounded-sm border border-gold/25 bg-surface shadow-[0_50px_120px_-60px_rgba(18,16,14,0.55)]"
+      >
+        <div className="luxury-shimmer pointer-events-none absolute inset-0 z-20" />
+
+        <div className="relative aspect-[4/5] w-full overflow-hidden bg-[linear-gradient(145deg,#e8dfd3,#faf7f2)]">
+          <Link href={`/products/${activeProduct.id}`} className="absolute inset-0">
+            {imageSrc ? (
+              <ProductImage
+                src={imageSrc}
+                alt={activeProduct.name}
+                priority
+                className="object-cover animate-ken-burns"
+                sizes="(max-width: 640px) 100vw, 420px"
+              />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center">
+                <span className="font-display text-6xl font-light text-stone-300">
+                  {activeProduct.name.slice(0, 1)}
+                </span>
+              </div>
+            )}
+          </Link>
+
+          <div className="pointer-events-none absolute inset-4 border border-white/20" />
+
+          <span className="pointer-events-none absolute left-5 top-5 z-10 rounded-sm border border-white/25 bg-black/20 px-3 py-1 text-[9px] uppercase tracking-[0.35em] text-white/90 backdrop-blur-md">
+            Seçili parça
+          </span>
+
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-luxury-dark/85 via-luxury-dark/10 to-transparent" />
+
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 p-6 text-white sm:p-8">
+            {activeProduct.category && (
+              <p className="text-[10px] uppercase tracking-[0.35em] text-gold-soft">
+                {activeProduct.category.name}
+              </p>
+            )}
+            <p className="mt-3 font-display text-3xl font-light leading-tight sm:text-4xl">
+              {activeProduct.name}
+            </p>
+            <p className="mt-3 font-display text-xl text-gold-soft">
+              {formatPrice(activeProduct.price)}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {products.length > 1 && (
+        <div className="mt-6 flex items-center justify-center gap-2">
+          {products.slice(0, Math.min(products.length, 6)).map((product, index) => (
+            <button
+              key={product.id}
+              type="button"
+              aria-label={`${product.name} göster`}
+              onClick={() => setActiveIndex(index)}
+              className={`h-1.5 rounded-full transition-all duration-500 ${
+                index === activeIndex % products.length
+                  ? "w-8 bg-gold"
+                  : "w-1.5 bg-line hover:bg-gold/50"
+              }`}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

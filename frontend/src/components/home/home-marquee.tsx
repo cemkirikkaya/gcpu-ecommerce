@@ -22,26 +22,25 @@ function MarqueeTrack({
   trackId: string;
 } & HTMLAttributes<HTMLUListElement>) {
   return (
-    <ul
-      className="flex shrink-0 list-none items-center gap-10 pr-10"
-      {...props}
-    >
+    <ul className="flex shrink-0 list-none items-center gap-14 pr-14" {...props}>
       {items.map((item, index) => (
         <li
           key={`${trackId}-${item.label}-${index}`}
-          className="inline-flex shrink-0 items-center gap-10 whitespace-nowrap"
+          className="inline-flex shrink-0 items-center gap-14 whitespace-nowrap"
         >
           {item.href ? (
             <Link
               href={item.href}
-              className="font-display text-2xl text-foreground/80 transition hover:text-accent sm:text-3xl"
+              className="font-display text-2xl font-light italic text-white/90 transition duration-300 hover:text-gold sm:text-3xl"
             >
               {item.label}
             </Link>
           ) : (
-            <span className="font-display text-2xl text-muted sm:text-3xl">{item.label}</span>
+            <span className="font-display text-2xl font-light text-white/40 sm:text-3xl">
+              {item.label}
+            </span>
           )}
-          <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-accent/50" aria-hidden="true" />
+          <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-gold/80" aria-hidden="true" />
         </li>
       ))}
     </ul>
@@ -68,7 +67,7 @@ export function HomeMarquee({ items }: HomeMarqueeProps) {
 
     let frameId = 0;
     let running = true;
-    const speed = 0.75;
+    const speed = 0.85;
 
     const animate = () => {
       if (!running) {
@@ -104,9 +103,12 @@ export function HomeMarquee({ items }: HomeMarqueeProps) {
 
   return (
     <section
-      className="overflow-hidden border-y border-line/70 bg-surface/80 py-5"
-      aria-label="Kategori vitrini"
+      className="relative overflow-hidden border-y border-white/10 bg-luxury-dark py-7"
+      aria-label="Koleksiyon vitrini"
     >
+      <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-24 bg-gradient-to-r from-luxury-dark to-transparent" />
+      <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-24 bg-gradient-to-l from-luxury-dark to-transparent" />
+
       <div
         ref={trackRef}
         className="flex w-max will-change-transform"

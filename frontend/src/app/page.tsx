@@ -1,7 +1,8 @@
-import { CategoryShowcase } from "@/components/home/category-showcase";
+import { CategoryRail } from "@/components/home/category-rail";
+import { FeaturedBento } from "@/components/home/featured-bento";
 import { HomeMarquee } from "@/components/home/home-marquee";
+import { HomeVideoBand } from "@/components/home/home-video-band";
 import { RevealSection } from "@/components/home/reveal-section";
-import { FeaturedProductsSection } from "@/components/home/featured-products-section";
 import { HeroSection } from "@/components/home/hero-section";
 import { HomeBottomSection } from "@/components/home/home-bottom-section";
 import { HomeExperienceSection } from "@/components/home/home-sections";
@@ -46,7 +47,7 @@ export default async function Home() {
   ];
 
   return (
-    <>
+    <div className="overflow-x-hidden">
       <HeroSection
         shopName={catalog.shop_name}
         reservationMinutes={catalog.reservation_minutes}
@@ -54,20 +55,21 @@ export default async function Home() {
       />
       <HomeMarquee items={marqueeItems} />
       <RevealSection>
-        <CategoryShowcase
+        <CategoryRail
           categories={categoryOptions}
           productsByCategory={productsByCategory}
         />
       </RevealSection>
-      <RevealSection delayMs={80}>
-        <FeaturedProductsSection products={featuredResponse.products} />
+      <HomeVideoBand shopName={catalog.shop_name} />
+      <RevealSection delayMs={100}>
+        <FeaturedBento products={featuredResponse.products} />
       </RevealSection>
-      <RevealSection delayMs={120}>
+      <RevealSection delayMs={140}>
         <HomeExperienceSection />
       </RevealSection>
-      <RevealSection delayMs={160}>
+      <RevealSection delayMs={180}>
         <HomeBottomSection reservationMinutes={catalog.reservation_minutes} />
       </RevealSection>
-    </>
+    </div>
   );
 }

@@ -29,7 +29,7 @@ export function RevealSection({
           observer.disconnect();
         }
       },
-      { threshold: 0.12, rootMargin: "0px 0px -40px 0px" },
+      { threshold: 0.08, rootMargin: "0px 0px -60px 0px" },
     );
 
     observer.observe(node);
@@ -40,10 +40,12 @@ export function RevealSection({
   return (
     <div
       ref={ref}
-      className={`transition duration-700 ${
-        visible ? "animate-reveal-up opacity-100" : "translate-y-8 opacity-0"
+      className={`transition-all duration-1000 ease-out ${
+        visible
+          ? "translate-y-0 scale-100 opacity-100 blur-0"
+          : "translate-y-14 scale-[0.98] opacity-0 blur-sm"
       } ${className}`}
-      style={{ animationDelay: visible ? `${delayMs}ms` : undefined }}
+      style={{ transitionDelay: visible ? `${delayMs}ms` : undefined }}
     >
       {children}
     </div>
