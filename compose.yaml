@@ -50,10 +50,13 @@ services:
             - '${FRONTEND_PORT:-3000}:3000'
         environment:
             NEXT_PUBLIC_API_URL: '${NEXT_PUBLIC_API_URL:-http://localhost/api}'
-            API_INTERNAL_URL: 'http://laravel.test/api'
+            API_INTERNAL_URL: 'http://host.docker.internal/api'
+            LARAVEL_SAIL: '1'
             NEXT_PUBLIC_APP_URL: '${FRONTEND_URL:-http://localhost:3000}'
             NEXT_PUBLIC_GOOGLE_CLIENT_ID: '${NEXT_PUBLIC_GOOGLE_CLIENT_ID:-}'
             WATCHPACK_POLLING: 'true'
+        extra_hosts:
+            - 'host.docker.internal:host-gateway'
         volumes:
             - './frontend:/app'
             - '/app/node_modules'

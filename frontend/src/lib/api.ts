@@ -33,15 +33,23 @@ import type {
 } from "./types";
 
 const getApiUrl = (): string => {
+  const publicUrl =
+    process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000/api";
+
   if (typeof window === "undefined") {
-    return (
-      process.env.API_INTERNAL_URL ??
-      process.env.NEXT_PUBLIC_API_URL ??
-      "http://127.0.0.1:8000/api"
-    );
+    const internalUrl = process.env.API_INTERNAL_URL;
+
+    if (
+      internalUrl?.includes("laravel.test") &&
+      process.env.LARAVEL_SAIL !== "1"
+    ) {
+      return publicUrl;
+    }
+
+    return internalUrl ?? publicUrl;
   }
 
-  return process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000/api";
+  return publicUrl;
 };
 
 export class ApiClientError extends Error {

@@ -31,16 +31,16 @@ function MarqueeTrack({
           {item.href ? (
             <Link
               href={item.href}
-              className="font-display text-2xl font-light italic text-white/90 transition duration-300 hover:text-gold sm:text-3xl"
+              className="font-display text-2xl font-light italic text-foreground/80 transition duration-300 hover:text-gold sm:text-3xl"
             >
               {item.label}
             </Link>
           ) : (
-            <span className="font-display text-2xl font-light text-white/40 sm:text-3xl">
+            <span className="font-display text-2xl font-light text-muted/70 sm:text-3xl">
               {item.label}
             </span>
           )}
-          <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-gold/80" aria-hidden="true" />
+          <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-gold/70" aria-hidden="true" />
         </li>
       ))}
     </ul>
@@ -103,11 +103,11 @@ export function HomeMarquee({ items }: HomeMarqueeProps) {
 
   return (
     <section
-      className="relative overflow-hidden border-y border-white/10 bg-luxury-dark py-7"
+      className="relative overflow-hidden border-y border-line/70 bg-surface/80 py-8"
       aria-label="Koleksiyon vitrini"
     >
-      <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-24 bg-gradient-to-r from-luxury-dark to-transparent" />
-      <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-24 bg-gradient-to-l from-luxury-dark to-transparent" />
+      <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-24 bg-gradient-to-r from-surface/95 to-transparent" />
+      <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-24 bg-gradient-to-l from-surface/95 to-transparent" />
 
       <div
         ref={trackRef}

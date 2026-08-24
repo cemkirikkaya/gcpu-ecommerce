@@ -1,4 +1,4 @@
-import { CinematicHero } from "@/components/home/cinematic-hero";
+import { HeroBannerSlider } from "@/components/home/hero-banner-slider";
 import type { Product } from "@/lib/types";
 
 type HeroSectionProps = {
@@ -7,6 +7,16 @@ type HeroSectionProps = {
   spotlightProducts: Product[];
 };
 
-export function HeroSection(props: HeroSectionProps) {
-  return <CinematicHero {...props} />;
+export function HeroSection({
+  shopName,
+  reservationMinutes,
+  spotlightProducts,
+}: HeroSectionProps) {
+  return (
+    <HeroBannerSlider
+      shopName={shopName}
+      reservationMinutes={reservationMinutes}
+      products={spotlightProducts}
+    />
+  );
 }

@@ -131,17 +131,17 @@ export function HomeBottomSection({ reservationMinutes }: HomeBottomSectionProps
 
   return (
     <section className="mx-auto max-w-7xl px-6 pb-28 lg:px-10">
-      <div className="luxury-grain relative overflow-hidden rounded-sm border border-luxury-ink/10 bg-luxury-dark text-white shadow-[0_50px_120px_-70px_rgba(18,16,14,0.55)]">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_0%_0%,rgba(184,149,107,0.15)_0%,transparent_50%)]" />
+      <div className="luxury-grain relative overflow-hidden rounded-[2rem] border border-line/80 bg-[linear-gradient(180deg,#fdfcfa_0%,#f5efe6_100%)] shadow-[0_40px_100px_-70px_rgba(28,25,23,0.15)]">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_0%_0%,rgba(184,149,107,0.12)_0%,transparent_50%)]" />
 
-        <div className="relative border-b border-white/10 px-8 py-12 lg:px-14 lg:py-16">
+        <div className="relative border-b border-line/70 px-8 py-12 lg:px-14 lg:py-16">
           <div className="flex items-center gap-4">
             <span className="h-px w-10 bg-gold/60" aria-hidden="true" />
-            <p className="text-[10px] uppercase tracking-[0.45em] text-gold-soft">Maison GCPU</p>
+            <p className="text-[10px] uppercase tracking-[0.45em] text-muted">Maison GCPU</p>
           </div>
-          <h2 className="mt-6 max-w-2xl font-display text-4xl font-light leading-tight sm:text-5xl">
+          <h2 className="mt-6 max-w-2xl font-display text-4xl font-light leading-tight text-foreground sm:text-5xl">
             Ayrıcalıklı alışverişin
-            <span className="block font-semibold italic text-gold"> küçük dokunuşları</span>
+            <span className="block font-semibold italic text-accent"> küçük dokunuşları</span>
           </h2>
         </div>
 
@@ -151,25 +151,24 @@ export function HomeBottomSection({ reservationMinutes }: HomeBottomSectionProps
               key={item.title}
               className={`px-8 py-10 lg:px-10 lg:py-12 ${
                 index < highlights.length - 1
-                  ? "border-b border-white/10 lg:border-b-0 lg:border-r"
+                  ? "border-b border-line/70 lg:border-b-0 lg:border-r"
                   : ""
               }`}
             >
-              <p className="font-display text-4xl font-light text-gold/35">0{index + 1}</p>
-              <h3 className="mt-5 font-display text-2xl font-light text-white">{item.title}</h3>
-              <p className="mt-4 text-sm leading-7 text-white/55">{item.text}</p>
+              <p className="font-display text-4xl font-light text-gold/45">0{index + 1}</p>
+              <h3 className="mt-5 font-display text-2xl font-light text-foreground">
+                {item.title}
+              </h3>
+              <p className="mt-4 text-sm leading-7 text-muted">{item.text}</p>
             </article>
           ))}
         </div>
 
-        <div className="relative flex flex-wrap items-center justify-between gap-6 border-t border-white/10 px-8 py-8 lg:px-14">
-          <p className="max-w-xl text-sm leading-7 text-white/50">
+        <div className="relative flex flex-wrap items-center justify-between gap-6 border-t border-line/70 px-8 py-8 lg:px-14">
+          <p className="max-w-xl text-sm leading-7 text-muted">
             Koleksiyona göz atın; beğendiğiniz parçaları istediğiniz zaman sepete ekleyin.
           </p>
-          <ButtonLink
-            href="/products"
-            className="!bg-gold !text-luxury-dark hover:!bg-gold-soft"
-          >
+          <ButtonLink href="/products" className="!rounded-full">
             Koleksiyonu Keşfet
           </ButtonLink>
         </div>

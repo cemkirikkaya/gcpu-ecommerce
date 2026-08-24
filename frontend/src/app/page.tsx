@@ -1,13 +1,13 @@
 import { CategoryRail } from "@/components/home/category-rail";
-import { FeaturedBento } from "@/components/home/featured-bento";
+import { FeaturedProductsCarousel } from "@/components/home/featured-products-carousel";
 import { HomeMarquee } from "@/components/home/home-marquee";
-import { HomeVideoBand } from "@/components/home/home-video-band";
+import { HomePromoStrip } from "@/components/home/home-promo-strip";
+import { PromoBanners } from "@/components/home/promo-banners";
 import { RevealSection } from "@/components/home/reveal-section";
 import { HeroSection } from "@/components/home/hero-section";
 import { HomeBottomSection } from "@/components/home/home-bottom-section";
 import { HomeExperienceSection } from "@/components/home/home-sections";
 import { api } from "@/lib/api";
-import { fetchAllProducts } from "@/lib/fetch-all-products";
 import {
   buildCategoryOptions,
   collectCatalogProducts,
@@ -17,19 +17,16 @@ import {
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
-  const [catalog, featuredResponse, allProducts] = await Promise.all([
+  const [catalog, featuredResponse] = await Promise.all([
     api.catalog(),
-    api.products({ per_page: 8, sort: "latest" }),
-    fetchAllProducts({ sort: "latest" }),
+    api.products({ per_page: 12, sort: "latest" }),
   ]);
 
   const catalogProducts = collectCatalogProducts(catalog);
   const spotlightProducts =
-    allProducts.length > 0
-      ? allProducts
-      : featuredResponse.products.length > 0
-        ? featuredResponse.products
-        : catalogProducts;
+    featuredResponse.products.length > 0
+      ? featuredResponse.products
+      : catalogProducts;
   const categoryOptions =
     featuredResponse.categories.length > 0
       ? featuredResponse.categories
@@ -53,6 +50,7 @@ export default async function Home() {
         reservationMinutes={catalog.reservation_minutes}
         spotlightProducts={spotlightProducts}
       />
+      <PromoBanners reservationMinutes={catalog.reservation_minutes} />
       <HomeMarquee items={marqueeItems} />
       <RevealSection>
         <CategoryRail
@@ -60,9 +58,9 @@ export default async function Home() {
           productsByCategory={productsByCategory}
         />
       </RevealSection>
-      <HomeVideoBand shopName={catalog.shop_name} />
+      <HomePromoStrip shopName={catalog.shop_name} />
       <RevealSection delayMs={100}>
-        <FeaturedBento products={featuredResponse.products} />
+        <FeaturedProductsCarousel products={featuredResponse.products} />
       </RevealSection>
       <RevealSection delayMs={140}>
         <HomeExperienceSection />

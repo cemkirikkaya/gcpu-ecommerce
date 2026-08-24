@@ -40,8 +40,8 @@ export function SiteHeader() {
   const visibleCartCount = token ? cartCount : 0;
 
   return (
-    <header className="sticky top-0 z-50 border-b border-line/80 bg-background/90 backdrop-blur-md">
-      <div className="mx-auto max-w-7xl px-6 py-4 lg:px-10 lg:py-5">
+    <header className="sticky top-0 z-50 border-b border-line/60 bg-surface/85 backdrop-blur-xl">
+      <div className="mx-auto max-w-7xl px-6 py-5 lg:px-10 lg:py-6">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:gap-6">
           <div className="flex items-center justify-between gap-4 md:shrink-0">
             <Link href="/" className="group flex items-center gap-3">
