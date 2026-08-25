@@ -25,6 +25,9 @@ export function AccountSettingsClient() {
     return null;
   }
 
+  const authToken = token;
+  const currentUser = user;
+
   async function handleProfileSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setProfileSubmitting(true);
@@ -32,7 +35,7 @@ export function AccountSettingsClient() {
     setProfileMessage(null);
 
     try {
-      await api.updateProfile(token, { name, email });
+      await api.updateProfile(authToken, { name, email });
       await refreshUser();
       setProfileMessage("Profil bilgileriniz güncellendi.");
     } catch (err) {
@@ -49,8 +52,8 @@ export function AccountSettingsClient() {
     setPasswordMessage(null);
 
     try {
-      await api.updatePassword(token, {
-        ...(user.has_password ? { current_password: currentPassword } : {}),
+      await api.updatePassword(authToken, {
+        ...(currentUser.has_password ? { current_password: currentPassword } : {}),
         password,
         password_confirmation: passwordConfirmation,
       });
@@ -59,7 +62,7 @@ export function AccountSettingsClient() {
       setPasswordConfirmation("");
       await refreshUser();
       setPasswordMessage(
-        user.has_password ? "Şifreniz güncellendi." : "Şifreniz oluşturuldu.",
+        currentUser.has_password ? "Şifreniz güncellendi." : "Şifreniz oluşturuldu.",
       );
     } catch (err) {
       setPasswordError(err instanceof Error ? err.message : "Şifre güncellenemedi.");
@@ -107,11 +110,11 @@ export function AccountSettingsClient() {
       >
         <h2 className="font-display text-2xl font-semibold">Şifre</h2>
         <p className="text-sm text-muted">
-          {user.has_password
+          {currentUser.has_password
             ? "Güvenliğiniz için mevcut şifrenizi girin."
             : "Google ile giriş yaptınız. İsterseniz e-posta ve şifre ile de giriş yapabilmeniz için bir şifre belirleyin."}
         </p>
-        {user.has_password && (
+        {currentUser.has_password && (
           <input
             value={currentPassword}
             onChange={(event) => setCurrentPassword(event.target.value)}
@@ -144,7 +147,7 @@ export function AccountSettingsClient() {
         <Button type="submit" disabled={passwordSubmitting}>
           {passwordSubmitting
             ? "Kaydediliyor..."
-            : user.has_password
+            : currentUser.has_password
               ? "Şifreyi Güncelle"
               : "Şifre Oluştur"}
         </Button>

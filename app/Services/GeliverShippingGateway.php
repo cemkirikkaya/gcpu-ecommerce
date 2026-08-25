@@ -141,6 +141,22 @@ class GeliverShippingGateway implements ShippingGateway
         ];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
+    public function fetchShipment(string $shipmentId): array
+    {
+        try {
+            return $this->unwrapResponse($this->client()->shipments()->get($shipmentId));
+        } catch (ApiException $exception) {
+            throw new RuntimeException(
+                trim($exception->getMessage().' '.($exception->additionalMessage ?? '')),
+                $exception->status,
+                $exception,
+            );
+        }
+    }
+
     private function client(): Client
     {
         if ($this->client instanceof Client) {

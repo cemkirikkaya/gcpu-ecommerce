@@ -19,6 +19,7 @@ export default function AdminOrderDetailPage() {
   const [message, setMessage] = useState<string | null>(null);
   const [statusUpdating, setStatusUpdating] = useState(false);
   const [shipmentCreating, setShipmentCreating] = useState(false);
+  const [shipmentSyncing, setShipmentSyncing] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState("");
 
   useEffect(() => {
@@ -67,6 +68,24 @@ export default function AdminOrderDetailPage() {
       setMessage(error instanceof Error ? error.message : "Kargo oluşturulamadı.");
     } finally {
       setShipmentCreating(false);
+    }
+  }
+
+  async function handleSyncShipment() {
+    if (!token || !order) return;
+
+    setShipmentSyncing(true);
+    setMessage(null);
+
+    try {
+      const updated = await api.adminSyncOrderShipment(token, order.id);
+      setOrder(updated);
+      setSelectedStatus(updated.status);
+      setMessage("Kargo bilgileri Geliver ile senkronize edildi.");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Kargo senkronize edilemedi.");
+    } finally {
+      setShipmentSyncing(false);
     }
   }
 
@@ -151,9 +170,21 @@ export default function AdminOrderDetailPage() {
 
       {isAdmin(user) && order.geliver_shipment_id && (
         <div className="mt-8 rounded-[1.5rem] border border-dashed border-line bg-surface p-6">
-          <p className="text-sm text-muted">
-            Kargo durumu Geliver webhook ile otomatik güncellenir.
+          <p className="text-sm text-muted">Geliver gönderi ID</p>
+          <p className="mt-2 break-all font-mono text-sm text-foreground">
+            {order.geliver_shipment_id}
           </p>
+          <p className="mt-4 text-sm text-muted">
+            Kargo durumu Geliver webhook ile otomatik güncellenir. Gecikme varsa senkronize edin.
+          </p>
+          <button
+            type="button"
+            disabled={shipmentSyncing}
+            onClick={() => void handleSyncShipment()}
+            className="mt-4 rounded-full border border-line bg-background px-5 py-3 text-sm font-medium transition hover:border-accent disabled:opacity-50"
+          >
+            {shipmentSyncing ? "Senkronize ediliyor..." : "Geliver'dan Senkronize Et"}
+          </button>
         </div>
       )}
 

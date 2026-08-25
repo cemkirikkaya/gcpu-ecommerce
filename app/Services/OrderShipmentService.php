@@ -117,4 +117,23 @@ class OrderShipmentService
 
         return $order->fresh();
     }
+
+    public function syncFromGeliverApi(Order $order): Order
+    {
+        if (blank($order->geliver_shipment_id)) {
+            throw new InvalidArgumentException('Bu sipariş için Geliver gönderi kaydı bulunamadı.');
+        }
+
+        if (config('geliver.fake')) {
+            throw new InvalidArgumentException('Sahte Geliver modunda API senkronu yapılamaz.');
+        }
+
+        /** @var GeliverShippingGateway $gateway */
+        $gateway = app(GeliverShippingGateway::class);
+
+        return $this->syncFromWebhook(
+            $order,
+            $gateway->fetchShipment((string) $order->geliver_shipment_id),
+        );
+    }
 }

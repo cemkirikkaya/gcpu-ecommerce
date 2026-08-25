@@ -8,6 +8,7 @@ use App\Services\OrderShipmentService;
 use Geliver\Webhooks;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class GeliverWebhookController extends Controller
 {
@@ -26,7 +27,11 @@ class GeliverWebhookController extends Controller
         /** @var array<string, mixed> $payload */
         $payload = json_decode($rawBody, true) ?: [];
 
-        if (($payload['event'] ?? null) !== 'TRACK_UPDATED') {
+        Log::info('Geliver webhook received', [
+            'event' => $payload['event'] ?? null,
+        ]);
+
+        if (! $this->isTrackingEvent(isset($payload['event']) ? (string) $payload['event'] : null)) {
             return response()->json([
                 'message' => 'Webhook alındı.',
             ]);
@@ -35,9 +40,13 @@ class GeliverWebhookController extends Controller
         /** @var array<string, mixed> $data */
         $data = is_array($payload['data'] ?? null) ? $payload['data'] : [];
 
-        $shipmentId = isset($data['id']) ? (string) $data['id'] : null;
+        $shipmentId = $this->resolveShipmentId($data);
 
-        if ($shipmentId === null || $shipmentId === '') {
+        if ($shipmentId === null) {
+            Log::warning('Geliver webhook missing shipment id', [
+                'event' => $payload['event'] ?? null,
+            ]);
+
             return response()->json([
                 'message' => 'Webhook alındı.',
             ]);
@@ -48,6 +57,10 @@ class GeliverWebhookController extends Controller
             ->first();
 
         if ($order === null) {
+            Log::warning('Geliver webhook order not found', [
+                'shipment_id' => $shipmentId,
+            ]);
+
             return response()->json([
                 'message' => 'Webhook alındı.',
             ]);
@@ -55,9 +68,46 @@ class GeliverWebhookController extends Controller
 
         $this->orderShipmentService->syncFromWebhook($order, $data);
 
+        Log::info('Geliver webhook synced order', [
+            'order_id' => $order->id,
+            'shipment_id' => $shipmentId,
+            'status' => $order->fresh()->status->value,
+        ]);
+
         return response()->json([
             'message' => 'Takip bilgileri güncellendi.',
         ]);
+    }
+
+    private function isTrackingEvent(?string $event): bool
+    {
+        if ($event === null || $event === '') {
+            return false;
+        }
+
+        $normalized = strtoupper(str_replace('-', '_', $event));
+
+        return in_array($normalized, ['TRACK_UPDATED', 'TRACK_CREATED'], true);
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    private function resolveShipmentId(array $data): ?string
+    {
+        foreach (['id', 'shipmentId', 'shipmentID'] as $key) {
+            if (! isset($data[$key])) {
+                continue;
+            }
+
+            $shipmentId = (string) $data[$key];
+
+            if ($shipmentId !== '') {
+                return $shipmentId;
+            }
+        }
+
+        return null;
     }
 
     /**

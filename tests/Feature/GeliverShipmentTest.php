@@ -11,6 +11,7 @@ use App\Models\ProductVariant;
 use App\Models\Stock;
 use App\Models\User;
 use App\Services\CartService;
+use App\Services\GeliverShippingGateway;
 use App\Services\GeliverTrackingStatusMapper;
 use App\Services\OrderService;
 use App\Services\OrderShipmentService;
@@ -272,6 +273,64 @@ it('syncs order status through the shipment service webhook handler', function (
 
     expect($order->status)->toBe(OrderStatus::Delivered)
         ->and($order->tracking_number)->toBe('SYNC123');
+
+    Mail::assertQueued(OrderDeliveredMail::class);
+});
+
+it('accepts track_created webhook events', function () {
+    $order = createPaidOrderForShipment();
+    $order->update([
+        'status' => OrderStatus::Shipped,
+        'geliver_shipment_id' => 'geliver-shipment-created',
+    ]);
+
+    $this->postJson('/api/webhooks/geliver', [
+        'event' => 'track_created',
+        'data' => [
+            'id' => 'geliver-shipment-created',
+            'trackingNumber' => 'CREATED123',
+            'trackingUrl' => 'https://tracking.example.test/CREATED123',
+            'statusCode' => 'IN_TRANSIT',
+        ],
+    ])->assertOk();
+
+    $order->refresh();
+
+    expect($order->tracking_number)->toBe('CREATED123')
+        ->and($order->tracking_url)->toBe('https://tracking.example.test/CREATED123');
+});
+
+it('syncs order status from geliver api', function () {
+    Mail::fake();
+
+    $order = createPaidOrderForShipment();
+    $order->update([
+        'status' => OrderStatus::Shipped,
+        'geliver_shipment_id' => 'geliver-shipment-api',
+    ]);
+
+    config(['geliver.fake' => false]);
+
+    $gateway = Mockery::mock(GeliverShippingGateway::class);
+    $gateway->shouldReceive('fetchShipment')
+        ->once()
+        ->with('geliver-shipment-api')
+        ->andReturn([
+            'id' => 'geliver-shipment-api',
+            'trackingNumber' => 'API123',
+            'trackingUrl' => 'https://tracking.example.test/API123',
+            'statusCode' => 'DELIVERED',
+            'trackingStatus' => [
+                'trackingStatusCode' => 'DELIVERED',
+            ],
+        ]);
+
+    app()->instance(GeliverShippingGateway::class, $gateway);
+
+    $updated = app(OrderShipmentService::class)->syncFromGeliverApi($order);
+
+    expect($updated->status)->toBe(OrderStatus::Delivered)
+        ->and($updated->tracking_number)->toBe('API123');
 
     Mail::assertQueued(OrderDeliveredMail::class);
 });

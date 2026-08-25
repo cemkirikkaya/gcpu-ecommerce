@@ -95,6 +95,7 @@ Route::middleware('auth:sanctum')->group(function (): void {
         Route::get('/orders/{order}', [AdminOrderController::class, 'show']);
         Route::patch('/orders/{order}', [AdminOrderController::class, 'update']);
         Route::post('/orders/{order}/shipment', [AdminOrderShipmentController::class, 'store']);
+        Route::post('/orders/{order}/shipment/sync', [AdminOrderShipmentController::class, 'sync']);
         Route::get('/cancellation-requests', [AdminOrderCancellationController::class, 'index']);
         Route::post('/cancellation-requests/{cancellationRequest}/approve', [AdminOrderCancellationController::class, 'approve']);
         Route::post('/cancellation-requests/{cancellationRequest}/reject', [AdminOrderCancellationController::class, 'reject']);

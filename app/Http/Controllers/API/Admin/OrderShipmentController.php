@@ -49,4 +49,36 @@ class OrderShipmentController extends Controller
             'message' => 'Kargo oluşturuldu.',
         ], 201);
     }
+
+    public function sync(Order $order): JsonResponse
+    {
+        $this->authorize('adminCreateShipment', $order);
+
+        /** @var User $user */
+        $user = request()->user();
+
+        try {
+            $order = $this->orderShipmentService->syncFromGeliverApi($order);
+        } catch (InvalidArgumentException $exception) {
+            return response()->json([
+                'message' => $exception->getMessage(),
+            ], 422);
+        }
+
+        $order->load([
+            'address',
+            'items.cartItem.productVariant.product.vendor',
+            'items.cartItem.productVariant.variantValues.variantValue.variant',
+        ]);
+
+        return response()->json([
+            'order' => AdminOrderResource::forUser(
+                $order,
+                $user,
+                $this->adminOrderService->itemsForUser($order, $user),
+                (float) $order->getRawOriginal('total_price'),
+            ),
+            'message' => 'Kargo bilgileri Geliver ile senkronize edildi.',
+        ]);
+    }
 }

@@ -545,6 +545,13 @@ export const api = {
       token,
     ).then((response) => response.order),
 
+  adminSyncOrderShipment: (token: string, orderId: number) =>
+    request<{ order: AdminOrder; message: string }>(
+      `/admin/orders/${orderId}/shipment/sync`,
+      { method: "POST" },
+      token,
+    ).then((response) => response.order),
+
   adminPosts: (token: string) =>
     request<{ posts: AdminPost[] }>("/admin/posts", {}, token).then(
       (response) => response.posts,
