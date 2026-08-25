@@ -130,6 +130,9 @@ Local geliştirmede `STRIPE_FAKE=true` yeterlidir; API anahtarları boş kalabil
 | `GELIVER_TEST=true` | Gerçek API ile test gönderisi (`test: true`) |
 | `GELIVER_AUTO_CREATE_ON_PAYMENT=true` | Ödeme sonrası otomatik kargo |
 | `GELIVER_SYNC_STATUS_FROM_WEBHOOK=true` | Webhook ile sipariş durumu senkronu |
+| `GELIVER_TRACKING_PAGE_BASE` | Müşteri kargo takip sayfası tabanı (fallback: `https://app.geliver.io/tracking`) |
+| `GELIVER_DEFAULT_WEIGHT` | Varsayılan paket ağırlığı (kg) |
+| `GELIVER_DEFAULT_LENGTH` / `WIDTH` / `HEIGHT` | Varsayılan paket ölçüleri (cm) |
 
 Gerçek Geliver testi için `GELIVER_FAKE=false` yapın. Webhook URL:
 
