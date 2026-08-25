@@ -68,7 +68,7 @@ class AdminOrderResource extends JsonResource
             'payment_status' => $order->payment_status->value,
             'payment_status_label' => $order->payment_status->label(),
             'tracking_number' => $order->tracking_number,
-            'tracking_url' => $order->tracking_url,
+            'tracking_url' => $order->trackingPageUrl(),
             'geliver_shipment_id' => $order->geliver_shipment_id,
             'estimated_delivery_at' => $order->estimated_delivery_at?->toIso8601String(),
             'created_at' => $order->created_at?->toIso8601String(),

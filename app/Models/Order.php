@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
+use App\Services\GeliverTrackingUrlResolver;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -101,5 +102,13 @@ class Order extends Model
     public function user(): ?User
     {
         return $this->cart?->user;
+    }
+
+    public function trackingPageUrl(): ?string
+    {
+        return app(GeliverTrackingUrlResolver::class)->resolve(
+            $this->tracking_url,
+            $this->geliver_shipment_id,
+        );
     }
 }

@@ -29,7 +29,7 @@ class OrderResource extends JsonResource
             'stripe_payment_intent_id' => $this->stripe_payment_intent_id,
             'created_at' => $this->created_at?->toIso8601String(),
             'tracking_number' => $this->tracking_number,
-            'tracking_url' => $this->tracking_url,
+            'tracking_url' => $this->trackingPageUrl(),
             'estimated_delivery_at' => $this->estimated_delivery_at?->toIso8601String(),
             'can_download_invoice' => $request->user()?->can('downloadInvoice', $this->resource) ?? false,
             'address' => new AddressResource($this->whenLoaded('address')),

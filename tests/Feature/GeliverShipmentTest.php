@@ -14,6 +14,7 @@ use App\Services\CartService;
 use App\Services\GeliverEstimatedDeliveryResolver;
 use App\Services\GeliverShippingGateway;
 use App\Services\GeliverTrackingStatusMapper;
+use App\Services\GeliverTrackingUrlResolver;
 use App\Services\OrderService;
 use App\Services\OrderShipmentService;
 use Carbon\CarbonInterface;
@@ -185,7 +186,7 @@ it('exposes tracking fields on customer order detail', function () {
     $order->update([
         'status' => OrderStatus::Shipped,
         'tracking_number' => 'TRK123456',
-        'tracking_url' => 'https://tracking.example.test/TRK123456',
+        'tracking_url' => 'https://example.com/tracking/TRK123456',
         'geliver_shipment_id' => 'shipment-123',
         'estimated_delivery_at' => Carbon::parse('2026-08-28T14:30:00+03:00')->utc(),
     ]);
@@ -196,8 +197,18 @@ it('exposes tracking fields on customer order detail', function () {
         ->getJson("/api/orders/{$order->id}")
         ->assertOk()
         ->assertJsonPath('order.tracking_number', 'TRK123456')
-        ->assertJsonPath('order.tracking_url', 'https://tracking.example.test/TRK123456')
+        ->assertJsonPath('order.tracking_url', 'https://app.geliver.io/tracking/shipment-123')
         ->assertJsonPath('order.estimated_delivery_at', fn (string $value): bool => Carbon::parse($value)->utc()->getTimestamp() === Carbon::parse('2026-08-28T14:30:00+03:00')->utc()->getTimestamp());
+});
+
+it('uses geliver tracking page when api returns placeholder tracking url', function () {
+    $resolver = app(GeliverTrackingUrlResolver::class);
+
+    expect($resolver->resolve('https://example.com/tracking/12345', 'geliver-shipment-99'))
+        ->toBe('https://app.geliver.io/tracking/geliver-shipment-99');
+
+    expect($resolver->resolve('https://kargo.example.test/t/12345', 'geliver-shipment-99'))
+        ->toBe('https://kargo.example.test/t/12345');
 });
 
 it('updates tracking info from geliver webhook', function () {
@@ -212,7 +223,7 @@ it('updates tracking info from geliver webhook', function () {
         'data' => [
             'id' => 'geliver-shipment-42',
             'trackingNumber' => 'UPDATED123',
-            'trackingUrl' => 'https://tracking.example.test/UPDATED123',
+            'trackingUrl' => 'https://example.com/tracking/UPDATED123',
             'eta' => '2026-08-30T18:00:00+03:00',
             'trackingStatus' => [
                 'trackingStatusCode' => 'IN_TRANSIT',
@@ -223,7 +234,7 @@ it('updates tracking info from geliver webhook', function () {
     $order->refresh();
 
     expect($order->tracking_number)->toBe('UPDATED123')
-        ->and($order->tracking_url)->toBe('https://tracking.example.test/UPDATED123')
+        ->and($order->tracking_url)->toBe('https://app.geliver.io/tracking/geliver-shipment-42')
         ->and($order->status)->toBe(OrderStatus::Shipped);
 
     assertSameEstimatedDelivery($order->estimated_delivery_at, '2026-08-30T18:00:00+03:00');

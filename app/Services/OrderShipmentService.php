@@ -15,6 +15,7 @@ class OrderShipmentService
         private AdminOrderService $adminOrderService,
         private GeliverTrackingStatusMapper $trackingStatusMapper,
         private GeliverEstimatedDeliveryResolver $estimatedDeliveryResolver,
+        private GeliverTrackingUrlResolver $trackingUrlResolver,
     ) {}
 
     public function createShipment(Order $order): Order
@@ -50,7 +51,7 @@ class OrderShipmentService
         $order->update([
             'geliver_shipment_id' => $result->shipmentId,
             'tracking_number' => $result->trackingNumber,
-            'tracking_url' => $result->trackingUrl,
+            'tracking_url' => $this->trackingUrlResolver->resolve($result->trackingUrl, $result->shipmentId),
             'estimated_delivery_at' => $result->estimatedDeliveryAt,
         ]);
 
@@ -76,6 +77,7 @@ class OrderShipmentService
             $order,
             isset($shipmentData['trackingNumber']) ? (string) $shipmentData['trackingNumber'] : null,
             isset($shipmentData['trackingUrl']) ? (string) $shipmentData['trackingUrl'] : null,
+            isset($shipmentData['id']) ? (string) $shipmentData['id'] : null,
         );
 
         $this->syncEstimatedDeliveryFromWebhook($order, $shipmentData);
@@ -103,16 +105,25 @@ class OrderShipmentService
         return $order;
     }
 
-    public function syncTrackingFromWebhook(Order $order, ?string $trackingNumber, ?string $trackingUrl): Order
-    {
+    public function syncTrackingFromWebhook(
+        Order $order,
+        ?string $trackingNumber,
+        ?string $trackingUrl,
+        ?string $shipmentId = null,
+    ): Order {
         $attributes = [];
 
         if (filled($trackingNumber)) {
             $attributes['tracking_number'] = $trackingNumber;
         }
 
-        if (filled($trackingUrl)) {
-            $attributes['tracking_url'] = $trackingUrl;
+        $resolvedTrackingUrl = $this->trackingUrlResolver->resolve(
+            $trackingUrl,
+            $shipmentId ?? $order->geliver_shipment_id,
+        );
+
+        if (filled($resolvedTrackingUrl)) {
+            $attributes['tracking_url'] = $resolvedTrackingUrl;
         }
 
         if ($attributes !== []) {
