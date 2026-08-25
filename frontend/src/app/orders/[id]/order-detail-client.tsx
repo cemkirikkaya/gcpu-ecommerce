@@ -8,7 +8,7 @@ import { OrderPaymentRetry } from "@/components/orders/order-payment-retry";
 import { OrderCancellationPanel } from "@/components/orders/order-cancellation-panel";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { useAuth } from "@/context/auth-context";
-import { api, formatOrderDate, formatPrice } from "@/lib/api";
+import { api, formatEstimatedDeliveryDate, formatOrderDate, formatPrice } from "@/lib/api";
 import type { Order, OrderCancellationRequest, PaymentOptions } from "@/lib/types";
 
 export function OrderDetailClient({ orderId }: { orderId: string }) {
@@ -109,13 +109,26 @@ export function OrderDetailClient({ orderId }: { orderId: string }) {
         <p className="mt-4 text-muted">{formatOrderDate(order.created_at)}</p>
       </div>
 
-      <OrderStatusTimeline status={order.status} statusLabel={order.status_label} />
+      <OrderStatusTimeline
+        status={order.status}
+        statusLabel={order.status_label}
+        paymentStatus={order.payment_status}
+        paymentStatusLabel={order.payment_status_label}
+      />
 
       {order.tracking_url && (
         <div className="mt-8 rounded-[2rem] border border-line bg-surface p-6 text-center">
           <p className="text-sm text-muted">Kargo takibi</p>
           {order.tracking_number && (
             <p className="mt-2 font-medium">Takip No: {order.tracking_number}</p>
+          )}
+          {order.estimated_delivery_at && (
+            <p className="mt-2 text-sm text-muted">
+              Tahmini teslimat:{" "}
+              <span className="font-medium text-foreground">
+                {formatEstimatedDeliveryDate(order.estimated_delivery_at)}
+              </span>
+            </p>
           )}
           <a
             href={order.tracking_url}

@@ -11,15 +11,24 @@ use App\Models\ProductVariant;
 use App\Models\Stock;
 use App\Models\User;
 use App\Services\CartService;
+use App\Services\GeliverEstimatedDeliveryResolver;
 use App\Services\GeliverShippingGateway;
 use App\Services\GeliverTrackingStatusMapper;
 use App\Services\OrderService;
 use App\Services\OrderShipmentService;
+use Carbon\CarbonInterface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Mail;
 
 uses(RefreshDatabase::class);
+
+function assertSameEstimatedDelivery(?CarbonInterface $actual, string $expected): void
+{
+    expect($actual)->not->toBeNull()
+        ->and($actual?->getTimestamp())->toBe(Carbon::parse($expected)->utc()->getTimestamp());
+}
 
 function createPaidOrderForShipment(array $addressOverrides = []): Order
 {
@@ -85,7 +94,8 @@ it('creates shipment automatically when payment completes with sync queue', func
         ->status->toBe(OrderStatus::Shipped)
         ->geliver_shipment_id->not->toBeNull()
         ->tracking_number->not->toBeNull()
-        ->tracking_url->not->toBeNull();
+        ->tracking_url->not->toBeNull()
+        ->estimated_delivery_at->not->toBeNull();
 
     Mail::assertQueued(OrderShippedMail::class);
 });
@@ -177,6 +187,7 @@ it('exposes tracking fields on customer order detail', function () {
         'tracking_number' => 'TRK123456',
         'tracking_url' => 'https://tracking.example.test/TRK123456',
         'geliver_shipment_id' => 'shipment-123',
+        'estimated_delivery_at' => Carbon::parse('2026-08-28T14:30:00+03:00')->utc(),
     ]);
 
     $customer = $order->user();
@@ -185,7 +196,8 @@ it('exposes tracking fields on customer order detail', function () {
         ->getJson("/api/orders/{$order->id}")
         ->assertOk()
         ->assertJsonPath('order.tracking_number', 'TRK123456')
-        ->assertJsonPath('order.tracking_url', 'https://tracking.example.test/TRK123456');
+        ->assertJsonPath('order.tracking_url', 'https://tracking.example.test/TRK123456')
+        ->assertJsonPath('order.estimated_delivery_at', fn (string $value): bool => Carbon::parse($value)->utc()->getTimestamp() === Carbon::parse('2026-08-28T14:30:00+03:00')->utc()->getTimestamp());
 });
 
 it('updates tracking info from geliver webhook', function () {
@@ -201,6 +213,7 @@ it('updates tracking info from geliver webhook', function () {
             'id' => 'geliver-shipment-42',
             'trackingNumber' => 'UPDATED123',
             'trackingUrl' => 'https://tracking.example.test/UPDATED123',
+            'eta' => '2026-08-30T18:00:00+03:00',
             'trackingStatus' => [
                 'trackingStatusCode' => 'IN_TRANSIT',
             ],
@@ -212,6 +225,8 @@ it('updates tracking info from geliver webhook', function () {
     expect($order->tracking_number)->toBe('UPDATED123')
         ->and($order->tracking_url)->toBe('https://tracking.example.test/UPDATED123')
         ->and($order->status)->toBe(OrderStatus::Shipped);
+
+    assertSameEstimatedDelivery($order->estimated_delivery_at, '2026-08-30T18:00:00+03:00');
 });
 
 it('marks order as delivered from geliver webhook', function () {
@@ -263,6 +278,7 @@ it('syncs order status through the shipment service webhook handler', function (
     app(OrderShipmentService::class)->syncFromWebhook($order, [
         'trackingNumber' => 'SYNC123',
         'trackingUrl' => 'https://tracking.example.test/SYNC123',
+        'eta' => '2026-09-01T12:00:00+03:00',
         'statusCode' => 'DELIVERED',
         'trackingStatus' => [
             'trackingStatusCode' => 'DELIVERED',
@@ -273,6 +289,8 @@ it('syncs order status through the shipment service webhook handler', function (
 
     expect($order->status)->toBe(OrderStatus::Delivered)
         ->and($order->tracking_number)->toBe('SYNC123');
+
+    assertSameEstimatedDelivery($order->estimated_delivery_at, '2026-09-01T12:00:00+03:00');
 
     Mail::assertQueued(OrderDeliveredMail::class);
 });
@@ -319,6 +337,7 @@ it('syncs order status from geliver api', function () {
             'id' => 'geliver-shipment-api',
             'trackingNumber' => 'API123',
             'trackingUrl' => 'https://tracking.example.test/API123',
+            'eta' => '2026-09-02T16:00:00+03:00',
             'statusCode' => 'DELIVERED',
             'trackingStatus' => [
                 'trackingStatusCode' => 'DELIVERED',
@@ -332,5 +351,34 @@ it('syncs order status from geliver api', function () {
     expect($updated->status)->toBe(OrderStatus::Delivered)
         ->and($updated->tracking_number)->toBe('API123');
 
+    assertSameEstimatedDelivery($updated->estimated_delivery_at, '2026-09-02T16:00:00+03:00');
+
     Mail::assertQueued(OrderDeliveredMail::class);
+});
+
+it('resolves estimated delivery from geliver offer fields', function () {
+    $resolver = app(GeliverEstimatedDeliveryResolver::class);
+
+    assertSameEstimatedDelivery(
+        $resolver->resolve([
+            'acceptedOffer' => [
+                'estimatedArrivalTime' => '2026-08-27T10:15:00+03:00',
+            ],
+        ]),
+        '2026-08-27T10:15:00+03:00',
+    );
+});
+
+it('resolves estimated delivery from geliver predicted hours', function () {
+    $resolver = app(GeliverEstimatedDeliveryResolver::class);
+
+    assertSameEstimatedDelivery(
+        $resolver->resolve([
+            'createdAt' => '2026-08-25T15:11:18+03:00',
+            'acceptedOffer' => [
+                'predictedDeliveryTime' => 28.902060596207253,
+            ],
+        ]),
+        '2026-08-26T20:05:25+03:00',
+    );
 });

@@ -9,5 +9,6 @@ readonly class ShipmentCreationResult
         public ?string $trackingNumber,
         public ?string $trackingUrl,
         public ?string $labelUrl = null,
+        public ?string $estimatedDeliveryAt = null,
     ) {}
 }

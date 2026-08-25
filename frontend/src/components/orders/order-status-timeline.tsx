@@ -1,6 +1,8 @@
 type OrderStatusTimelineProps = {
   status: string;
   statusLabel: string;
+  paymentStatus: string;
+  paymentStatusLabel?: string;
 };
 
 const FULFILLMENT_STEPS = [
@@ -49,7 +51,12 @@ function stepState(
   return "upcoming";
 }
 
-export function OrderStatusTimeline({ status, statusLabel }: OrderStatusTimelineProps) {
+export function OrderStatusTimeline({
+  status,
+  statusLabel,
+  paymentStatus,
+  paymentStatusLabel,
+}: OrderStatusTimelineProps) {
   if (status === "cancelled") {
     return (
       <div className="mt-8 rounded-[1.5rem] border border-line bg-surface px-6 py-5 text-left">
@@ -57,6 +64,32 @@ export function OrderStatusTimeline({ status, statusLabel }: OrderStatusTimeline
         <p className="mt-3 font-display text-2xl text-stone-700">Sipariş iptal edildi</p>
         <p className="mt-2 text-sm leading-6 text-muted">
           Bu sipariş ({statusLabel}) artık işlenmiyor.
+        </p>
+      </div>
+    );
+  }
+
+  if (paymentStatus === "failed") {
+    return (
+      <div className="mt-8 rounded-[1.5rem] border border-red-200 bg-red-50/70 px-6 py-5 text-left">
+        <p className="text-xs uppercase tracking-[0.25em] text-red-700/70">Ödeme</p>
+        <p className="mt-3 font-display text-2xl text-red-950">Ödeme tamamlanamadı</p>
+        <p className="mt-2 text-sm leading-6 text-red-900/80">
+          {paymentStatusLabel ?? "Ödeme başarısız"} — siparişiniz henüz işleme alınmadı.
+          Aşağıdan ödemeyi tekrar deneyebilirsiniz.
+        </p>
+      </div>
+    );
+  }
+
+  if (paymentStatus === "pending") {
+    return (
+      <div className="mt-8 rounded-[1.5rem] border border-amber-200 bg-amber-50/70 px-6 py-5 text-left">
+        <p className="text-xs uppercase tracking-[0.25em] text-amber-800/70">Ödeme</p>
+        <p className="mt-3 font-display text-2xl text-amber-950">Ödeme bekleniyor</p>
+        <p className="mt-2 text-sm leading-6 text-amber-900/80">
+          Siparişiniz oluşturuldu ancak ödeme henüz alınmadı. Ödeme tamamlandığında
+          hazırlık süreci başlayacak.
         </p>
       </div>
     );

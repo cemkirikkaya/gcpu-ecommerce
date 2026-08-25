@@ -7,7 +7,7 @@ import { useParams } from "next/navigation";
 import { OrderStatusBadge } from "@/components/orders/order-status-badge";
 import { ButtonLink } from "@/components/ui/button";
 import { useAuth } from "@/context/auth-context";
-import { api, formatOrderDate, formatPrice } from "@/lib/api";
+import { api, formatEstimatedDeliveryDate, formatOrderDate, formatPrice } from "@/lib/api";
 import { isAdmin } from "@/lib/auth";
 import type { AdminOrder } from "@/lib/types";
 
@@ -17,10 +17,8 @@ export default function AdminOrderDetailPage() {
   const [order, setOrder] = useState<AdminOrder | null>(null);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState<string | null>(null);
-  const [statusUpdating, setStatusUpdating] = useState(false);
   const [shipmentCreating, setShipmentCreating] = useState(false);
   const [shipmentSyncing, setShipmentSyncing] = useState(false);
-  const [selectedStatus, setSelectedStatus] = useState("");
 
   useEffect(() => {
     if (!token || !params.id) return;
@@ -29,29 +27,10 @@ export default function AdminOrderDetailPage() {
       .adminOrder(token, Number(params.id))
       .then((loadedOrder) => {
         setOrder(loadedOrder);
-        setSelectedStatus(loadedOrder.status);
       })
       .catch((error) => setMessage(error.message))
       .finally(() => setLoading(false));
   }, [token, params.id]);
-
-  async function handleStatusUpdate() {
-    if (!token || !order || !selectedStatus) return;
-
-    setStatusUpdating(true);
-    setMessage(null);
-
-    try {
-      const updated = await api.adminUpdateOrderStatus(token, order.id, selectedStatus);
-      setOrder(updated);
-      setSelectedStatus(updated.status);
-      setMessage("Sipariş durumu güncellendi.");
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Durum güncellenemedi.");
-    } finally {
-      setStatusUpdating(false);
-    }
-  }
 
   async function handleCreateShipment() {
     if (!token || !order) return;
@@ -62,7 +41,6 @@ export default function AdminOrderDetailPage() {
     try {
       const updated = await api.adminCreateOrderShipment(token, order.id);
       setOrder(updated);
-      setSelectedStatus(updated.status);
       setMessage("Kargo oluşturuldu.");
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Kargo oluşturulamadı.");
@@ -80,7 +58,6 @@ export default function AdminOrderDetailPage() {
     try {
       const updated = await api.adminSyncOrderShipment(token, order.id);
       setOrder(updated);
-      setSelectedStatus(updated.status);
       setMessage("Kargo bilgileri Geliver ile senkronize edildi.");
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Kargo senkronize edilemedi.");
@@ -122,36 +99,6 @@ export default function AdminOrderDetailPage() {
         </div>
       </div>
 
-      {isAdmin(user) && order.payment_status !== "paid" && (
-        <div className="mt-8 flex flex-wrap items-end gap-3 rounded-[1.5rem] border border-line bg-surface p-6">
-          <div>
-            <label htmlFor="order-status" className="text-sm text-muted">
-              Sipariş Durumu
-            </label>
-            <select
-              id="order-status"
-              value={selectedStatus}
-              onChange={(event) => setSelectedStatus(event.target.value)}
-              className="mt-2 block rounded-full border border-line bg-background px-5 py-3 text-sm outline-none focus:border-accent"
-            >
-              <option value="pending">Beklemede</option>
-              <option value="processing">Hazırlanıyor</option>
-              <option value="shipped">Kargoda</option>
-              <option value="delivered">Teslim Edildi</option>
-              <option value="cancelled">İptal Edildi</option>
-            </select>
-          </div>
-          <button
-            type="button"
-            disabled={statusUpdating || selectedStatus === order.status}
-            onClick={() => void handleStatusUpdate()}
-            className="rounded-full bg-accent px-5 py-3 text-sm font-medium text-white transition hover:bg-stone-800 disabled:opacity-50"
-          >
-            {statusUpdating ? "Kaydediliyor..." : "Durumu Güncelle"}
-          </button>
-        </div>
-      )}
-
       {isAdmin(user) && order.payment_status === "paid" && !order.geliver_shipment_id && (
         <div className="mt-8 rounded-[1.5rem] border border-line bg-surface p-6">
           <p className="text-sm text-muted">
@@ -174,6 +121,14 @@ export default function AdminOrderDetailPage() {
           <p className="mt-2 break-all font-mono text-sm text-foreground">
             {order.geliver_shipment_id}
           </p>
+          {order.estimated_delivery_at && (
+            <p className="mt-4 text-sm text-muted">
+              Tahmini teslimat:{" "}
+              <span className="font-medium text-foreground">
+                {formatEstimatedDeliveryDate(order.estimated_delivery_at)}
+              </span>
+            </p>
+          )}
           <p className="mt-4 text-sm text-muted">
             Kargo durumu Geliver webhook ile otomatik güncellenir. Gecikme varsa senkronize edin.
           </p>

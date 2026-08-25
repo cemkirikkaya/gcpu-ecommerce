@@ -70,6 +70,7 @@ class AdminOrderResource extends JsonResource
             'tracking_number' => $order->tracking_number,
             'tracking_url' => $order->tracking_url,
             'geliver_shipment_id' => $order->geliver_shipment_id,
+            'estimated_delivery_at' => $order->estimated_delivery_at?->toIso8601String(),
             'created_at' => $order->created_at?->toIso8601String(),
             'items_count' => $items->count(),
             'items' => $this->when(

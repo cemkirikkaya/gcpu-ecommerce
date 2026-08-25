@@ -13,6 +13,7 @@ class GeliverShippingGateway implements ShippingGateway
 {
     public function __construct(
         private ?Client $client = null,
+        private ?GeliverEstimatedDeliveryResolver $estimatedDeliveryResolver = null,
     ) {}
 
     public function createShipment(Order $order): ShipmentCreationResult
@@ -64,12 +65,28 @@ class GeliverShippingGateway implements ShippingGateway
             $transaction = $this->unwrapResponse($client->transactions()->acceptOffer($cheapestOffer['id']));
 
             $transactionShipment = $transaction['shipment'] ?? [];
+            $shipmentData = [
+                ...$transactionShipment,
+                'acceptedOffer' => $transactionShipment['acceptedOffer'] ?? $cheapestOffer,
+                'offers' => [
+                    'cheapest' => $cheapestOffer,
+                ],
+            ];
+
+            $estimatedDeliveryAt = $this->estimatedDeliveryResolver()->resolve($shipmentData);
+
+            if ($estimatedDeliveryAt === null) {
+                $estimatedDeliveryAt = $this->estimatedDeliveryResolver()->resolve(
+                    $this->fetchShipment($shipmentId),
+                );
+            }
 
             return new ShipmentCreationResult(
                 shipmentId: $shipmentId,
                 trackingNumber: $transactionShipment['trackingNumber'] ?? $shipment['trackingNumber'] ?? null,
                 trackingUrl: $transactionShipment['trackingUrl'] ?? $shipment['trackingUrl'] ?? null,
                 labelUrl: $transactionShipment['labelURL'] ?? null,
+                estimatedDeliveryAt: $estimatedDeliveryAt?->toIso8601String(),
             );
         } catch (ApiException $exception) {
             throw new RuntimeException(
@@ -170,5 +187,10 @@ class GeliverShippingGateway implements ShippingGateway
         }
 
         return new Client($token);
+    }
+
+    private function estimatedDeliveryResolver(): GeliverEstimatedDeliveryResolver
+    {
+        return $this->estimatedDeliveryResolver ??= app(GeliverEstimatedDeliveryResolver::class);
     }
 }

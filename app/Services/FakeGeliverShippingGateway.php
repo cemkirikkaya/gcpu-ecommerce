@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Contracts\ShippingGateway;
 use App\DataTransferObjects\ShipmentCreationResult;
 use App\Models\Order;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 
 class FakeGeliverShippingGateway implements ShippingGateway
@@ -19,6 +20,7 @@ class FakeGeliverShippingGateway implements ShippingGateway
             trackingNumber: $trackingNumber,
             trackingUrl: 'https://tracking.example.test/'.$trackingNumber,
             labelUrl: 'https://tracking.example.test/labels/'.$shipmentId.'.pdf',
+            estimatedDeliveryAt: Carbon::now()->addDays(3)->toIso8601String(),
         );
     }
 }

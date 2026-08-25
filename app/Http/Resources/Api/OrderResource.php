@@ -30,6 +30,7 @@ class OrderResource extends JsonResource
             'created_at' => $this->created_at?->toIso8601String(),
             'tracking_number' => $this->tracking_number,
             'tracking_url' => $this->tracking_url,
+            'estimated_delivery_at' => $this->estimated_delivery_at?->toIso8601String(),
             'can_download_invoice' => $request->user()?->can('downloadInvoice', $this->resource) ?? false,
             'address' => new AddressResource($this->whenLoaded('address')),
             'cancellation_request' => new OrderCancellationRequestResource(

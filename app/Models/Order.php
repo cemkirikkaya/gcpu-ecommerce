@@ -35,6 +35,7 @@ class Order extends Model
         'tracking_number',
         'tracking_url',
         'geliver_shipment_id',
+        'estimated_delivery_at',
     ];
 
     protected $attributes = [
@@ -55,6 +56,7 @@ class Order extends Model
             'status' => OrderStatus::class,
             'payment_status' => PaymentStatus::class,
             'paid_at' => 'datetime',
+            'estimated_delivery_at' => 'datetime',
         ];
     }
 

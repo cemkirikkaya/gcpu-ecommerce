@@ -256,6 +256,7 @@ export type Order = {
   payment_provider?: string | null;
   tracking_number?: string | null;
   tracking_url?: string | null;
+  estimated_delivery_at?: string | null;
   created_at: string | null;
   can_download_invoice?: boolean;
   address?: Address | null;
@@ -383,6 +384,7 @@ export type AdminOrder = {
   tracking_number?: string | null;
   tracking_url?: string | null;
   geliver_shipment_id?: string | null;
+  estimated_delivery_at?: string | null;
   created_at: string | null;
   items_count?: number;
   address?: Address | null;

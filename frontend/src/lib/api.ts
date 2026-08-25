@@ -531,13 +531,6 @@ export const api = {
       (response) => response.order,
     ),
 
-  adminUpdateOrderStatus: (token: string, orderId: number, status: string) =>
-    request<{ order: AdminOrder; message: string }>(
-      `/admin/orders/${orderId}`,
-      { method: "PATCH", body: JSON.stringify({ status }) },
-      token,
-    ).then((response) => response.order),
-
   adminCreateOrderShipment: (token: string, orderId: number) =>
     request<{ order: AdminOrder; message: string }>(
       `/admin/orders/${orderId}/shipment`,
@@ -604,6 +597,26 @@ export function formatPrice(value: number): string {
   const withSeparators = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 
   return `${withSeparators},${decimalPart} ₺`;
+}
+
+export function formatEstimatedDeliveryDate(value: string | null): string {
+  if (!value) {
+    return "—";
+  }
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return "—";
+  }
+
+  return new Intl.DateTimeFormat("tr-TR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: "Europe/Istanbul",
+  }).format(date);
 }
 
 export function formatOrderDate(value: string | null): string {

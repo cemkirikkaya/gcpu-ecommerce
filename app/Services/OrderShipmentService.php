@@ -14,6 +14,7 @@ class OrderShipmentService
         private ShippingGatewayFactory $shippingGatewayFactory,
         private AdminOrderService $adminOrderService,
         private GeliverTrackingStatusMapper $trackingStatusMapper,
+        private GeliverEstimatedDeliveryResolver $estimatedDeliveryResolver,
     ) {}
 
     public function createShipment(Order $order): Order
@@ -50,6 +51,7 @@ class OrderShipmentService
             'geliver_shipment_id' => $result->shipmentId,
             'tracking_number' => $result->trackingNumber,
             'tracking_url' => $result->trackingUrl,
+            'estimated_delivery_at' => $result->estimatedDeliveryAt,
         ]);
 
         $order = $order->fresh();
@@ -75,6 +77,8 @@ class OrderShipmentService
             isset($shipmentData['trackingNumber']) ? (string) $shipmentData['trackingNumber'] : null,
             isset($shipmentData['trackingUrl']) ? (string) $shipmentData['trackingUrl'] : null,
         );
+
+        $this->syncEstimatedDeliveryFromWebhook($order, $shipmentData);
 
         if (! config('geliver.sync_status_from_webhook')) {
             return $order->fresh();
@@ -114,6 +118,24 @@ class OrderShipmentService
         if ($attributes !== []) {
             $order->update($attributes);
         }
+
+        return $order->fresh();
+    }
+
+    /**
+     * @param  array<string, mixed>  $shipmentData
+     */
+    public function syncEstimatedDeliveryFromWebhook(Order $order, array $shipmentData): Order
+    {
+        $estimatedDeliveryAt = $this->estimatedDeliveryResolver->resolve($shipmentData);
+
+        if ($estimatedDeliveryAt === null) {
+            return $order->fresh();
+        }
+
+        $order->update([
+            'estimated_delivery_at' => $estimatedDeliveryAt,
+        ]);
 
         return $order->fresh();
     }
