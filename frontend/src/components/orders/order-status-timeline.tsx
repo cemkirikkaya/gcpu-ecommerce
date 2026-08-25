@@ -39,6 +39,10 @@ function stepState(
   }
 
   if (stepIndex === currentIndex) {
+    if (currentIndex === FULFILLMENT_STEPS.length - 1) {
+      return "complete";
+    }
+
     return "current";
   }
 
