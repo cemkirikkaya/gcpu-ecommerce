@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -12,6 +11,7 @@ import {
   useState,
 } from "react";
 
+import { ProductImage } from "@/components/catalog/product-image";
 import { api, formatPrice } from "@/lib/api";
 import { resolveImageSrc } from "@/lib/media";
 import type { PopularSearch, ProductSearchSuggestion } from "@/lib/types";
@@ -308,10 +308,9 @@ export function ProductSearchAutocomplete({
                 >
                   <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-lg bg-stone-100">
                     {imageSrc ? (
-                      <Image
+                      <ProductImage
                         src={imageSrc}
                         alt=""
-                        fill
                         sizes="40px"
                         className="object-cover"
                       />
