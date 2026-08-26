@@ -7,7 +7,7 @@ import { AccountBackLink } from "@/components/account/account-back-link";
 import { OrderStatusBadge } from "@/components/orders/order-status-badge";
 import { ButtonLink } from "@/components/ui/button";
 import { useAuth } from "@/context/auth-context";
-import { api, formatOrderDate, formatPrice } from "@/lib/api";
+import { api, formatEstimatedDeliveryDate, formatOrderDate, formatPrice } from "@/lib/api";
 import { splitOrdersByStatus } from "@/lib/orders";
 import type { Order } from "@/lib/types";
 
@@ -49,26 +49,59 @@ export default function OrdersPage() {
   const { activeOrders, cancelledOrders } = splitOrdersByStatus(orders);
 
   function renderOrderCard(order: Order) {
+    const showShipping =
+      order.tracking_number || order.tracking_url || order.estimated_delivery_at;
+
     return (
-      <Link
+      <div
         key={order.id}
-        href={`/orders/${order.id}`}
-        className="block rounded-[2rem] border border-line bg-surface p-6 transition hover:border-accent/40"
+        className="rounded-[2rem] border border-line bg-surface transition hover:border-accent/40"
       >
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <p className="text-sm text-muted">Sipariş #{order.id}</p>
-            <p className="mt-2 font-display text-2xl text-accent">
-              {formatPrice(order.total_price)}
-            </p>
-            <p className="mt-2 text-sm text-muted">{formatOrderDate(order.created_at)}</p>
+        <Link href={`/orders/${order.id}`} className="block p-6">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <p className="text-sm text-muted">Sipariş #{order.id}</p>
+              <p className="mt-2 font-display text-2xl text-accent">
+                {formatPrice(order.total_price)}
+              </p>
+              <p className="mt-2 text-sm text-muted">{formatOrderDate(order.created_at)}</p>
+            </div>
+            <div className="flex flex-col items-end gap-2">
+              <OrderStatusBadge status={order.status} label={order.status_label} />
+              <span className="text-xs text-muted">{order.payment_status_label}</span>
+            </div>
           </div>
-          <div className="flex flex-col items-end gap-2">
-            <OrderStatusBadge status={order.status} label={order.status_label} />
-            <span className="text-xs text-muted">{order.payment_status_label}</span>
+        </Link>
+
+        {showShipping && (
+          <div className="border-t border-line px-6 py-4 text-sm">
+            {order.estimated_delivery_at && (
+              <p className="text-muted">
+                Tahmini teslimat:{" "}
+                <span className="font-medium text-foreground">
+                  {formatEstimatedDeliveryDate(order.estimated_delivery_at)}
+                </span>
+              </p>
+            )}
+            {order.tracking_number && (
+              <p className={order.estimated_delivery_at ? "mt-2 text-muted" : "text-muted"}>
+                Takip No:{" "}
+                <span className="font-medium text-foreground">{order.tracking_number}</span>
+              </p>
+            )}
+            {order.tracking_url && (
+              <a
+                href={order.tracking_url}
+                target="_blank"
+                rel="noreferrer"
+                className="mt-2 inline-block text-accent underline-offset-4 hover:underline"
+              >
+                Kargoyu takip et
+              </a>
+            )}
           </div>
-        </div>
-      </Link>
+        )}
+      </div>
     );
   }
 
