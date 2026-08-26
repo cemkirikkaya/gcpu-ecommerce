@@ -509,6 +509,31 @@ export const api = {
     );
   },
 
+  adminUploadProductImage: (token: string, productId: number, file: File) => {
+    const formData = new FormData();
+    formData.append("image", file);
+
+    return request<{ product: AdminProduct; message: string }>(
+      `/admin/products/${productId}/images`,
+      { method: "POST", body: formData },
+      token,
+    );
+  },
+
+  adminDeleteProductImage: (token: string, productId: number, imageId: number) =>
+    request<{ product: AdminProduct; message: string }>(
+      `/admin/products/${productId}/images/${imageId}`,
+      { method: "DELETE" },
+      token,
+    ),
+
+  adminSetProductCoverImage: (token: string, productId: number, imageId: number) =>
+    request<{ product: AdminProduct; message: string }>(
+      `/admin/products/${productId}/images/${imageId}/cover`,
+      { method: "POST" },
+      token,
+    ),
+
   adminUpdateStock: (token: string, stockId: number, quantity: number) =>
     request<{ stock: { id: number; quantity: number }; message: string }>(
       `/admin/stocks/${stockId}`,

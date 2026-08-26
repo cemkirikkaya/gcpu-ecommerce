@@ -14,6 +14,7 @@ use App\Models\VariantValue;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class ProductCatalogService
@@ -174,7 +175,7 @@ class ProductCatalogService
         $filename = Str::slug($product->name).'-'.$product->id.'.'.$extension;
         $relativePath = 'catalog/products/'.$filename;
 
-        $file->storeAs('public/catalog/products', $filename);
+        $this->storePublicProductImage($file, $filename);
 
         Image::query()
             ->where('product_id', $product->id)
@@ -199,6 +200,101 @@ class ProductCatalogService
             'is_cover' => true,
             'sort_order' => 0,
         ]);
+    }
+
+    public function storeGalleryImage(Product $product, UploadedFile $file): Image
+    {
+        $extension = $file->guessExtension() ?? 'jpg';
+        $filename = Str::slug($product->name).'-'.$product->id.'-'.Str::uuid().'.'.$extension;
+        $relativePath = 'catalog/products/'.$filename;
+
+        $this->storePublicProductImage($file, $filename);
+
+        $hasCover = Image::query()
+            ->where('product_id', $product->id)
+            ->whereNull('product_variant_id')
+            ->where('is_cover', true)
+            ->exists();
+
+        $maxSortOrder = Image::query()
+            ->where('product_id', $product->id)
+            ->whereNull('product_variant_id')
+            ->max('sort_order');
+
+        return Image::query()->create([
+            'product_id' => $product->id,
+            'product_variant_id' => null,
+            'image' => $relativePath,
+            'label' => $product->name,
+            'is_cover' => ! $hasCover,
+            'sort_order' => ($maxSortOrder ?? -1) + 1,
+        ]);
+    }
+
+    public function deleteProductImage(Product $product, Image $image): void
+    {
+        if ($image->product_id !== $product->id || $image->product_variant_id !== null) {
+            abort(404);
+        }
+
+        $absolutePath = storage_path('app/public/'.$image->image);
+
+        if (File::exists($absolutePath)) {
+            File::delete($absolutePath);
+        }
+
+        $wasCover = $image->is_cover;
+        $image->delete();
+
+        if (! $wasCover) {
+            return;
+        }
+
+        $nextCover = Image::query()
+            ->where('product_id', $product->id)
+            ->whereNull('product_variant_id')
+            ->orderBy('sort_order')
+            ->orderBy('id')
+            ->first();
+
+        if ($nextCover === null) {
+            return;
+        }
+
+        Image::query()
+            ->where('product_id', $product->id)
+            ->whereNull('product_variant_id')
+            ->update(['is_cover' => false]);
+
+        $nextCover->update([
+            'is_cover' => true,
+            'sort_order' => 0,
+        ]);
+    }
+
+    public function setProductCoverImage(Product $product, Image $image): Image
+    {
+        if ($image->product_id !== $product->id || $image->product_variant_id !== null) {
+            abort(404);
+        }
+
+        Image::query()
+            ->where('product_id', $product->id)
+            ->whereNull('product_variant_id')
+            ->where('is_cover', true)
+            ->update(['is_cover' => false]);
+
+        $image->update([
+            'is_cover' => true,
+            'sort_order' => 0,
+        ]);
+
+        return $image->fresh() ?? $image;
+    }
+
+    private function storePublicProductImage(UploadedFile $file, string $filename): void
+    {
+        Storage::disk('public')->putFileAs('catalog/products', $file, $filename);
     }
 
     private function removeVariantsPermanently(Product $product): void

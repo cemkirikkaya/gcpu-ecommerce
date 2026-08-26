@@ -6,7 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreProductRequest;
 use App\Http\Requests\Admin\UpdateProductRequest;
 use App\Http\Requests\Admin\UploadProductCoverRequest;
+use App\Http\Requests\Admin\UploadProductImageRequest;
 use App\Http\Resources\Api\AdminProductResource;
+use App\Models\Image;
 use App\Models\Product;
 use App\Models\User;
 use App\Services\ProductCatalogService;
@@ -136,6 +138,66 @@ class ProductController extends Controller
         $this->authorize('update', $product);
 
         $this->catalogService->storeCoverImage($product, $request->file('image'));
+
+        $product->load([
+            'category',
+            'vendor',
+            'images',
+            'variants.stock',
+            'variants.variantValues.variantValue.variant',
+        ]);
+
+        return response()->json([
+            'product' => new AdminProductResource($product),
+            'message' => 'Kapak görseli güncellendi.',
+        ]);
+    }
+
+    public function uploadImage(UploadProductImageRequest $request, Product $product): JsonResponse
+    {
+        $this->authorize('update', $product);
+
+        $this->catalogService->storeGalleryImage($product, $request->file('image'));
+
+        $product->load([
+            'category',
+            'vendor',
+            'images',
+            'variants.stock',
+            'variants.variantValues.variantValue.variant',
+        ]);
+
+        return response()->json([
+            'product' => new AdminProductResource($product),
+            'message' => 'Görsel eklendi.',
+        ]);
+    }
+
+    public function destroyImage(Product $product, Image $image): JsonResponse
+    {
+        $this->authorize('update', $product);
+
+        $this->catalogService->deleteProductImage($product, $image);
+
+        $product->load([
+            'category',
+            'vendor',
+            'images',
+            'variants.stock',
+            'variants.variantValues.variantValue.variant',
+        ]);
+
+        return response()->json([
+            'product' => new AdminProductResource($product),
+            'message' => 'Görsel silindi.',
+        ]);
+    }
+
+    public function setCover(Product $product, Image $image): JsonResponse
+    {
+        $this->authorize('update', $product);
+
+        $this->catalogService->setProductCoverImage($product, $image);
 
         $product->load([
             'category',

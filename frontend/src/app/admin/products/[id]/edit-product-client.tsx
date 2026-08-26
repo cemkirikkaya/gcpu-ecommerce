@@ -3,7 +3,7 @@
 import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
-import { ProductCoverUpload } from "@/components/admin/product-cover-upload";
+import { ProductGalleryUpload } from "@/components/admin/product-gallery-upload";
 import { VariantFields } from "@/components/admin/variant-fields";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { useAuth } from "@/context/auth-context";
@@ -103,21 +103,50 @@ export function EditProductClient({ productId, merged }: EditProductClientProps)
       )}
 
       <form onSubmit={handleSubmit} className="mt-8 max-w-3xl space-y-6">
-        <ProductCoverUpload
+        <ProductGalleryUpload
           productId={product.id}
-          imageUrl={product.image_url}
           productName={product.name}
-          onUploaded={(imageUrl) =>
-            setProduct((current) => (current ? { ...current, image_url: imageUrl } : current))
+          images={product.images ?? []}
+          onChange={(images, imageUrl) =>
+            setProduct((current) =>
+              current ? { ...current, images, image_url: imageUrl } : current,
+            )
           }
           onUpload={async (file) => {
             if (!token) {
               throw new Error("Oturum bulunamadı");
             }
 
-            const response = await api.adminUploadProductCover(token, product.id, file);
+            const response = await api.adminUploadProductImage(token, product.id, file);
 
-            return { image_url: response.product.image_url ?? null };
+            return {
+              images: response.product.images ?? [],
+              image_url: response.product.image_url ?? null,
+            };
+          }}
+          onDelete={async (imageId) => {
+            if (!token) {
+              throw new Error("Oturum bulunamadı");
+            }
+
+            const response = await api.adminDeleteProductImage(token, product.id, imageId);
+
+            return {
+              images: response.product.images ?? [],
+              image_url: response.product.image_url ?? null,
+            };
+          }}
+          onSetCover={async (imageId) => {
+            if (!token) {
+              throw new Error("Oturum bulunamadı");
+            }
+
+            const response = await api.adminSetProductCoverImage(token, product.id, imageId);
+
+            return {
+              images: response.product.images ?? [],
+              image_url: response.product.image_url ?? null,
+            };
           }}
         />
 

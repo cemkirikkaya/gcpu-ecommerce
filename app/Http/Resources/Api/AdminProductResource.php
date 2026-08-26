@@ -25,6 +25,10 @@ class AdminProductResource extends JsonResource
                 'slug' => $this->category->slug,
             ] : null),
             'image_url' => $this->coverImageUrl(),
+            'images' => $this->when(
+                $this->relationLoaded('images'),
+                fn () => ProductImageResource::collection($this->galleryImages()),
+            ),
             'vendor_email' => $this->whenLoaded('vendor', fn () => $this->vendor?->email),
             'variants' => $this->whenLoaded('variants', fn () => $this->variants->map(fn ($variant) => [
                 'id' => $variant->id,

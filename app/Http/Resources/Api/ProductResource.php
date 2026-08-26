@@ -25,6 +25,10 @@ class ProductResource extends JsonResource
                 'slug' => $this->category?->slug,
             ]),
             'image_url' => $this->coverImageUrl(),
+            'images' => $this->when(
+                $this->relationLoaded('images'),
+                fn () => ProductImageResource::collection($this->galleryImages()),
+            ),
             'base_variant' => $this->whenLoaded('baseVariant', fn () => $this->baseVariant?->name),
             'variant_groups' => $this->when(
                 $this->relationLoaded('variants'),

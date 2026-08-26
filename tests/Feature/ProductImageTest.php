@@ -29,7 +29,43 @@ it('returns product cover image url from images table in catalog api', function 
 
     $response
         ->assertSuccessful()
-        ->assertJsonPath('product.image_url', '/storage/catalog/products/test-phone.jpg');
+        ->assertJsonPath('product.image_url', '/storage/catalog/products/test-phone.jpg')
+        ->assertJsonCount(1, 'product.images')
+        ->assertJsonPath('product.images.0.is_cover', true);
+});
+
+it('returns multiple product gallery images sorted by sort order', function (): void {
+    $product = Product::query()->create([
+        'name' => 'Gallery Phone',
+        'price' => 1500,
+        'description' => 'Gallery test',
+    ]);
+
+    Image::query()->create([
+        'product_id' => $product->id,
+        'product_variant_id' => null,
+        'image' => 'catalog/products/gallery-cover.jpg',
+        'label' => 'Cover',
+        'is_cover' => true,
+        'sort_order' => 0,
+    ]);
+
+    Image::query()->create([
+        'product_id' => $product->id,
+        'product_variant_id' => null,
+        'image' => 'catalog/products/gallery-second.jpg',
+        'label' => 'Second',
+        'is_cover' => false,
+        'sort_order' => 1,
+    ]);
+
+    $response = $this->getJson("/api/products/{$product->id}");
+
+    $response
+        ->assertSuccessful()
+        ->assertJsonCount(2, 'product.images')
+        ->assertJsonPath('product.images.0.url', '/storage/catalog/products/gallery-cover.jpg')
+        ->assertJsonPath('product.images.1.url', '/storage/catalog/products/gallery-second.jpg');
 });
 
 it('seeds cover and variant images for catalog products', function (): void {

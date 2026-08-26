@@ -70,6 +70,30 @@ class Product extends Model implements HasMedia
         return $this->hasMany(Image::class);
     }
 
+    public function productLevelImages(): HasMany
+    {
+        return $this->hasMany(Image::class)
+            ->whereNull('product_variant_id')
+            ->orderBy('sort_order')
+            ->orderBy('id');
+    }
+
+    /**
+     * @return Collection<int, Image>
+     */
+    public function galleryImages(): Collection
+    {
+        $this->loadMissing('images');
+
+        return $this->images
+            ->whereNull('product_variant_id')
+            ->sortBy([
+                ['sort_order', 'asc'],
+                ['id', 'asc'],
+            ])
+            ->values();
+    }
+
     public function reviews(): HasMany
     {
         return $this->hasMany(ProductReview::class);

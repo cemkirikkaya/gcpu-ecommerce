@@ -2,6 +2,7 @@
 
 use App\Enums\UserRole;
 use App\Models\Category;
+use App\Models\Image;
 use App\Models\Product;
 use App\Models\Stock;
 use App\Models\User;
@@ -275,6 +276,77 @@ it('uploads a product cover image for admin users', function () {
     $this->assertDatabaseHas('images', [
         'product_id' => $product->id,
         'is_cover' => true,
+    ]);
+
+    expect(file_exists(storage_path('app/public/catalog/products/kapak-test-'.$product->id.'.jpg')))->toBeTrue();
+});
+
+it('uploads additional gallery images for admin users', function () {
+    $product = Product::query()->create([
+        'name' => 'Galeri Test',
+        'price' => 100,
+        'description' => 'Test',
+    ]);
+
+    $this->withToken(adminToken())
+        ->post('/api/admin/products/'.$product->id.'/cover-image', [
+            'image' => UploadedFile::fake()->image('cover.jpg', 800, 1000),
+        ])
+        ->assertOk();
+
+    $this->withToken(adminToken())
+        ->post('/api/admin/products/'.$product->id.'/images', [
+            'image' => UploadedFile::fake()->image('gallery.jpg', 800, 1000),
+        ])
+        ->assertOk()
+        ->assertJsonCount(2, 'product.images');
+
+    expect(Image::query()->where('product_id', $product->id)->whereNull('product_variant_id')->count())->toBe(2);
+});
+
+it('sets a gallery image as cover and deletes gallery images', function () {
+    $product = Product::query()->create([
+        'name' => 'Galeri Yönetim',
+        'price' => 100,
+        'description' => 'Test',
+    ]);
+
+    $cover = Image::query()->create([
+        'product_id' => $product->id,
+        'product_variant_id' => null,
+        'image' => 'catalog/products/cover.jpg',
+        'label' => 'Cover',
+        'is_cover' => true,
+        'sort_order' => 0,
+    ]);
+
+    $second = Image::query()->create([
+        'product_id' => $product->id,
+        'product_variant_id' => null,
+        'image' => 'catalog/products/second.jpg',
+        'label' => 'Second',
+        'is_cover' => false,
+        'sort_order' => 1,
+    ]);
+
+    $this->withToken(adminToken())
+        ->post("/api/admin/products/{$product->id}/images/{$second->id}/cover")
+        ->assertOk()
+        ->assertJsonPath('product.image_url', '/storage/catalog/products/second.jpg');
+
+    $this->assertDatabaseHas('images', [
+        'id' => $second->id,
+        'is_cover' => true,
+    ]);
+
+    $this->withToken(adminToken())
+        ->delete("/api/admin/products/{$product->id}/images/{$cover->id}")
+        ->assertOk()
+        ->assertJsonCount(1, 'product.images');
+
+    $this->assertDatabaseMissing('images', [
+        'id' => $cover->id,
+        'deleted_at' => null,
     ]);
 });
 

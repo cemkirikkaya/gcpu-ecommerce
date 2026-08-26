@@ -7,7 +7,7 @@ import { ColorSwatch } from "@/components/catalog/color-swatch";
 import { ProductFavoriteButton } from "@/components/catalog/product-favorite-button";
 import { StockAlertButton } from "@/components/catalog/stock-alert-button";
 import { ProductFeatures, getProductVariants } from "@/components/catalog/product-features";
-import { ProductImage } from "@/components/catalog/product-image";
+import { ProductImageGallery } from "@/components/catalog/product-image-gallery";
 import { ProductRatingStars } from "@/components/catalog/product-rating-stars";
 import { ProductReviews } from "@/components/catalog/product-reviews";
 import { RelatedProducts } from "@/components/catalog/related-products";
@@ -110,6 +110,7 @@ export default function ProductDetailPage({
   const displayImageUrl = resolveImageSrc(
     selectedVariant?.image_url ?? product.image_url,
   );
+  const galleryImages = product.images ?? [];
 
   return (
     <div className="mx-auto max-w-7xl px-6 py-16 lg:px-10 lg:py-24">
@@ -118,24 +119,17 @@ export default function ProductDetailPage({
       </Link>
 
       <div className="mt-10 grid gap-12 lg:grid-cols-2 lg:gap-16">
-        <div className="relative min-h-[480px] overflow-hidden rounded-[2.5rem] border border-line bg-[linear-gradient(145deg,#f3eee8,#faf8f5)]">
-          <ProductFavoriteButton
-            productId={product.id}
-            className="absolute right-5 top-5 z-10"
-          />
-          {displayImageUrl ? (
-            <ProductImage
-              src={displayImageUrl}
-              alt={product.name}
-              className="object-cover"
-              sizes="(max-width: 1024px) 100vw, 50vw"
+        <ProductImageGallery
+          images={galleryImages}
+          fallbackImageUrl={displayImageUrl}
+          alt={product.name}
+          favoriteButton={
+            <ProductFavoriteButton
+              productId={product.id}
+              className="absolute right-5 top-5 z-10"
             />
-          ) : (
-            <div className="flex h-full items-center justify-center font-display text-8xl text-stone-300">
-              {product.name.slice(0, 1)}
-            </div>
-          )}
-        </div>
+          }
+        />
 
         <div>
           <p className="text-xs uppercase tracking-[0.35em] text-muted">

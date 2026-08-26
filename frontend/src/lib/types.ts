@@ -30,6 +30,13 @@ export type VariantGroup = {
   variants: ProductVariant[];
 };
 
+export type ProductGalleryImage = {
+  id: number;
+  url: string;
+  is_cover: boolean;
+  sort_order: number;
+};
+
 export type Product = {
   id: number;
   name: string;
@@ -41,6 +48,7 @@ export type Product = {
     slug: string;
   } | null;
   image_url: string | null;
+  images?: ProductGalleryImage[];
   base_variant?: string | null;
   variant_groups?: VariantGroup[];
   variants?: ProductVariant[];
@@ -308,6 +316,7 @@ export type AdminProduct = {
   } | null;
   variants?: AdminProductVariant[];
   image_url?: string | null;
+  images?: ProductGalleryImage[];
   vendor_email?: string | null;
   created_at?: string | null;
 };
