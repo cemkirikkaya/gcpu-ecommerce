@@ -14,14 +14,14 @@ Laravel API + Next.js mağaza ve admin panelinden oluşan e-ticaret monorepo'su.
 
 ### Mağaza (müşteri)
 
-- **Katalog:** Arama, kategori/fiyat filtresi, sıralama, sayfalama
-- **Ürün:** Varyant seçimi, renk swatch, ürün yorumları, ilgili ürünler
+- **Katalog:** Arama, **autocomplete önerileri** (`/api/products/search/suggest`), kategori/fiyat filtresi, sıralama, sayfalama
+- **Ürün:** Varyant seçimi, renk swatch, **çoklu görsel galerisi** (kaydırılabilir), ürün yorumları, **ilgili ürünler** (cross-sell)
 - **Sepet & checkout:** Stok rezervasyonu, taksit seçenekleri (Iyzico)
 - **Auth:** E-posta/şifre, Google OAuth, şifre sıfırlama
 - **Hesap:** Profil ve şifre güncelleme, adres defteri, sipariş geçmişi
 - **Favoriler:** Ürün kaydetme
 - **Stok bildirimi:** Stokta olmayan varyantlar için “Stoğa dönünce haber ver” (e-posta)
-- **Sipariş:** Durum takibi, fatura PDF indirme, iptal talebi
+- **Sipariş:** Durum takibi, **tahmini teslimat (ETA)**, kargo takip linki, fatura PDF indirme, iptal talebi
 - **Blog:** `/blog` vitrin ve yazı detayı
 
 ### Ödeme
@@ -33,7 +33,8 @@ Laravel API + Next.js mağaza ve admin panelinden oluşan e-ticaret monorepo'su.
 
 - Ödeme sonrası **otomatik kargo oluşturma** (Geliver API)
 - Sipariş durumu **Geliver webhook** ile güncellenir (`shipped` → `delivered`)
-- Müşteri sipariş detayında **kargo takip linki**
+- Müşteri sipariş listesi ve detayında **kargo takip linki** ve **tahmini teslimat tarihi (ETA)**
+- Test modunda placeholder takip URL’leri için `GELIVER_TRACKING_PAGE_BASE` fallback’i
 - Test modu: `GELIVER_FAKE=true` (API’ye gitmeden), `GELIVER_TEST=true` (Geliver test gönderisi)
 
 ### Admin (Next.js — `/admin/*`)
@@ -41,8 +42,8 @@ Laravel API + Next.js mağaza ve admin panelinden oluşan e-ticaret monorepo'su.
 Sanctum API; vendor kendi ürün/siparişlerini görür, platform admin hepsini görür.
 
 - Dashboard özeti, düşük stok uyarıları, grafikler
-- Ürün CRUD, stok güncelleme, kapak görseli
-- Sipariş listesi/detay, kargo bilgisi
+- Ürün CRUD, stok güncelleme, **çoklu ürün görseli** (yükle, sil, kapak seç)
+- Sipariş listesi/detay, kargo bilgisi ve ETA (durum Geliver webhook ile güncellenir)
 - İptal talepleri onay/red
 - Blog yazıları (yalnızca platform admin)
 
@@ -101,7 +102,10 @@ docker compose restart frontend
 |----------|----------|
 | `APP_KEY` | `php artisan key:generate` ile üretilir |
 | `NEXT_PUBLIC_API_URL` | Tarayıcı API adresi (`http://localhost/api`) |
+| `NEXT_PUBLIC_MEDIA_URL` | Ürün görselleri kökü (`http://localhost`) — `/storage/...` URL’leri için |
 | `FRONTEND_URL` | Frontend kök URL (`http://localhost:3000`) |
+
+Frontend `.env.local` içinde ayrıca `API_INTERNAL_URL` (Docker/SSR içinden API) tanımlanır; ayrıntılar için `frontend/.env.local.example` dosyasına bakın.
 
 ### Iyzico (ödeme)
 
@@ -185,9 +189,12 @@ Sail kurulduktan sonra `./vendor/bin/sail` kısayolunu kullanabilirsiniz:
 ./vendor/bin/sail artisan test              # Pest testleri
 ./vendor/bin/sail artisan migrate
 ./vendor/bin/sail artisan db:seed --class=CatalogSeeder
+./vendor/bin/sail artisan db:seed --class=ProductImageSeeder  # demo görseller (mevcut kapakları değiştirir)
 ./vendor/bin/sail exec frontend npm install # frontend paketi ekleme
 ./vendor/bin/sail restart frontend
 ```
+
+Manuel yüklediğin ürün görselleri `storage/app/public/catalog/products/` altında kalıcıdır; projeyi kapatıp açmak bunları silmez. `migrate:fresh --seed` veya `ProductImageSeeder` çalıştırmak kapak görsellerini değiştirebilir.
 
 Log izleme:
 
@@ -209,6 +216,10 @@ cd frontend && npm install && npm run dev
 - **Filament** (`/admin`): Ayrı Laravel paneli; ürün/kategori yönetimi için.
 - **Ödeme akışı:** Checkout → sipariş oluştur → Iyzico veya Stripe init → `/payment/result`.
 - **Sipariş durumları:** `pending` → `processing` (ödeme) → `shipped` (Geliver kargo) → `delivered` (Geliver webhook).
+- **Ürün silme:** Soft delete — admin’den silinen ürünler `deleted_at` ile DB’de kalır; vitrin ve arama dışında tutulur (geçmiş sipariş bütünlüğü için).
+- **Ürün görselleri:** `images` tablosu + `storage/app/public/catalog/products/`; API `image_url` (kapak) ve `images[]` (galeri) döner.
+- **Arama:** `GET /api/products/search/suggest?q=...` autocomplete; popüler aramalar `GET /api/products/search/popular`.
+- **Cross-sell:** `GET /api/products/{id}/cross-sell` — aynı kategoriden ilgili ürünler.
 - **Stok bildirimi:** `stock_alerts` tablosu; stok 0’dan pozitife çıkınca abonelere `BackInStockMail` gider.
 
 ## Güvenlik
