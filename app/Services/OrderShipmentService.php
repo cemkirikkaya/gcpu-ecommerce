@@ -169,4 +169,28 @@ class OrderShipmentService
             $gateway->fetchShipment((string) $order->geliver_shipment_id),
         );
     }
+
+    public function syncPendingShipments(): int
+    {
+        if (config('geliver.fake') || ! config('geliver.auto_sync_from_api')) {
+            return 0;
+        }
+
+        $syncedCount = 0;
+
+        Order::query()
+            ->whereNotNull('geliver_shipment_id')
+            ->whereNotIn('status', [OrderStatus::Delivered, OrderStatus::Cancelled])
+            ->orderBy('id')
+            ->each(function (Order $order) use (&$syncedCount): void {
+                try {
+                    $this->syncFromGeliverApi($order);
+                    $syncedCount++;
+                } catch (\Throwable $exception) {
+                    report($exception);
+                }
+            });
+
+        return $syncedCount;
+    }
 }

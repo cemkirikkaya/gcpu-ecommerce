@@ -39,5 +39,6 @@ return Application::configure(basePath: dirname(__DIR__))
     })
     ->withSchedule(function (Schedule $schedule): void {
         $schedule->command('reservations:clear')->everyMinute();
+        $schedule->command('geliver:sync-shipments')->everyMinute()->withoutOverlapping();
     })
     ->create();

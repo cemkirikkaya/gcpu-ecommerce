@@ -11,6 +11,10 @@ import { api, formatEstimatedDeliveryDate, formatOrderDate, formatPrice } from "
 import { isAdmin } from "@/lib/auth";
 import type { AdminOrder } from "@/lib/types";
 
+function hasActiveGeliverShipment(order: AdminOrder): boolean {
+  return Boolean(order.geliver_shipment_id) && !["delivered", "cancelled"].includes(order.status);
+}
+
 export default function AdminOrderDetailPage() {
   const params = useParams<{ id: string }>();
   const { token, user } = useAuth();
@@ -31,6 +35,37 @@ export default function AdminOrderDetailPage() {
       .catch((error) => setMessage(error.message))
       .finally(() => setLoading(false));
   }, [token, params.id]);
+
+  useEffect(() => {
+    if (!token || !order || !isAdmin(user) || !hasActiveGeliverShipment(order)) {
+      return;
+    }
+
+    let cancelled = false;
+
+    async function syncShipmentQuietly(): Promise<void> {
+      try {
+        const updated = await api.adminSyncOrderShipment(token!, order!.id);
+
+        if (!cancelled) {
+          setOrder(updated);
+        }
+      } catch {
+        // Arka plan senkronu sessizce atlanır.
+      }
+    }
+
+    void syncShipmentQuietly();
+
+    const intervalId = window.setInterval(() => {
+      void syncShipmentQuietly();
+    }, 60_000);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(intervalId);
+    };
+  }, [token, user, order?.id, order?.geliver_shipment_id, order?.status]);
 
   async function handleCreateShipment() {
     if (!token || !order) return;
@@ -130,7 +165,8 @@ export default function AdminOrderDetailPage() {
             </p>
           )}
           <p className="mt-4 text-sm text-muted">
-            Kargo durumu Geliver webhook ile otomatik güncellenir. Gecikme varsa senkronize edin.
+            Kargo durumu Geliver ile otomatik senkronize edilir. Gecikme varsa aşağıdaki
+            butonu kullanabilirsiniz.
           </p>
           <button
             type="button"

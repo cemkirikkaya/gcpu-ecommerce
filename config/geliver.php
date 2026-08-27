@@ -14,6 +14,8 @@ return [
 
     'sync_status_from_webhook' => env('GELIVER_SYNC_STATUS_FROM_WEBHOOK', true),
 
+    'auto_sync_from_api' => env('GELIVER_AUTO_SYNC_FROM_API', true),
+
     'tracking_page_base' => env('GELIVER_TRACKING_PAGE_BASE', 'https://app.geliver.io/tracking'),
 
     'default_parcel' => [

@@ -380,6 +380,53 @@ it('resolves estimated delivery from geliver offer fields', function () {
     );
 });
 
+it('syncs pending shipments via scheduled command', function () {
+    Mail::fake();
+
+    config([
+        'geliver.fake' => false,
+        'geliver.auto_sync_from_api' => true,
+    ]);
+
+    $order = createPaidOrderForShipment();
+    $order->update([
+        'status' => OrderStatus::Shipped,
+        'geliver_shipment_id' => 'geliver-shipment-scheduled',
+    ]);
+
+    $gateway = Mockery::mock(GeliverShippingGateway::class);
+    $gateway->shouldReceive('fetchShipment')
+        ->once()
+        ->with('geliver-shipment-scheduled')
+        ->andReturn([
+            'id' => 'geliver-shipment-scheduled',
+            'trackingNumber' => 'SCHEDULED123',
+            'trackingUrl' => 'https://tracking.example.test/SCHEDULED123',
+            'statusCode' => 'DELIVERED',
+            'trackingStatus' => [
+                'trackingStatusCode' => 'DELIVERED',
+            ],
+        ]);
+
+    app()->instance(GeliverShippingGateway::class, $gateway);
+
+    $this->artisan('geliver:sync-shipments')
+        ->expectsOutputToContain('1 Geliver gönderisi senkronize edildi.')
+        ->assertSuccessful();
+
+    expect($order->fresh()->status)->toBe(OrderStatus::Delivered);
+
+    Mail::assertQueued(OrderDeliveredMail::class);
+});
+
+it('skips geliver sync command when auto sync is disabled', function () {
+    config(['geliver.auto_sync_from_api' => false]);
+
+    $this->artisan('geliver:sync-shipments')
+        ->expectsOutputToContain('Geliver API otomatik senkronizasyonu devre dışı.')
+        ->assertSuccessful();
+});
+
 it('resolves estimated delivery from geliver predicted hours', function () {
     $resolver = app(GeliverEstimatedDeliveryResolver::class);
 

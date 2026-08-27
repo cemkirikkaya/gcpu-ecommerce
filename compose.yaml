@@ -45,6 +45,25 @@ services:
         command: php artisan queue:work database --sleep=3 --tries=3 --max-time=3600
         restart: unless-stopped
 
+    scheduler:
+        image: sail-8.5/app
+        extra_hosts:
+            - 'host.docker.internal:host-gateway'
+        environment:
+            WWWUSER: '${WWWUSER}'
+            LARAVEL_SAIL: 1
+            SAIL_DB_HOST: pgsql
+            SAIL_DB_PORT: 5432
+        volumes:
+            - '.:/var/www/html'
+        networks:
+            - sail
+        depends_on:
+            - pgsql
+            - laravel.test
+        command: php artisan schedule:work
+        restart: unless-stopped
+
     frontend:
         build:
             context: ./frontend
