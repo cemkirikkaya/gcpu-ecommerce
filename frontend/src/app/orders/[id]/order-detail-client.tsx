@@ -11,6 +11,10 @@ import { useAuth } from "@/context/auth-context";
 import { api, formatEstimatedDeliveryDate, formatOrderDate, formatPrice } from "@/lib/api";
 import type { Order, OrderCancellationRequest, PaymentOptions } from "@/lib/types";
 
+function shouldPollOrder(order: Order): boolean {
+  return !["delivered", "cancelled"].includes(order.status);
+}
+
 export function OrderDetailClient({ orderId }: { orderId: string }) {
   const parsedOrderId = Number(orderId);
   const { token, loading: authLoading } = useAuth();
@@ -70,6 +74,36 @@ export function OrderDetailClient({ orderId }: { orderId: string }) {
       cancelled = true;
     };
   }, [authLoading, token, orderId, parsedOrderId]);
+
+  useEffect(() => {
+    if (!token || !order || !shouldPollOrder(order)) {
+      return;
+    }
+
+    let cancelled = false;
+
+    async function refreshOrderQuietly(): Promise<void> {
+      try {
+        const data = await api.order(token!, parsedOrderId);
+
+        if (!cancelled) {
+          setOrder(data.order);
+          setPaymentOptions(data.payment_options ?? null);
+        }
+      } catch {
+        // Arka plan yenilemesi sessizce atlanır.
+      }
+    }
+
+    const intervalId = window.setInterval(() => {
+      void refreshOrderQuietly();
+    }, 60_000);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(intervalId);
+    };
+  }, [token, order?.id, order?.status, parsedOrderId]);
 
   if (authLoading || !ready) {
     return <div className="px-6 py-24 text-center text-muted">Yükleniyor...</div>;
