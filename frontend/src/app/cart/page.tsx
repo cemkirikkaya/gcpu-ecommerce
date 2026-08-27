@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
+import { CartCouponForm } from "@/components/cart/cart-coupon-form";
 import { ButtonLink } from "@/components/ui/button";
 import { useAuth } from "@/context/auth-context";
 import { api, formatPrice } from "@/lib/api";
@@ -182,6 +183,16 @@ export default function CartPage() {
                 <dt className="text-muted">Ürün adedi</dt>
                 <dd>{cart.item_count}</dd>
               </div>
+              <div className="flex justify-between">
+                <dt className="text-muted">Ara toplam</dt>
+                <dd>{formatPrice(cart.subtotal ?? cart.total)}</dd>
+              </div>
+              {cart.discount_amount > 0 && (
+                <div className="flex justify-between text-accent">
+                  <dt>İndirim {cart.coupon ? `(${cart.coupon.code})` : ""}</dt>
+                  <dd>-{formatPrice(cart.discount_amount)}</dd>
+                </div>
+              )}
               <div className="flex justify-between border-t border-line pt-4 text-base">
                 <dt className="font-medium">Toplam</dt>
                 <dd className="font-display text-2xl text-accent">
@@ -189,6 +200,15 @@ export default function CartPage() {
                 </dd>
               </div>
             </dl>
+
+            <CartCouponForm
+              cart={cart}
+              token={token}
+              onUpdated={(nextCart, nextMessage) => {
+                setCart(nextCart);
+                setMessage(nextMessage);
+              }}
+            />
             <ButtonLink href="/checkout" className="mt-8 w-full">
               Ödemeye Geç
             </ButtonLink>

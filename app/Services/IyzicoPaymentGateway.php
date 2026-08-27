@@ -9,6 +9,7 @@ use App\DataTransferObjects\PaymentRefundResult;
 use App\DataTransferObjects\PaymentRetrievalResult;
 use App\Models\Order;
 use App\Support\IyzicoBuyerData;
+use App\Support\OrderPaymentLineAmounts;
 use Illuminate\Support\Facades\Log;
 use Iyzipay\Model\Address;
 use Iyzipay\Model\BasketItem;
@@ -88,21 +89,7 @@ class IyzicoPaymentGateway implements PaymentGateway
         $request->setShippingAddress($iyzicoAddress);
         $request->setBillingAddress($iyzicoAddress);
 
-        $basketItems = [];
-
-        foreach ($order->items as $index => $item) {
-            $variant = $item->cartItem?->productVariant;
-            $product = $variant?->product;
-            $linePrice = $this->formatAmount($item->subtotal());
-
-            $basketItem = new BasketItem;
-            $basketItem->setId('item-'.$item->id);
-            $basketItem->setName($product?->name ?? 'Ürün');
-            $basketItem->setCategory1($product?->category?->name ?? 'Genel');
-            $basketItem->setItemType(BasketItemType::PHYSICAL);
-            $basketItem->setPrice($linePrice);
-            $basketItems[$index] = $basketItem;
-        }
+        $basketItems = $this->buildBasketItems($order);
 
         $request->setBasketItems($basketItems);
 
@@ -201,21 +188,7 @@ class IyzicoPaymentGateway implements PaymentGateway
         $request->setShippingAddress($iyzicoAddress);
         $request->setBillingAddress($iyzicoAddress);
 
-        $basketItems = [];
-
-        foreach ($order->items as $index => $item) {
-            $variant = $item->cartItem?->productVariant;
-            $product = $variant?->product;
-            $linePrice = $this->formatAmount($item->subtotal());
-
-            $basketItem = new BasketItem;
-            $basketItem->setId('item-'.$item->id);
-            $basketItem->setName($product?->name ?? 'Ürün');
-            $basketItem->setCategory1($product?->category?->name ?? 'Genel');
-            $basketItem->setItemType(BasketItemType::PHYSICAL);
-            $basketItem->setPrice($linePrice);
-            $basketItems[$index] = $basketItem;
-        }
+        $basketItems = $this->buildBasketItems($order);
 
         $request->setBasketItems($basketItems);
 
@@ -531,6 +504,35 @@ class IyzicoPaymentGateway implements PaymentGateway
         }
 
         return $items;
+    }
+
+    /**
+     * @return list<BasketItem>
+     */
+    private function buildBasketItems(Order $order): array
+    {
+        $order->loadMissing([
+            'items.cartItem.productVariant.product.category',
+        ]);
+
+        $lineAmounts = OrderPaymentLineAmounts::forOrder($order);
+        $basketItems = [];
+
+        foreach ($order->items->values() as $index => $item) {
+            $variant = $item->cartItem?->productVariant;
+            $product = $variant?->product;
+            $linePrice = $this->formatAmount($lineAmounts[$index] ?? $item->subtotal());
+
+            $basketItem = new BasketItem;
+            $basketItem->setId('item-'.$item->id);
+            $basketItem->setName($product?->name ?? 'Ürün');
+            $basketItem->setCategory1($product?->category?->name ?? 'Genel');
+            $basketItem->setItemType(BasketItemType::PHYSICAL);
+            $basketItem->setPrice($linePrice);
+            $basketItems[] = $basketItem;
+        }
+
+        return $basketItems;
     }
 
     private function options(): Options

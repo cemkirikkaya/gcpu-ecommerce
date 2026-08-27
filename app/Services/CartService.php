@@ -39,6 +39,16 @@ class CartService
 
     public function removeItem(CartItem $cartItem): void
     {
-        $this->repository->removeItem($cartItem);
+        $cartItem->delete();
+    }
+
+    public function applyCoupon(User $user, string $code)
+    {
+        return $this->repository->applyCoupon($user, $code);
+    }
+
+    public function removeCoupon(User $user)
+    {
+        return $this->repository->removeCoupon($user);
     }
 }

@@ -2,6 +2,7 @@ import type {
   Address,
   AccountType,
   AdminCategory,
+  AdminCoupon,
   AdminOrder,
   AdminPost,
   AdminProduct,
@@ -267,6 +268,16 @@ export const api = {
       { method: "DELETE" },
       token,
     ),
+
+  applyCartCoupon: (token: string, code: string) =>
+    request<{ cart: Cart; message: string }>(
+      "/cart/coupon",
+      { method: "POST", body: JSON.stringify({ code }) },
+      token,
+    ),
+
+  removeCartCoupon: (token: string) =>
+    request<{ cart: Cart; message: string }>("/cart/coupon", { method: "DELETE" }, token),
 
   checkoutPreview: (token: string) =>
     request<{
@@ -615,6 +626,60 @@ export const api = {
 
   adminDeletePost: (token: string, postId: number) =>
     request<{ message: string }>(`/admin/posts/${postId}`, { method: "DELETE" }, token),
+
+  adminCoupons: (token: string) =>
+    request<{ coupons: AdminCoupon[] }>("/admin/coupons", {}, token).then(
+      (response) => response.coupons,
+    ),
+
+  adminCoupon: (token: string, couponId: number) =>
+    request<{ coupon: AdminCoupon }>(`/admin/coupons/${couponId}`, {}, token).then(
+      (response) => response.coupon,
+    ),
+
+  adminCreateCoupon: (
+    token: string,
+    payload: {
+      code: string;
+      type: "percent" | "fixed";
+      value: number;
+      min_order_amount?: number | null;
+      max_discount_amount?: number | null;
+      usage_limit?: number | null;
+      starts_at?: string | null;
+      expires_at?: string | null;
+      is_active?: boolean;
+    },
+  ) =>
+    request<{ coupon: AdminCoupon; message: string }>(
+      "/admin/coupons",
+      { method: "POST", body: JSON.stringify(payload) },
+      token,
+    ),
+
+  adminUpdateCoupon: (
+    token: string,
+    couponId: number,
+    payload: {
+      code?: string;
+      type?: "percent" | "fixed";
+      value?: number;
+      min_order_amount?: number | null;
+      max_discount_amount?: number | null;
+      usage_limit?: number | null;
+      starts_at?: string | null;
+      expires_at?: string | null;
+      is_active?: boolean;
+    },
+  ) =>
+    request<{ coupon: AdminCoupon; message: string }>(
+      `/admin/coupons/${couponId}`,
+      { method: "PUT", body: JSON.stringify(payload) },
+      token,
+    ).then((response) => response.coupon),
+
+  adminDeleteCoupon: (token: string, couponId: number) =>
+    request<{ message: string }>(`/admin/coupons/${couponId}`, { method: "DELETE" }, token),
 };
 
 export function formatPrice(value: number): string {

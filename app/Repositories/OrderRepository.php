@@ -10,6 +10,7 @@ use App\Models\CartItem;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\User;
+use App\Services\CouponService;
 use App\Services\StockService;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
@@ -18,6 +19,7 @@ class OrderRepository
 {
     public function __construct(
         private StockService $stockService,
+        private CouponService $couponService,
     ) {}
 
     public function checkout(User $user, ?int $addressId = null): Order
@@ -25,6 +27,7 @@ class OrderRepository
         return DB::transaction(function () use ($user, $addressId): Order {
             $cart = $user->cart()
                 ->with([
+                    'coupon',
                     'items.productVariant.product',
                     'items.productVariant.stock',
                     'items.productVariant.variantValues.variantValue.variant',
@@ -48,10 +51,25 @@ class OrderRepository
                 );
             }
 
+            $subtotal = $cart->subtotal();
+            $discountAmount = 0.0;
+            $coupon = $cart->coupon;
+
+            if ($coupon !== null) {
+                $this->couponService->validateForSubtotal($coupon, $subtotal);
+                $discountAmount = $this->couponService->calculateDiscount($coupon, $subtotal);
+            }
+
+            $totalPrice = max(0, round($subtotal - $discountAmount, 2));
+
             $order = Order::query()->create([
                 'cart_id' => $cart->id,
                 'address_id' => $address?->id,
-                'total_price' => $cart->total(),
+                'subtotal' => $subtotal,
+                'discount_amount' => $discountAmount,
+                'coupon_id' => $coupon?->id,
+                'coupon_code' => $coupon?->code,
+                'total_price' => $totalPrice,
                 'status' => OrderStatus::Pending,
                 'payment_status' => PaymentStatus::Pending,
             ]);
@@ -89,6 +107,7 @@ class OrderRepository
                 'items.cartItem.productVariant.product',
                 'items.cartItem.productVariant.stock',
                 'cart.items',
+                'coupon',
             ]);
 
             if ($order === null) {
@@ -120,6 +139,11 @@ class OrderRepository
             }
 
             $order->cart?->items()->delete();
+            $order->cart?->update(['coupon_id' => null]);
+
+            if ($order->coupon !== null) {
+                $this->couponService->recordUsage($order->coupon, $order);
+            }
 
             $paymentIdFields = $order->stripe_checkout_session_id !== null
                 ? ['stripe_payment_intent_id' => $paymentId]

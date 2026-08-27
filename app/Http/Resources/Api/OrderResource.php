@@ -16,6 +16,9 @@ class OrderResource extends JsonResource
     {
         return [
             'id' => $this->id,
+            'subtotal' => $this->subtotal !== null ? (float) $this->subtotal : null,
+            'discount_amount' => (float) ($this->discount_amount ?? 0),
+            'coupon_code' => $this->coupon_code,
             'total_price' => (float) $this->total_price,
             'status' => $this->status->value,
             'status_label' => $this->status->label(),

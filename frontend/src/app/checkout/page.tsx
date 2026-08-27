@@ -256,6 +256,18 @@ export default function CheckoutPage() {
               </li>
             ))}
           </ul>
+          {(cart?.discount_amount ?? 0) > 0 && (
+            <div className="mt-6 space-y-2 border-t border-line pt-4 text-sm">
+              <div className="flex justify-between text-muted">
+                <span>Ara toplam</span>
+                <span>{formatPrice(cart?.subtotal ?? cartTotal)}</span>
+              </div>
+              <div className="flex justify-between text-accent">
+                <span>İndirim {cart?.coupon ? `(${cart.coupon.code})` : ""}</span>
+                <span>-{formatPrice(cart?.discount_amount ?? 0)}</span>
+              </div>
+            </div>
+          )}
           {showInstallments && installments.length > 0 && (
             <section className="mt-6 border-t border-line pt-4">
               <h3 className="font-medium">Taksit Seçenekleri</h3>

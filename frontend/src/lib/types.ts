@@ -182,10 +182,20 @@ export type CartItem = {
   variant: ProductVariant | null;
 };
 
+export type CartCoupon = {
+  id: number;
+  code: string;
+  type: "percent" | "fixed";
+  value: number;
+};
+
 export type Cart = {
   id: number;
   item_count: number;
+  subtotal: number;
+  discount_amount: number;
   total: number;
+  coupon?: CartCoupon | null;
   reservation_minutes: number;
   items: CartItem[];
 };
@@ -251,6 +261,9 @@ export type OrderDetailResponse = {
 
 export type Order = {
   id: number;
+  subtotal?: number | null;
+  discount_amount?: number;
+  coupon_code?: string | null;
   total_price: number;
   paid_price?: number | null;
   installment?: number;
@@ -336,6 +349,22 @@ export type LowStockAlert = {
   variant_id: number;
   sku: string;
   quantity: number;
+};
+
+export type AdminCoupon = {
+  id: number;
+  code: string;
+  type: "percent" | "fixed";
+  type_label: string;
+  value: number;
+  min_order_amount?: number | null;
+  max_discount_amount?: number | null;
+  usage_limit?: number | null;
+  used_count: number;
+  starts_at?: string | null;
+  expires_at?: string | null;
+  is_active: boolean;
+  created_at?: string | null;
 };
 
 export type AdminSummary = {

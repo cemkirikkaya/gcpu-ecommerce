@@ -16,11 +16,15 @@ class StripeCheckoutData
         ]);
 
         $currency = (string) config('stripe.currency');
+        $lineAmounts = OrderPaymentLineAmounts::forOrder($order);
         $items = [];
 
-        foreach ($order->items as $item) {
+        foreach ($order->items->values() as $index => $item) {
             $product = $item->cartItem?->productVariant?->product;
             $name = $product?->name ?? 'Ürün';
+            $lineAmount = $lineAmounts[$index] ?? $item->subtotal();
+            $quantity = max(1, $item->quantity);
+            $unitAmount = self::amountInMinorUnits(round($lineAmount / $quantity, 2));
 
             $items[] = [
                 'price_data' => [
@@ -28,9 +32,9 @@ class StripeCheckoutData
                     'product_data' => [
                         'name' => $name,
                     ],
-                    'unit_amount' => self::amountInMinorUnits((float) $item->price),
+                    'unit_amount' => $unitAmount,
                 ],
-                'quantity' => $item->quantity,
+                'quantity' => $quantity,
             ];
         }
 

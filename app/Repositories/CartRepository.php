@@ -6,12 +6,14 @@ use App\Models\Cart;
 use App\Models\CartItem;
 use App\Models\ProductVariant;
 use App\Models\User;
+use App\Services\CouponService;
 use App\Services\StockService;
 
 class CartRepository
 {
     public function __construct(
         private StockService $stockService,
+        private CouponService $couponService,
     ) {}
 
     public function getOrCreate(User $user): Cart
@@ -25,12 +27,37 @@ class CartRepository
     {
         return Cart::query()
             ->with([
+                'coupon',
                 'items.productVariant.product',
                 'items.productVariant.variantValues.variantValue.variant',
                 'items.productVariant.stock',
             ])
             ->where('user_id', $user->id)
             ->firstOrCreate(['user_id' => $user->id]);
+    }
+
+    public function applyCoupon(User $user, string $code): Cart
+    {
+        $cart = $this->getWithItems($user);
+        $coupon = $this->couponService->findByCode($code);
+
+        if ($coupon === null) {
+            throw new \RuntimeException('Kupon kodu geçersiz.');
+        }
+
+        $this->couponService->validateForSubtotal($coupon, $cart->subtotal());
+
+        $cart->update(['coupon_id' => $coupon->id]);
+
+        return $this->getWithItems($user);
+    }
+
+    public function removeCoupon(User $user): Cart
+    {
+        $cart = $this->getWithItems($user);
+        $cart->update(['coupon_id' => null]);
+
+        return $this->getWithItems($user);
     }
 
     public function addItem(Cart $cart, ProductVariant $productVariant, int $quantity): CartItem

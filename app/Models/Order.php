@@ -21,6 +21,10 @@ class Order extends Model
     protected $fillable = [
         'cart_id',
         'address_id',
+        'subtotal',
+        'discount_amount',
+        'coupon_id',
+        'coupon_code',
         'total_price',
         'status',
         'payment_status',
@@ -50,6 +54,8 @@ class Order extends Model
     protected function casts(): array
     {
         return [
+            'subtotal' => 'decimal:2',
+            'discount_amount' => 'decimal:2',
             'total_price' => 'decimal:2',
             'paid_price' => 'decimal:2',
             'installment' => 'integer',
@@ -82,6 +88,11 @@ class Order extends Model
     public function address(): BelongsTo
     {
         return $this->belongsTo(Address::class);
+    }
+
+    public function coupon(): BelongsTo
+    {
+        return $this->belongsTo(Coupon::class);
     }
 
     public function items(): HasMany

@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\AccountController;
 use App\Http\Controllers\Api\AddressController;
 use App\Http\Controllers\Api\Admin\CategoryController as AdminCategoryController;
+use App\Http\Controllers\Api\Admin\CouponController as AdminCouponController;
 use App\Http\Controllers\Api\Admin\OrderCancellationController as AdminOrderCancellationController;
 use App\Http\Controllers\Api\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Api\Admin\OrderShipmentController as AdminOrderShipmentController;
@@ -12,6 +13,7 @@ use App\Http\Controllers\Api\Admin\StockController as AdminStockController;
 use App\Http\Controllers\Api\Admin\SummaryController as AdminSummaryController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CartController;
+use App\Http\Controllers\Api\CartCouponController;
 use App\Http\Controllers\Api\CatalogController;
 use App\Http\Controllers\Api\CheckoutController;
 use App\Http\Controllers\Api\GeliverWebhookController;
@@ -55,6 +57,8 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::post('/cart/items', [CartController::class, 'store']);
     Route::patch('/cart/items/{cartItem}', [CartController::class, 'update']);
     Route::delete('/cart/items/{cartItem}', [CartController::class, 'destroy']);
+    Route::post('/cart/coupon', [CartCouponController::class, 'store']);
+    Route::delete('/cart/coupon', [CartCouponController::class, 'destroy']);
 
     Route::get('/checkout', [CheckoutController::class, 'show']);
     Route::get('/checkout/installments', [CheckoutController::class, 'installments']);
@@ -114,5 +118,10 @@ Route::middleware('auth:sanctum')->group(function (): void {
         Route::get('/posts/{post:id}', [AdminPostController::class, 'show']);
         Route::put('/posts/{post:id}', [AdminPostController::class, 'update']);
         Route::delete('/posts/{post:id}', [AdminPostController::class, 'destroy']);
+        Route::get('/coupons', [AdminCouponController::class, 'index']);
+        Route::post('/coupons', [AdminCouponController::class, 'store']);
+        Route::get('/coupons/{coupon}', [AdminCouponController::class, 'show']);
+        Route::put('/coupons/{coupon}', [AdminCouponController::class, 'update']);
+        Route::delete('/coupons/{coupon}', [AdminCouponController::class, 'destroy']);
     });
 });
