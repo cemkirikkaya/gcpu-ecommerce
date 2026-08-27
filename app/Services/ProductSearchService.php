@@ -53,6 +53,48 @@ class ProductSearchService
             ->all();
     }
 
+    /**
+     * @return array{
+     *     summary: array{total_searches: int, unique_terms: int, active_terms_last_7_days: int},
+     *     top_terms: list<array{term: string, count: int, last_searched_at: string|null}>
+     * }
+     */
+    public function analytics(int $limit = 20, ?int $days = null): array
+    {
+        $totalSearches = (int) SearchQuery::query()->sum('count');
+        $uniqueTerms = SearchQuery::query()->count();
+        $activeTermsLast7Days = SearchQuery::query()
+            ->where('last_searched_at', '>=', now()->subDays(7))
+            ->count();
+
+        $topTermsQuery = SearchQuery::query()
+            ->orderByDesc('count')
+            ->orderByDesc('last_searched_at');
+
+        if ($days !== null) {
+            $topTermsQuery->where('last_searched_at', '>=', now()->subDays($days));
+        }
+
+        $topTerms = $topTermsQuery
+            ->limit($limit)
+            ->get(['term', 'count', 'last_searched_at'])
+            ->map(fn (SearchQuery $searchQuery): array => [
+                'term' => $searchQuery->term,
+                'count' => $searchQuery->count,
+                'last_searched_at' => $searchQuery->last_searched_at?->toIso8601String(),
+            ])
+            ->all();
+
+        return [
+            'summary' => [
+                'total_searches' => $totalSearches,
+                'unique_terms' => $uniqueTerms,
+                'active_terms_last_7_days' => $activeTermsLast7Days,
+            ],
+            'top_terms' => $topTerms,
+        ];
+    }
+
     public function recordSearch(string $query): void
     {
         $normalized = $this->normalizeTerm($query);

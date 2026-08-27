@@ -380,6 +380,19 @@ export type AdminSummary = {
   charts?: AdminCharts;
 };
 
+export type SearchAnalytics = {
+  summary: {
+    total_searches: number;
+    unique_terms: number;
+    active_terms_last_7_days: number;
+  };
+  top_terms: Array<{
+    term: string;
+    count: number;
+    last_searched_at?: string | null;
+  }>;
+};
+
 export type AdminCharts = {
   revenue_trend: Array<{
     date: string;

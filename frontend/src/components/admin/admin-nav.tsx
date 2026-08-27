@@ -12,6 +12,7 @@ const links = [
   { href: "/admin/orders", label: "Siparişler" },
   { href: "/admin/cancellation-requests", label: "İptal Talepleri" },
   { href: "/admin/coupons", label: "Kuponlar", adminOnly: true },
+  { href: "/admin/search-analytics", label: "Arama Analitiği", adminOnly: true },
   { href: "/admin/posts", label: "Blog", adminOnly: true },
   { href: "/admin/products/new", label: "Yeni Ürün" },
   { href: "/admin/coupons/new", label: "Yeni Kupon", adminOnly: true },
@@ -47,6 +48,10 @@ function isNavLinkActive(pathname: string, href: string): boolean {
       pathname === "/admin/coupons" ||
       (pathname.startsWith("/admin/coupons/") && pathname !== "/admin/coupons/new")
     );
+  }
+
+  if (href === "/admin/search-analytics") {
+    return pathname === "/admin/search-analytics";
   }
 
   if (href === "/admin/posts") {

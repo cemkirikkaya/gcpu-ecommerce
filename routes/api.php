@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Api\Admin\OrderShipmentController as AdminOrderShipmentController;
 use App\Http\Controllers\Api\Admin\PostController as AdminPostController;
 use App\Http\Controllers\Api\Admin\ProductController as AdminProductController;
+use App\Http\Controllers\Api\Admin\SearchAnalyticsController as AdminSearchAnalyticsController;
 use App\Http\Controllers\Api\Admin\StockController as AdminStockController;
 use App\Http\Controllers\Api\Admin\SummaryController as AdminSummaryController;
 use App\Http\Controllers\Api\AuthController;
@@ -94,6 +95,7 @@ Route::middleware('auth:sanctum')->group(function (): void {
 
     Route::middleware('admin')->prefix('admin')->group(function (): void {
         Route::get('/summary', AdminSummaryController::class);
+        Route::get('/search-analytics', AdminSearchAnalyticsController::class);
         Route::get('/categories', [AdminCategoryController::class, 'index']);
         Route::get('/orders', [AdminOrderController::class, 'index']);
         Route::get('/orders/{order}', [AdminOrderController::class, 'show']);

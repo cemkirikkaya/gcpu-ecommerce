@@ -6,15 +6,19 @@ import { useEffect, useState } from "react";
 import { AdminChartsSection } from "@/components/admin/admin-charts";
 import { LowStockAlerts } from "@/components/admin/low-stock-alerts";
 import { PendingCancellationAlerts } from "@/components/admin/pending-cancellation-alerts";
+import { SearchAnalyticsPanel } from "@/components/admin/search-analytics-panel";
 import { ButtonLink } from "@/components/ui/button";
 import { useAuth } from "@/context/auth-context";
 import { api, formatOrderDate, formatPrice } from "@/lib/api";
-import type { AdminOrder, AdminSummary } from "@/lib/types";
+import { isAdmin } from "@/lib/auth";
+import type { AdminOrder, AdminSummary, SearchAnalytics } from "@/lib/types";
 
 export default function AdminDashboardPage() {
-  const { token } = useAuth();
+  const { token, user } = useAuth();
   const [summary, setSummary] = useState<AdminSummary | null>(null);
   const [recentOrders, setRecentOrders] = useState<AdminOrder[]>([]);
+  const [searchAnalytics, setSearchAnalytics] = useState<SearchAnalytics | null>(null);
+  const [searchAnalyticsLoading, setSearchAnalyticsLoading] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -27,6 +31,21 @@ export default function AdminDashboardPage() {
       })
       .finally(() => setLoading(false));
   }, [token]);
+
+  useEffect(() => {
+    if (!token || !isAdmin(user)) {
+      setSearchAnalytics(null);
+      return;
+    }
+
+    setSearchAnalyticsLoading(true);
+
+    api
+      .adminSearchAnalytics(token, { limit: 5 })
+      .then(setSearchAnalytics)
+      .catch(() => setSearchAnalytics(null))
+      .finally(() => setSearchAnalyticsLoading(false));
+  }, [token, user]);
 
   return (
     <div>
@@ -55,6 +74,16 @@ export default function AdminDashboardPage() {
       </div>
 
       <AdminChartsSection charts={summary?.charts ?? null} loading={loading} />
+
+      {isAdmin(user) && (
+        <div className="mt-10">
+          <SearchAnalyticsPanel
+            analytics={searchAnalytics}
+            loading={searchAnalyticsLoading}
+            compact
+          />
+        </div>
+      )}
 
       <div className="mt-10 flex flex-wrap gap-3">
         <ButtonLink href="/admin/products/new">Yeni Ürün Ekle</ButtonLink>

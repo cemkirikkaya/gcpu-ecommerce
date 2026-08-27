@@ -7,6 +7,7 @@ import type {
   AdminPost,
   AdminProduct,
   AdminSummary,
+  SearchAnalytics,
   ApiError,
   AuthResponse,
   CancellationRequestsResponse,
@@ -556,6 +557,32 @@ export const api = {
     request<{ summary: AdminSummary }>("/admin/summary", {}, token).then(
       (response) => response.summary,
     ),
+
+  adminSearchAnalytics: (
+    token: string,
+    params?: {
+      limit?: number;
+      days?: number;
+    },
+  ) => {
+    const searchParams = new URLSearchParams();
+
+    if (params?.limit) {
+      searchParams.set("limit", String(params.limit));
+    }
+
+    if (params?.days) {
+      searchParams.set("days", String(params.days));
+    }
+
+    const query = searchParams.toString();
+
+    return request<{ analytics: SearchAnalytics }>(
+      `/admin/search-analytics${query ? `?${query}` : ""}`,
+      {},
+      token,
+    ).then((response) => response.analytics);
+  },
 
   adminOrders: (token: string) =>
     request<{ orders: AdminOrder[] }>("/admin/orders", {}, token).then(
