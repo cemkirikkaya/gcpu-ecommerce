@@ -91,7 +91,7 @@ export function OrderDetailClient({ orderId }: { orderId: string }) {
           setPaymentOptions(data.payment_options ?? null);
         }
       } catch {
-        // Arka plan yenilemesi sessizce atlanır.
+
       }
     }
 
