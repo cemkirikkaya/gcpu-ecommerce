@@ -646,6 +646,13 @@ export const api = {
       (response) => response.order,
     ),
 
+  adminUpdateOrderStatus: (token: string, orderId: number, status: string) =>
+    request<{ order: AdminOrder; message: string }>(
+      `/admin/orders/${orderId}`,
+      { method: "PATCH", body: JSON.stringify({ status }) },
+      token,
+    ).then((response) => response.order),
+
   adminCreateOrderShipment: (token: string, orderId: number) =>
     request<{ order: AdminOrder; message: string }>(
       `/admin/orders/${orderId}/shipment`,

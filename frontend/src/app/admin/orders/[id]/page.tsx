@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 
 import { OrderStatusBadge } from "@/components/orders/order-status-badge";
+import { AdminOrderStatusPanel } from "@/components/admin/admin-order-status-panel";
 import { ButtonLink } from "@/components/ui/button";
 import { useAuth } from "@/context/auth-context";
 import { api, formatEstimatedDeliveryDate, formatOrderDate, formatPrice } from "@/lib/api";
@@ -133,6 +134,15 @@ export default function AdminOrderDetailPage() {
           <span className="text-xs text-muted">{order.payment_status_label}</span>
         </div>
       </div>
+
+      {isAdmin(user) && token && (
+        <AdminOrderStatusPanel
+          token={token}
+          order={order}
+          onUpdated={setOrder}
+          onMessage={setMessage}
+        />
+      )}
 
       {isAdmin(user) && order.payment_status === "paid" && !order.geliver_shipment_id && (
         <div className="mt-8 rounded-[1.5rem] border border-line bg-surface p-6">
