@@ -36,7 +36,9 @@ function isNavLinkActive(pathname: string, href: string): boolean {
   if (href === "/admin/products") {
     return (
       pathname === "/admin/products" ||
-      (pathname.startsWith("/admin/products/") && pathname !== "/admin/products/new")
+      (pathname.startsWith("/admin/products/") &&
+        pathname !== "/admin/products/new" &&
+        pathname !== "/admin/products/bulk")
     );
   }
 
