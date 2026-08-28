@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\Admin\OrderCancellationController as AdminOrderCanc
 use App\Http\Controllers\Api\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Api\Admin\OrderShipmentController as AdminOrderShipmentController;
 use App\Http\Controllers\Api\Admin\PostController as AdminPostController;
+use App\Http\Controllers\Api\Admin\ProductBulkController as AdminProductBulkController;
 use App\Http\Controllers\Api\Admin\ProductController as AdminProductController;
 use App\Http\Controllers\Api\Admin\SearchAnalyticsController as AdminSearchAnalyticsController;
 use App\Http\Controllers\Api\Admin\StockController as AdminStockController;
@@ -105,6 +106,10 @@ Route::middleware('auth:sanctum')->group(function (): void {
         Route::get('/cancellation-requests', [AdminOrderCancellationController::class, 'index']);
         Route::post('/cancellation-requests/{cancellationRequest}/approve', [AdminOrderCancellationController::class, 'approve']);
         Route::post('/cancellation-requests/{cancellationRequest}/reject', [AdminOrderCancellationController::class, 'reject']);
+        Route::get('/products/bulk/template/{type}', [AdminProductBulkController::class, 'template'])
+            ->where('type', 'import|update');
+        Route::post('/products/bulk/import', [AdminProductBulkController::class, 'import']);
+        Route::post('/products/bulk/update', [AdminProductBulkController::class, 'update']);
         Route::get('/products', [AdminProductController::class, 'index']);
         Route::post('/products', [AdminProductController::class, 'store']);
         Route::get('/products/{product}', [AdminProductController::class, 'show']);

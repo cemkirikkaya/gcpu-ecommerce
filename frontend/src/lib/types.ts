@@ -367,6 +367,19 @@ export type AdminCoupon = {
   created_at?: string | null;
 };
 
+export type BulkProductImportResult = {
+  created: number;
+  merged: number;
+  skipped: number;
+  errors: Array<{ row: number; message: string }>;
+};
+
+export type BulkProductUpdateResult = {
+  updated: number;
+  skipped: number;
+  errors: Array<{ row: number; message: string }>;
+};
+
 export type AdminSummary = {
   products_count: number;
   total_stock: number;

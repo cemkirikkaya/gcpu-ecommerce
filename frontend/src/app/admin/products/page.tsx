@@ -114,7 +114,12 @@ export default function AdminProductsPage() {
           <p className="text-xs uppercase tracking-[0.35em] text-muted">Ürünler</p>
           <h1 className="mt-3 font-display text-4xl font-semibold">Stok Yönetimi</h1>
         </div>
-        <ButtonLink href="/admin/products/new">Yeni Ürün</ButtonLink>
+        <div className="flex flex-wrap gap-3">
+          <ButtonLink href="/admin/products/bulk" variant="secondary">
+            Toplu İşlemler
+          </ButtonLink>
+          <ButtonLink href="/admin/products/new">Yeni Ürün</ButtonLink>
+        </div>
       </div>
 
       <input

@@ -9,6 +9,7 @@ import { isAdmin } from "@/lib/auth";
 const links = [
   { href: "/admin", label: "Özet" },
   { href: "/admin/products", label: "Ürünler" },
+  { href: "/admin/products/bulk", label: "Toplu İşlemler" },
   { href: "/admin/orders", label: "Siparişler" },
   { href: "/admin/cancellation-requests", label: "İptal Talepleri" },
   { href: "/admin/coupons", label: "Kuponlar", adminOnly: true },
@@ -26,6 +27,10 @@ function isNavLinkActive(pathname: string, href: string): boolean {
 
   if (href === "/admin/products/new") {
     return pathname === "/admin/products/new";
+  }
+
+  if (href === "/admin/products/bulk") {
+    return pathname === "/admin/products/bulk";
   }
 
   if (href === "/admin/products") {

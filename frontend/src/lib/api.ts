@@ -7,6 +7,8 @@ import type {
   AdminPost,
   AdminProduct,
   AdminSummary,
+  BulkProductImportResult,
+  BulkProductUpdateResult,
   SearchAnalytics,
   ApiError,
   AuthResponse,
@@ -509,6 +511,56 @@ export const api = {
 
   adminDeleteProduct: (token: string, id: number) =>
     request<{ message: string }>(`/admin/products/${id}`, { method: "DELETE" }, token),
+
+  adminDownloadProductBulkTemplate: async (
+    token: string,
+    type: "import" | "update",
+  ) => {
+    const response = await fetch(`${getApiUrl()}/admin/products/bulk/template/${type}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "text/csv",
+      },
+      cache: "no-store",
+    });
+
+    if (!response.ok) {
+      throw new ApiClientError("CSV şablonu indirilemedi.", response.status);
+    }
+
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download =
+      type === "import" ? "product-import-template.csv" : "product-update-template.csv";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+  },
+
+  adminBulkImportProducts: (token: string, file: File) => {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    return request<{ result: BulkProductImportResult; message: string }>(
+      "/admin/products/bulk/import",
+      { method: "POST", body: formData },
+      token,
+    );
+  },
+
+  adminBulkUpdateProducts: (token: string, file: File) => {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    return request<{ result: BulkProductUpdateResult; message: string }>(
+      "/admin/products/bulk/update",
+      { method: "POST", body: formData },
+      token,
+    );
+  },
 
   adminUploadProductCover: (token: string, productId: number, file: File) => {
     const formData = new FormData();
