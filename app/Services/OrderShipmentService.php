@@ -180,7 +180,7 @@ class OrderShipmentService
 
         Order::query()
             ->whereNotNull('geliver_shipment_id')
-            ->whereNotIn('status', [OrderStatus::Delivered, OrderStatus::Cancelled])
+            ->whereNotIn('status', [OrderStatus::Delivered, OrderStatus::Returned, OrderStatus::Cancelled])
             ->orderBy('id')
             ->each(function (Order $order) use (&$syncedCount): void {
                 try {

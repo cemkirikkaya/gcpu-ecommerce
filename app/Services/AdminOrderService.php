@@ -81,7 +81,13 @@ class AdminOrderService
 
         $previousStatus = $order->status;
 
-        $order->update(['status' => $status]);
+        $attributes = ['status' => $status];
+
+        if ($status === OrderStatus::Delivered && $order->delivered_at === null) {
+            $attributes['delivered_at'] = now();
+        }
+
+        $order->update($attributes);
 
         $updatedOrder = $order->fresh();
 
@@ -118,6 +124,7 @@ class AdminOrderService
      *     items_sold: int,
      *     revenue: float,
      *     pending_cancellation_requests: int,
+     *     pending_return_requests: int,
      *     charts: array{
      *         revenue_trend: list<array{date: string, label: string, revenue: float, orders: int}>,
      *         orders_by_status: list<array{status: string, label: string, count: int}>,
@@ -167,6 +174,7 @@ class AdminOrderService
             'items_sold' => (int) $soldItems->sum('quantity'),
             'revenue' => (float) $soldItems->sum(fn (OrderItem $item): float => $item->subtotal()),
             'pending_cancellation_requests' => app(OrderCancellationService::class)->pendingCountFor($user),
+            'pending_return_requests' => app(OrderReturnService::class)->pendingCountFor($user),
             'charts' => $this->chartsFor($user),
         ];
     }

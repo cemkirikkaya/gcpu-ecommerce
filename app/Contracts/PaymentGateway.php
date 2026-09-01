@@ -16,7 +16,7 @@ interface PaymentGateway
 
     public function chargeDirectly(Order $order, string $buyerIp, int $installment = 1): PaymentRetrievalResult;
 
-    public function refund(Order $order): PaymentRefundResult;
+    public function refund(Order $order, ?float $amount = null): PaymentRefundResult;
 
     /**
      * @return list<InstallmentOption>

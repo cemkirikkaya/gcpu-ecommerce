@@ -6,13 +6,14 @@ import { OrderStatusBadge } from "@/components/orders/order-status-badge";
 import { OrderStatusTimeline } from "@/components/orders/order-status-timeline";
 import { OrderPaymentRetry } from "@/components/orders/order-payment-retry";
 import { OrderCancellationPanel } from "@/components/orders/order-cancellation-panel";
+import { OrderReturnPanel } from "@/components/orders/order-return-panel";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { useAuth } from "@/context/auth-context";
 import { api, formatEstimatedDeliveryDate, formatOrderDate, formatPrice } from "@/lib/api";
 import type { Order, OrderCancellationRequest, PaymentOptions } from "@/lib/types";
 
 function shouldPollOrder(order: Order): boolean {
-  return !["delivered", "cancelled"].includes(order.status);
+  return !["delivered", "returned", "cancelled"].includes(order.status);
 }
 
 export function OrderDetailClient({ orderId }: { orderId: string }) {
@@ -219,6 +220,24 @@ export function OrderDetailClient({ orderId }: { orderId: string }) {
               current ? { ...current, cancellation_request: request } : current,
             )
           }
+        />
+      )}
+
+      {token && (
+        <OrderReturnPanel
+          key={`${order.id}-${order.return_requests?.length ?? 0}`}
+          token={token}
+          order={order}
+          onUpdated={(requests) => {
+            setOrder((current) =>
+              current ? { ...current, return_requests: requests } : current,
+            );
+
+            void api.order(token, parsedOrderId).then((data) => {
+              setOrder(data.order);
+              setPaymentOptions(data.payment_options ?? null);
+            });
+          }}
         />
       )}
 

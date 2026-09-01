@@ -62,7 +62,7 @@ class FakePaymentGateway implements PaymentGateway
         );
     }
 
-    public function refund(Order $order): PaymentRefundResult
+    public function refund(Order $order, ?float $amount = null): PaymentRefundResult
     {
         return new PaymentRefundResult(
             successful: true,

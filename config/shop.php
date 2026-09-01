@@ -6,6 +6,8 @@ return [
 
     'reservation_minutes' => (int) env('SHOP_RESERVATION_MINUTES', 15),
 
+    'return_window_days' => (int) env('SHOP_RETURN_WINDOW_DAYS', 14),
+
     'low_stock_threshold' => (int) env('SHOP_LOW_STOCK_THRESHOLD', 5),
 
     'invoice' => [

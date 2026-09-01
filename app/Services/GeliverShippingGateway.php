@@ -18,35 +18,20 @@ class GeliverShippingGateway implements ShippingGateway
 
     public function createShipment(Order $order): ShipmentCreationResult
     {
+        return $this->createGeliverShipment($order, $this->outboundShipmentPayload($order));
+    }
+
+    public function createReturnShipment(Order $order): ShipmentCreationResult
+    {
+        return $this->createGeliverShipment($order, $this->returnShipmentPayload($order));
+    }
+
+    /**
+     * @param  array<string, mixed>  $payload
+     */
+    private function createGeliverShipment(Order $order, array $payload): ShipmentCreationResult
+    {
         $order->loadMissing(['address', 'cart.user']);
-
-        $senderAddressId = config('geliver.sender_address_id');
-
-        if (blank($senderAddressId)) {
-            throw new RuntimeException('Geliver gönderici adresi yapılandırılmamış.');
-        }
-
-        if ($order->address === null) {
-            throw new RuntimeException('Sipariş teslimat adresi bulunamadı.');
-        }
-
-        $parcel = config('geliver.default_parcel');
-        $payload = [
-            'senderAddressID' => $senderAddressId,
-            'recipientAddress' => $this->recipientAddressFromOrder($order),
-            'length' => (string) $parcel['length'],
-            'width' => (string) $parcel['width'],
-            'height' => (string) $parcel['height'],
-            'distanceUnit' => 'cm',
-            'weight' => (string) $parcel['weight'],
-            'massUnit' => 'kg',
-            'order' => [
-                'orderNumber' => (string) $order->id,
-                'sourceIdentifier' => rtrim((string) config('app.frontend_url'), '/'),
-                'totalAmount' => (string) $order->total_price,
-                'totalAmountCurrency' => 'TRY',
-            ],
-        ];
 
         $client = $this->client();
 
@@ -130,6 +115,76 @@ class GeliverShippingGateway implements ShippingGateway
         }
 
         return $response;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function outboundShipmentPayload(Order $order): array
+    {
+        return [
+            ...$this->parcelPayload($order),
+            'senderAddressID' => $this->senderAddressId(),
+            'recipientAddress' => $this->recipientAddressFromOrder($order),
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function returnShipmentPayload(Order $order): array
+    {
+        $payload = [
+            ...$this->parcelPayload($order),
+            'senderAddress' => $this->recipientAddressFromOrder($order),
+            'recipientAddressID' => $this->senderAddressId(),
+        ];
+
+        if (filled($order->geliver_shipment_id)) {
+            $payload['originalShipmentID'] = $order->geliver_shipment_id;
+        }
+
+        $payload['order']['orderNumber'] = $order->id.'-R';
+
+        return $payload;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function parcelPayload(Order $order): array
+    {
+        if ($order->address === null) {
+            throw new RuntimeException('Sipariş teslimat adresi bulunamadı.');
+        }
+
+        $parcel = config('geliver.default_parcel');
+
+        return [
+            'length' => (string) $parcel['length'],
+            'width' => (string) $parcel['width'],
+            'height' => (string) $parcel['height'],
+            'distanceUnit' => 'cm',
+            'weight' => (string) $parcel['weight'],
+            'massUnit' => 'kg',
+            'order' => [
+                'orderNumber' => (string) $order->id,
+                'sourceIdentifier' => rtrim((string) config('app.frontend_url'), '/'),
+                'totalAmount' => (string) $order->total_price,
+                'totalAmountCurrency' => 'TRY',
+            ],
+        ];
+    }
+
+    private function senderAddressId(): string
+    {
+        $senderAddressId = config('geliver.sender_address_id');
+
+        if (blank($senderAddressId)) {
+            throw new RuntimeException('Geliver gönderici adresi yapılandırılmamış.');
+        }
+
+        return (string) $senderAddressId;
     }
 
     /**

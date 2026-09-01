@@ -20,6 +20,7 @@ import type {
   CategoryDetailResponse,
   InstallmentOption,
   OrderCancellationRequest,
+  OrderReturnRequest,
   Order,
   OrderDetailResponse,
   PaymentProviderOption,
@@ -33,6 +34,7 @@ import type {
   MyProductReviewResponse,
   Post,
   PostListResponse,
+  ReturnRequestsResponse,
   User,
 } from "./types";
 
@@ -380,6 +382,49 @@ export const api = {
     request<{ cancellation_request: OrderCancellationRequest; message: string }>(
       `/admin/cancellation-requests/${requestId}/reject`,
       { method: "POST", body: JSON.stringify({ admin_note: adminNote ?? null }) },
+      token,
+    ),
+
+  requestOrderReturn: (
+    token: string,
+    orderId: number,
+    payload: {
+      type: "return" | "exchange";
+      message: string;
+      items: Array<{
+        order_item_id: number;
+        quantity: number;
+        replacement_product_variant_id?: number | null;
+      }>;
+    },
+  ) =>
+    request<{ return_request: OrderReturnRequest; message: string }>(
+      `/orders/${orderId}/return-request`,
+      { method: "POST", body: JSON.stringify(payload) },
+      token,
+    ),
+
+  adminReturnRequests: (token: string, status = "pending") =>
+    request<ReturnRequestsResponse>(`/admin/return-requests?status=${status}`, {}, token),
+
+  adminApproveReturn: (token: string, requestId: number, adminNote?: string) =>
+    request<{ return_request: OrderReturnRequest; message: string }>(
+      `/admin/return-requests/${requestId}/approve`,
+      { method: "POST", body: JSON.stringify({ admin_note: adminNote ?? null }) },
+      token,
+    ),
+
+  adminRejectReturn: (token: string, requestId: number, adminNote?: string) =>
+    request<{ return_request: OrderReturnRequest; message: string }>(
+      `/admin/return-requests/${requestId}/reject`,
+      { method: "POST", body: JSON.stringify({ admin_note: adminNote ?? null }) },
+      token,
+    ),
+
+  adminReceiveReturn: (token: string, requestId: number) =>
+    request<{ return_request: OrderReturnRequest; message: string }>(
+      `/admin/return-requests/${requestId}/receive`,
+      { method: "POST" },
       token,
     ),
 

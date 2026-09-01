@@ -57,13 +57,17 @@ export function OrderStatusTimeline({
   paymentStatus,
   paymentStatusLabel,
 }: OrderStatusTimelineProps) {
-  if (status === "cancelled") {
+  if (status === "cancelled" || status === "returned") {
     return (
       <div className="mt-8 rounded-[1.5rem] border border-line bg-surface px-6 py-5 text-left">
         <p className="text-xs uppercase tracking-[0.25em] text-muted">Durum</p>
-        <p className="mt-3 font-display text-2xl text-stone-700">Sipariş iptal edildi</p>
+        <p className="mt-3 font-display text-2xl text-stone-700">
+          {status === "returned" ? "Sipariş iade edildi" : "Sipariş iptal edildi"}
+        </p>
         <p className="mt-2 text-sm leading-6 text-muted">
-          Bu sipariş ({statusLabel}) artık işlenmiyor.
+          {status === "returned"
+            ? "Bu sipariş teslim sonrası iade edildi."
+            : `Bu sipariş (${statusLabel}) artık işlenmiyor.`}
         </p>
       </div>
     );

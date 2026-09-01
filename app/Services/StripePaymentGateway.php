@@ -143,7 +143,7 @@ class StripePaymentGateway implements PaymentGateway
         throw new RuntimeException('Stripe taksit sorgusu desteklemiyor.');
     }
 
-    public function refund(Order $order): PaymentRefundResult
+    public function refund(Order $order, ?float $amount = null): PaymentRefundResult
     {
         if ($order->stripe_payment_intent_id === null) {
             return new PaymentRefundResult(
@@ -153,9 +153,15 @@ class StripePaymentGateway implements PaymentGateway
         }
 
         try {
-            $refund = Refund::create([
+            $payload = [
                 'payment_intent' => $order->stripe_payment_intent_id,
-            ]);
+            ];
+
+            if ($amount !== null) {
+                $payload['amount'] = StripeCheckoutData::amountInMinorUnits($amount);
+            }
+
+            $refund = Refund::create($payload);
 
             return new PaymentRefundResult(
                 successful: true,

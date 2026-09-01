@@ -12,6 +12,7 @@ const links = [
   { href: "/admin/products/bulk", label: "Toplu İşlemler" },
   { href: "/admin/orders", label: "Siparişler" },
   { href: "/admin/cancellation-requests", label: "İptal Talepleri" },
+  { href: "/admin/return-requests", label: "İade Talepleri" },
   { href: "/admin/coupons", label: "Kuponlar", adminOnly: true },
   { href: "/admin/search-analytics", label: "Arama Analitiği", adminOnly: true },
   { href: "/admin/posts", label: "Blog", adminOnly: true },

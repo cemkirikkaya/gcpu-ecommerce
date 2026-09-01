@@ -56,7 +56,7 @@ class FakeStripePaymentGateway implements PaymentGateway
         throw new RuntimeException('Stripe doğrudan ödeme desteklemiyor.');
     }
 
-    public function refund(Order $order): PaymentRefundResult
+    public function refund(Order $order, ?float $amount = null): PaymentRefundResult
     {
         return new PaymentRefundResult(
             successful: true,

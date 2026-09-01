@@ -23,4 +23,17 @@ class FakeGeliverShippingGateway implements ShippingGateway
             estimatedDeliveryAt: Carbon::now()->addDays(3)->toIso8601String(),
         );
     }
+
+    public function createReturnShipment(Order $order): ShipmentCreationResult
+    {
+        $shipmentId = 'fake-return-'.Str::uuid()->toString();
+        $trackingNumber = 'FAKERET'.str_pad((string) $order->id, 8, '0', STR_PAD_LEFT);
+
+        return new ShipmentCreationResult(
+            shipmentId: $shipmentId,
+            trackingNumber: $trackingNumber,
+            trackingUrl: 'https://tracking.example.test/'.$trackingNumber,
+            labelUrl: 'https://tracking.example.test/labels/'.$shipmentId.'.pdf',
+        );
+    }
 }

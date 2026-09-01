@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\Admin\CategoryController as AdminCategoryController
 use App\Http\Controllers\Api\Admin\CouponController as AdminCouponController;
 use App\Http\Controllers\Api\Admin\OrderCancellationController as AdminOrderCancellationController;
 use App\Http\Controllers\Api\Admin\OrderController as AdminOrderController;
+use App\Http\Controllers\Api\Admin\OrderReturnController as AdminOrderReturnController;
 use App\Http\Controllers\Api\Admin\OrderShipmentController as AdminOrderShipmentController;
 use App\Http\Controllers\Api\Admin\PostController as AdminPostController;
 use App\Http\Controllers\Api\Admin\ProductBulkController as AdminProductBulkController;
@@ -22,6 +23,7 @@ use App\Http\Controllers\Api\GeliverWebhookController;
 use App\Http\Controllers\Api\IyzicoPaymentController;
 use App\Http\Controllers\Api\OrderCancellationController;
 use App\Http\Controllers\Api\OrderController;
+use App\Http\Controllers\Api\OrderReturnController;
 use App\Http\Controllers\Api\PasswordResetController;
 use App\Http\Controllers\Api\PostController;
 use App\Http\Controllers\Api\ProductReviewController;
@@ -71,6 +73,7 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::get('/orders/{order}/invoice', [OrderController::class, 'invoice']);
     Route::get('/orders/{order}/installments', [OrderController::class, 'installments']);
     Route::post('/orders/{order}/cancellation-request', [OrderCancellationController::class, 'store']);
+    Route::post('/orders/{order}/return-request', [OrderReturnController::class, 'store']);
     Route::post('/orders/{order}/payments/iyzico/init', [IyzicoPaymentController::class, 'initialize']);
     Route::post('/orders/{order}/payments/stripe/init', [ApiStripePaymentController::class, 'initialize']);
 
@@ -106,6 +109,10 @@ Route::middleware('auth:sanctum')->group(function (): void {
         Route::get('/cancellation-requests', [AdminOrderCancellationController::class, 'index']);
         Route::post('/cancellation-requests/{cancellationRequest}/approve', [AdminOrderCancellationController::class, 'approve']);
         Route::post('/cancellation-requests/{cancellationRequest}/reject', [AdminOrderCancellationController::class, 'reject']);
+        Route::get('/return-requests', [AdminOrderReturnController::class, 'index']);
+        Route::post('/return-requests/{returnRequest}/approve', [AdminOrderReturnController::class, 'approve']);
+        Route::post('/return-requests/{returnRequest}/reject', [AdminOrderReturnController::class, 'reject']);
+        Route::post('/return-requests/{returnRequest}/receive', [AdminOrderReturnController::class, 'receive']);
         Route::get('/products/bulk/template/{type}', [AdminProductBulkController::class, 'template'])
             ->where('type', 'import|update');
         Route::post('/products/bulk/import', [AdminProductBulkController::class, 'import']);

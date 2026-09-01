@@ -399,9 +399,13 @@ class IyzicoPaymentGateway implements PaymentGateway
         return $options;
     }
 
-    public function refund(Order $order): PaymentRefundResult
+    public function refund(Order $order, ?float $amount = null): PaymentRefundResult
     {
         $items = $this->resolveRefundItems($order);
+
+        if ($amount !== null) {
+            $items = $this->allocateRefundAmount($items, $amount);
+        }
 
         if ($items === []) {
             return new PaymentRefundResult(
@@ -443,6 +447,38 @@ class IyzicoPaymentGateway implements PaymentGateway
             successful: true,
             refundReference: implode(',', $refundReferences),
         );
+    }
+
+    /**
+     * @param  list<array{payment_transaction_id: string, price: string}>  $items
+     * @return list<array{payment_transaction_id: string, price: string}>
+     */
+    private function allocateRefundAmount(array $items, float $amount): array
+    {
+        $remaining = round($amount, 2);
+        $allocated = [];
+
+        foreach ($items as $item) {
+            if ($remaining <= 0) {
+                break;
+            }
+
+            $itemPrice = round((float) $item['price'], 2);
+            $refundPrice = min($itemPrice, $remaining);
+
+            if ($refundPrice <= 0) {
+                continue;
+            }
+
+            $allocated[] = [
+                'payment_transaction_id' => $item['payment_transaction_id'],
+                'price' => $this->formatAmount($refundPrice),
+            ];
+
+            $remaining = round($remaining - $refundPrice, 2);
+        }
+
+        return $allocated;
     }
 
     /**

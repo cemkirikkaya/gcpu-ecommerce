@@ -40,6 +40,7 @@ class OrderPolicy
         return in_array($order->payment_status, [
             PaymentStatus::Paid,
             PaymentStatus::Refunded,
+            PaymentStatus::PartiallyRefunded,
         ], true);
     }
 

@@ -3,6 +3,7 @@ const statusStyles: Record<string, string> = {
   processing: "bg-blue-100 text-blue-800",
   shipped: "bg-violet-100 text-violet-800",
   delivered: "bg-emerald-100 text-emerald-800",
+  returned: "bg-sky-100 text-sky-800",
   cancelled: "bg-stone-200 text-stone-700",
 };
 

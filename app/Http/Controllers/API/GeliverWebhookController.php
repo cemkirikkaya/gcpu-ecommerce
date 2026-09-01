@@ -4,15 +4,22 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Order;
+use App\Models\OrderReturnRequest;
+use App\Services\OrderReturnService;
 use App\Services\OrderShipmentService;
 use Geliver\Webhooks;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use InvalidArgumentException;
+use RuntimeException;
 
 class GeliverWebhookController extends Controller
 {
-    public function __construct(private OrderShipmentService $orderShipmentService) {}
+    public function __construct(
+        private OrderShipmentService $orderShipmentService,
+        private OrderReturnService $orderReturnService,
+    ) {}
 
     public function __invoke(Request $request): JsonResponse
     {
@@ -49,6 +56,32 @@ class GeliverWebhookController extends Controller
 
             return response()->json([
                 'message' => 'Webhook alındı.',
+            ]);
+        }
+
+        $returnRequest = OrderReturnRequest::query()
+            ->where('geliver_return_shipment_id', $shipmentId)
+            ->first();
+
+        if ($returnRequest !== null) {
+            try {
+                $this->orderReturnService->syncReturnShipmentFromWebhook($returnRequest, $data);
+            } catch (InvalidArgumentException|RuntimeException $exception) {
+                Log::warning('Geliver webhook return sync failed', [
+                    'return_request_id' => $returnRequest->id,
+                    'shipment_id' => $shipmentId,
+                    'error' => $exception->getMessage(),
+                ]);
+            }
+
+            Log::info('Geliver webhook synced return request', [
+                'return_request_id' => $returnRequest->id,
+                'shipment_id' => $shipmentId,
+                'status' => $returnRequest->fresh()?->status->value,
+            ]);
+
+            return response()->json([
+                'message' => 'İade kargo bilgileri güncellendi.',
             ]);
         }
 

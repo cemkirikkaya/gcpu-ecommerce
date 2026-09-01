@@ -8,6 +8,7 @@ enum OrderStatus: string
     case Processing = 'processing';
     case Shipped = 'shipped';
     case Delivered = 'delivered';
+    case Returned = 'returned';
     case Cancelled = 'cancelled';
 
     public function label(): string
@@ -17,6 +18,7 @@ enum OrderStatus: string
             self::Processing => 'Hazırlanıyor',
             self::Shipped => 'Kargoda',
             self::Delivered => 'Teslim Edildi',
+            self::Returned => 'İade Edildi',
             self::Cancelled => 'İptal Edildi',
         };
     }
@@ -31,7 +33,8 @@ enum OrderStatus: string
             self::Pending => in_array($status, [self::Processing, self::Cancelled], true),
             self::Processing => in_array($status, [self::Shipped, self::Cancelled], true),
             self::Shipped => $status === self::Delivered,
-            self::Delivered, self::Cancelled => false,
+            self::Delivered => $status === self::Returned,
+            self::Returned, self::Cancelled => false,
         };
     }
 }

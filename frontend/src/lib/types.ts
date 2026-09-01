@@ -254,9 +254,59 @@ export type OrderCancellationRequest = {
   order?: Order;
 };
 
-export type OrderDetailResponse = {
-  order: Order;
-  payment_options?: PaymentOptions;
+export type OrderReturnRequest = {
+  id: number;
+  order_id: number;
+  type: "return" | "exchange";
+  type_label: string;
+  message: string;
+  status: "pending" | "approved" | "rejected" | "completed";
+  status_label: string;
+  admin_note?: string | null;
+  refund_reference?: string | null;
+  refund_amount?: number | null;
+  return_tracking_number?: string | null;
+  return_tracking_url?: string | null;
+  return_label_url?: string | null;
+  exchange_tracking_number?: string | null;
+  exchange_tracking_url?: string | null;
+  created_at: string | null;
+  reviewed_at?: string | null;
+  received_at?: string | null;
+  completed_at?: string | null;
+  customer?: {
+    id: number;
+    name: string;
+    email: string;
+  };
+  items?: Array<{
+    id: number;
+    order_item_id: number;
+    quantity: number;
+    product_name?: string;
+    variant_label?: string | null;
+    replacement_product_variant_id?: number | null;
+    replacement_variant_label?: string | null;
+  }>;
+  order?: {
+    id: number;
+    total_price: number;
+    status: string;
+    status_label: string;
+    payment_status: string;
+    payment_status_label: string;
+  };
+};
+
+export type ReturnRequestsResponse = {
+  return_requests: OrderReturnRequest[];
+  pending_count: number;
+  meta: {
+    current_page: number;
+    last_page: number;
+    per_page: number;
+    total: number;
+  };
 };
 
 export type Order = {
@@ -282,6 +332,8 @@ export type Order = {
   can_download_invoice?: boolean;
   address?: Address | null;
   cancellation_request?: OrderCancellationRequest | null;
+  return_requests?: OrderReturnRequest[];
+  return_window_days?: number;
   items?: Array<{
     id: number;
     quantity: number;
@@ -289,7 +341,19 @@ export type Order = {
     subtotal: number;
     product_name?: string;
     variant_label?: string;
+    product_id?: number;
+    product_variant_id?: number;
+    returnable_quantity?: number;
+    exchange_variants?: Array<{
+      id: number;
+      label: string;
+    }>;
   }>;
+};
+
+export type OrderDetailResponse = {
+  order: Order;
+  payment_options?: PaymentOptions;
 };
 
 export type AuthResponse = {
@@ -390,6 +454,7 @@ export type AdminSummary = {
   items_sold: number;
   revenue: number;
   pending_cancellation_requests?: number;
+  pending_return_requests?: number;
   charts?: AdminCharts;
 };
 

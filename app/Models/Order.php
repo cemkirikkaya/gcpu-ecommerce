@@ -41,6 +41,7 @@ class Order extends Model
         'tracking_url',
         'geliver_shipment_id',
         'estimated_delivery_at',
+        'delivered_at',
     ];
 
     protected $attributes = [
@@ -64,6 +65,7 @@ class Order extends Model
             'payment_status' => PaymentStatus::class,
             'paid_at' => 'datetime',
             'estimated_delivery_at' => 'datetime',
+            'delivered_at' => 'datetime',
         ];
     }
 
@@ -108,6 +110,16 @@ class Order extends Model
     public function latestCancellationRequest(): HasOne
     {
         return $this->hasOne(OrderCancellationRequest::class)->latestOfMany();
+    }
+
+    public function returnRequests(): HasMany
+    {
+        return $this->hasMany(OrderReturnRequest::class)->latest();
+    }
+
+    public function latestReturnRequest(): HasOne
+    {
+        return $this->hasOne(OrderReturnRequest::class)->latestOfMany();
     }
 
     public function user(): ?User

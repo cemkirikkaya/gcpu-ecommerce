@@ -40,10 +40,13 @@ class OrderController extends Controller
         $this->authorize('view', $order);
 
         $order->load([
-            'items.cartItem.productVariant.product',
+            'items.cartItem.productVariant.product.variants.variantValues.variantValue.variant',
             'items.cartItem.productVariant.variantValues.variantValue.variant',
             'address',
             'latestCancellationRequest.user',
+            'returnRequests.items.orderItem.cartItem.productVariant.product',
+            'returnRequests.items.replacementProductVariant',
+            'returnRequests.user',
         ]);
 
         $payload = [

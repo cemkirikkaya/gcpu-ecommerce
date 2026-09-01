@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { AdminChartsSection } from "@/components/admin/admin-charts";
 import { LowStockAlerts } from "@/components/admin/low-stock-alerts";
 import { PendingCancellationAlerts } from "@/components/admin/pending-cancellation-alerts";
+import { PendingReturnAlerts } from "@/components/admin/pending-return-alerts";
 import { SearchAnalyticsPanel } from "@/components/admin/search-analytics-panel";
 import { ButtonLink } from "@/components/ui/button";
 import { useAuth } from "@/context/auth-context";
@@ -96,6 +97,9 @@ export default function AdminDashboardPage() {
         <ButtonLink href="/admin/cancellation-requests" variant="secondary">
           İptal Talepleri
         </ButtonLink>
+        <ButtonLink href="/admin/return-requests" variant="secondary">
+          İade Talepleri
+        </ButtonLink>
       </div>
 
       <LowStockAlerts
@@ -105,6 +109,8 @@ export default function AdminDashboardPage() {
       />
 
       <PendingCancellationAlerts />
+
+      <PendingReturnAlerts />
 
       <div className="mt-10">
         <div className="flex items-center justify-between gap-4">

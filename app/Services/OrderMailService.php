@@ -6,9 +6,13 @@ use App\Mail\OrderCancellationApprovedMail;
 use App\Mail\OrderCancellationRejectedMail;
 use App\Mail\OrderConfirmationMail;
 use App\Mail\OrderDeliveredMail;
+use App\Mail\OrderReturnApprovedMail;
+use App\Mail\OrderReturnCompletedMail;
+use App\Mail\OrderReturnRejectedMail;
 use App\Mail\OrderShippedMail;
 use App\Models\Order;
 use App\Models\OrderCancellationRequest;
+use App\Models\OrderReturnRequest;
 use Illuminate\Mail\Mailable;
 use Illuminate\Support\Facades\Mail;
 
@@ -54,6 +58,21 @@ class OrderMailService
         );
     }
 
+    public function queueReturnApproved(OrderReturnRequest $returnRequest): void
+    {
+        $this->queueReturnMail($returnRequest, new OrderReturnApprovedMail($returnRequest));
+    }
+
+    public function queueReturnRejected(OrderReturnRequest $returnRequest): void
+    {
+        $this->queueReturnMail($returnRequest, new OrderReturnRejectedMail($returnRequest));
+    }
+
+    public function queueReturnCompleted(OrderReturnRequest $returnRequest): void
+    {
+        $this->queueReturnMail($returnRequest, new OrderReturnCompletedMail($returnRequest));
+    }
+
     /**
      * @param  list<string>  $relations
      */
@@ -87,6 +106,25 @@ class OrderMailService
         ]);
 
         $customer = $cancellationRequest->user;
+
+        if ($customer->email === null) {
+            return;
+        }
+
+        Mail::to($customer)->send($mailable);
+    }
+
+    private function queueReturnMail(OrderReturnRequest $returnRequest, Mailable $mailable): void
+    {
+        $returnRequest->loadMissing([
+            'order.items.cartItem.productVariant.product',
+            'order.address',
+            'order.cart.user',
+            'items.orderItem.cartItem.productVariant.product',
+            'user',
+        ]);
+
+        $customer = $returnRequest->user;
 
         if ($customer->email === null) {
             return;

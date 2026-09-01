@@ -26,8 +26,12 @@ class ProductReviewService
             ->whereHas('cartItem.productVariant', fn (Builder $variantQuery) => $variantQuery
                 ->where('product_id', $product->id))
             ->whereHas('order', fn (Builder $orderQuery) => $orderQuery
-                ->where('payment_status', PaymentStatus::Paid)
-                ->where('status', OrderStatus::Delivered)
+                ->whereIn('payment_status', [
+                    PaymentStatus::Paid,
+                    PaymentStatus::Refunded,
+                    PaymentStatus::PartiallyRefunded,
+                ])
+                ->whereIn('status', [OrderStatus::Delivered, OrderStatus::Returned])
                 ->whereHas('cart', fn (Builder $cartQuery) => $cartQuery
                     ->where('user_id', $user->id)))
             ->exists();

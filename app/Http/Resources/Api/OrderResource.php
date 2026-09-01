@@ -3,6 +3,7 @@
 namespace App\Http\Resources\Api;
 
 use App\Models\Order;
+use App\Services\OrderReturnService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -35,23 +36,42 @@ class OrderResource extends JsonResource
             'tracking_url' => $this->trackingPageUrl(),
             'estimated_delivery_at' => $this->estimated_delivery_at?->toIso8601String(),
             'can_download_invoice' => $request->user()?->can('downloadInvoice', $this->resource) ?? false,
+            'return_window_days' => (int) config('shop.return_window_days', 14),
             'address' => new AddressResource($this->whenLoaded('address')),
             'cancellation_request' => new OrderCancellationRequestResource(
                 $this->whenLoaded('latestCancellationRequest'),
             ),
-            'items' => $this->whenLoaded('items', fn () => $this->items->map(function ($item): array {
-                $variant = $item->cartItem?->productVariant;
-                $product = $variant?->product;
+            'return_requests' => OrderReturnRequestResource::collection(
+                $this->whenLoaded('returnRequests'),
+            ),
+            'items' => $this->whenLoaded('items', function () {
+                $returnService = app(OrderReturnService::class);
+                $committed = $returnService->committedQuantitiesByOrderItemId($this->resource);
 
-                return [
-                    'id' => $item->id,
-                    'quantity' => $item->quantity,
-                    'price' => (float) $item->price,
-                    'subtotal' => $item->subtotal(),
-                    'product_name' => $product?->name,
-                    'variant_label' => $variant?->displayLabel() ?: null,
-                ];
-            })),
+                return $this->items->map(function ($item) use ($committed): array {
+                    $variant = $item->cartItem?->productVariant;
+                    $product = $variant?->product;
+                    $returnableQuantity = max(0, $item->quantity - ($committed[$item->id] ?? 0));
+
+                    return [
+                        'id' => $item->id,
+                        'quantity' => $item->quantity,
+                        'price' => (float) $item->price,
+                        'subtotal' => $item->subtotal(),
+                        'product_name' => $product?->name,
+                        'variant_label' => $variant?->displayLabel() ?: null,
+                        'product_id' => $product?->id,
+                        'product_variant_id' => $variant?->id,
+                        'returnable_quantity' => $returnableQuantity,
+                        'exchange_variants' => $product?->relationLoaded('variants')
+                            ? $product->variants->map(fn ($exchangeVariant): array => [
+                                'id' => $exchangeVariant->id,
+                                'label' => $exchangeVariant->displayLabel() ?: $exchangeVariant->sku,
+                            ])->values()
+                            : [],
+                    ];
+                });
+            }),
         ];
     }
 }

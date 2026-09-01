@@ -8,4 +8,6 @@ use App\Models\Order;
 interface ShippingGateway
 {
     public function createShipment(Order $order): ShipmentCreationResult;
+
+    public function createReturnShipment(Order $order): ShipmentCreationResult;
 }
