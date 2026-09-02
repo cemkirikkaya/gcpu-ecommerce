@@ -3,7 +3,6 @@
 import Link from "next/link";
 
 import { ProductImage } from "@/components/catalog/product-image";
-import { formatPrice } from "@/lib/api";
 import { resolveImageSrc } from "@/lib/media";
 import type { Product } from "@/lib/types";
 

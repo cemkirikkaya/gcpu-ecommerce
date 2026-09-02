@@ -104,7 +104,7 @@ export function OrderDetailClient({ orderId }: { orderId: string }) {
       cancelled = true;
       window.clearInterval(intervalId);
     };
-  }, [token, order?.id, order?.status, parsedOrderId]);
+  }, [token, order, parsedOrderId]);
 
   if (authLoading || !ready) {
     return <div className="px-6 py-24 text-center text-muted">Yükleniyor...</div>;

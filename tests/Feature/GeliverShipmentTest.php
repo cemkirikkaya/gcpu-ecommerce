@@ -91,12 +91,13 @@ it('creates shipment automatically when payment completes with sync queue', func
 
     $order = createPaidOrderForShipment();
 
-    expect($order->fresh())
-        ->status->toBe(OrderStatus::Shipped)
-        ->geliver_shipment_id->not->toBeNull()
-        ->tracking_number->not->toBeNull()
-        ->tracking_url->not->toBeNull()
-        ->estimated_delivery_at->not->toBeNull();
+    $order = $order->fresh();
+
+    expect($order->status)->toBe(OrderStatus::Shipped);
+    expect($order->geliver_shipment_id)->not->toBeNull();
+    expect($order->tracking_number)->not->toBeNull();
+    expect($order->tracking_url)->not->toBeNull();
+    expect($order->estimated_delivery_at)->not->toBeNull();
 
     Mail::assertQueued(OrderShippedMail::class);
 });

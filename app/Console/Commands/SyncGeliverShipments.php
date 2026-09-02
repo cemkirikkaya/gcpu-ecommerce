@@ -22,19 +22,19 @@ class SyncGeliverShipments extends Command
         if (! config('geliver.auto_sync_from_api')) {
             $this->info('Geliver API otomatik senkronizasyonu devre dışı.');
 
-            return self::SUCCESS;
+            return Command::SUCCESS;
         }
 
         if (config('geliver.fake')) {
             $this->info('Sahte Geliver modunda API senkronu atlandı.');
 
-            return self::SUCCESS;
+            return Command::SUCCESS;
         }
 
         $syncedCount = $orderShipmentService->syncPendingShipments();
 
         $this->info("{$syncedCount} Geliver gönderisi senkronize edildi.");
 
-        return self::SUCCESS;
+        return Command::SUCCESS;
     }
 }

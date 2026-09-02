@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/auth-context";
@@ -23,7 +23,7 @@ export default function AdminReturnRequestsPage() {
   const [message, setMessage] = useState<string | null>(null);
   const [processingId, setProcessingId] = useState<number | null>(null);
 
-  async function loadRequests(nextStatus = status) {
+  const loadRequests = useCallback(async () => {
     if (!token) {
       return;
     }
@@ -31,18 +31,18 @@ export default function AdminReturnRequestsPage() {
     setLoading(true);
 
     try {
-      const response = await api.adminReturnRequests(token, nextStatus);
+      const response = await api.adminReturnRequests(token, status);
       setRequests(response.return_requests);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Talepler yüklenemedi.");
     } finally {
       setLoading(false);
     }
-  }
+  }, [token, status]);
 
   useEffect(() => {
     void loadRequests();
-  }, [token, status]);
+  }, [loadRequests]);
 
   async function handleApprove(requestId: number) {
     if (!token) {

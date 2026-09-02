@@ -66,7 +66,7 @@ export default function AdminOrderDetailPage() {
       cancelled = true;
       window.clearInterval(intervalId);
     };
-  }, [token, user, order?.id, order?.geliver_shipment_id, order?.status]);
+  }, [token, user, order]);
 
   async function handleCreateShipment() {
     if (!token || !order) return;

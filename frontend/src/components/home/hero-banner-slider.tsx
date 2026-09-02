@@ -63,7 +63,6 @@ export function HeroBannerSlider({
   }, [products, reservationMinutes, shopName]);
 
   const [activeIndex, setActiveIndex] = useState(0);
-  const activeSlide = slides[activeIndex % slides.length];
 
   const goTo = useCallback(
     (index: number) => {

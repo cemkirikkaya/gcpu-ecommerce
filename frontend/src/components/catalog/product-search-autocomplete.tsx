@@ -225,6 +225,7 @@ export function ProductSearchAutocomplete({
         <input
           id={resolvedInputId}
           type="search"
+          role="combobox"
           value={value}
           onChange={(event) => {
             onChange(event.target.value);

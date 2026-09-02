@@ -16,7 +16,6 @@ import type {
   Cart,
   Catalog,
   CatalogVariantInput,
-  CategoryDetail,
   CategoryDetailResponse,
   InstallmentOption,
   OrderCancellationRequest,

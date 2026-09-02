@@ -24,6 +24,6 @@ class ClearExpiredReservations extends Command
 
         $this->info("{$count} expired reservation(s) removed (after ".config('shop.reservation_minutes').' minutes).');
 
-        return self::SUCCESS;
+        return Command::SUCCESS;
     }
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/auth-context";
@@ -16,7 +16,7 @@ export default function AdminCancellationRequestsPage() {
   const [message, setMessage] = useState<string | null>(null);
   const [processingId, setProcessingId] = useState<number | null>(null);
 
-  async function loadRequests() {
+  const loadRequests = useCallback(async () => {
     if (!token) {
       return;
     }
@@ -31,11 +31,11 @@ export default function AdminCancellationRequestsPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [token]);
 
   useEffect(() => {
     void loadRequests();
-  }, [token]);
+  }, [loadRequests]);
 
   async function handleApprove(requestId: number) {
     if (!token) {

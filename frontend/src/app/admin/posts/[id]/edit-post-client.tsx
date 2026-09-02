@@ -8,7 +8,7 @@ import { PostFormFields } from "@/components/admin/post-form-fields";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { useAuth } from "@/context/auth-context";
 import { api, formatPublishDate } from "@/lib/api";
-import { fromDateLocalValue, slugify, toDateLocalValue } from "@/lib/slugify";
+import { fromDateLocalValue, toDateLocalValue } from "@/lib/slugify";
 import type { AdminPost } from "@/lib/types";
 
 export function EditPostClient({ postId }: { postId: number }) {
